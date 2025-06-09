@@ -42,12 +42,10 @@ public class ProductService(DatabaseContext context) : IProductService
 
     public async Task<List<ProductListViewModel>> List(ProductListParameters parameters, CancellationToken cancellation)
     {
-        IQueryable<ProductEntity> query = context.Products.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(parameters.Name))
-        {
-            query = query.Where(x => EF.Functions.Like(x.Name, $"%{parameters.Name.Trim()}%"));
-        }
-        var products = await query
+        var products = await context.Products
+            .Where(x => string.IsNullOrEmpty(parameters.Name) || x.Name.Contains(parameters.Name))
+            .Where(x => parameters.MinPrice == 0 || parameters.MinPrice == null || x.Price >= parameters.MinPrice)
+            .Where(x => parameters.MaxPrice == 0 || parameters.MaxPrice == null || x.Price <= parameters.MaxPrice)
             .OrderBy(x => x.Id)
             .Select(x => new ProductListViewModel
             {
