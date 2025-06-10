@@ -8,7 +8,6 @@ namespace StoreBackend.Services.Implementation;
 
 public class ProductService(DatabaseContext context) : IProductService
 {
-
     public async Task<ProductDetailViewModel?> Detail(int id, CancellationToken cancellation)
     {
         var result = await context.Products.FirstOrDefaultAsync(x => x.Id == id, cancellation);
@@ -42,10 +41,23 @@ public class ProductService(DatabaseContext context) : IProductService
 
     public async Task<List<ProductListViewModel>> List(ProductListParameters parameters, CancellationToken cancellation)
     {
-        var products = await context.Products
-            .Where(x => string.IsNullOrEmpty(parameters.Name) || x.Name.Contains(parameters.Name))
-            .Where(x => parameters.MinPrice == 0 || parameters.MinPrice == null || x.Price >= parameters.MinPrice)
-            .Where(x => parameters.MaxPrice == 0 || parameters.MaxPrice == null || x.Price <= parameters.MaxPrice)
+        var query = context.Products.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(parameters.Name))
+        {
+            query = query.Where(x => x.Name.Contains(parameters.Name));
+        }
+
+        if (parameters.MinPrice != 0 || parameters.MinPrice != null)
+        {
+            query = query.Where(x => x.Price >= parameters.MinPrice);
+        }
+
+        if (parameters.MaxPrice != 0 || parameters.MaxPrice != null)
+        {
+            query = query.Where(x => x.Price <= parameters.MaxPrice);
+        }
+
+        var products = await query
             .OrderBy(x => x.Id)
             .Select(x => new ProductListViewModel
             {
