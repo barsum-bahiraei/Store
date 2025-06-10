@@ -5,5 +5,7 @@ public interface IProductService
 {
     Task<ProductDetailViewModel?> Detail(int id, CancellationToken cancellation);
     Task<int> Create(ProductCreateParameters parameters, CancellationToken cancellation);
+    Task Update(ProductUpdateParameters parameters, CancellationToken cancellation);
     Task<List<ProductListViewModel>> List(ProductListParameters parameters, CancellationToken cancellation);
+
 }

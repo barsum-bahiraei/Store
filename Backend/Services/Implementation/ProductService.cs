@@ -39,6 +39,22 @@ public class ProductService(DatabaseContext context) : IProductService
         return product.Id;
     }
 
+    public async Task Update(ProductUpdateParameters parameters, CancellationToken cancellation)
+    {
+        var product = await context.Products.Where(x => x.Id == parameters.Id).FirstOrDefaultAsync(cancellation);
+        if (product != null)
+        {
+            product.Id = parameters.Id;
+            product.Name = parameters.Name;
+            product.Description = parameters.Description;
+            product.Price = parameters.Price;
+            product.Discount = parameters.Discount;
+            product.ImageUrl = parameters.ImageUrl;
+
+        }
+        await context.SaveChangesAsync(cancellation);
+    }
+
     public async Task<List<ProductListViewModel>> List(ProductListParameters parameters, CancellationToken cancellation)
     {
         var query = context.Products.AsQueryable();
