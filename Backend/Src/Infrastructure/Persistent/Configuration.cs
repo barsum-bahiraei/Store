@@ -7,7 +7,7 @@ using Persistent.Implementation;
 namespace Persistent;
 public static class Configuration
 {
-    public static IServiceCollection RegisterAppServiceLayer(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection RegisterPersistent(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
         {

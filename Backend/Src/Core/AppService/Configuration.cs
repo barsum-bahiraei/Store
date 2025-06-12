@@ -3,7 +3,7 @@
 namespace Service;
 public static class Configuration
 {
-    public static IServiceCollection RegisterAppServiceLayer(IServiceCollection services)
+    public static IServiceCollection RegisterService(this IServiceCollection services)
     {
         return services;
     }

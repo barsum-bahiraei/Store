@@ -1,11 +1,9 @@
-﻿
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Domain;
-public static class Configurat
+public static class Configuration
 {
-    public static IServiceCollection RegisterAppServiceLayer(IServiceCollection services)
+    public static IServiceCollection RegisterDomain(this IServiceCollection services)
     {
         return services;
     }

@@ -1,5 +1,7 @@
 
+using Domain;
 using Persistent;
+using Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.RegisterAppServiceLayer(builder.Configuration);
+builder.Services.RegisterPersistent(builder.Configuration);
+builder.Services.RegisterDomain();
+builder.Services.RegisterService();
 
 var app = builder.Build();
 
