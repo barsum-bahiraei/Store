@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.Products;
-internal class ProductEntiry
+public class ProductEntiry
 {
     public int Id { get; set; }
     public string Name { get; set; }

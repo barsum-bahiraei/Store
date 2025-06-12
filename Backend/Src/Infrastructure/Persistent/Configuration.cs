@@ -1,11 +1,21 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Persistent;
-internal class Configuration
+public static class Configuration
 {
-    // کانکشن استرینگ اینجا خوانده شود
+    public static IServiceCollection RegisterAppServiceLayer(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<DbContext>(options =>
+        {
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+        });
+        return services;
+    }
 }
