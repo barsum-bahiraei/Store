@@ -7,5 +7,10 @@ using System.Threading.Tasks;
 namespace Domain.Products;
 public interface IProductRepository
 {
-    // تمام create add uppdate put delete list داخل این هستن
+    Task DetailAsync(int id, CancellationToken cancellation);
+    Task ListAsync(CancellationToken cancellation);
+    Task CreateAsync(CancellationToken cancellation);
+    Task UpdateAsync(CancellationToken cancellation);
+    Task DeleteAsync(CancellationToken cancellation);
+
 }
