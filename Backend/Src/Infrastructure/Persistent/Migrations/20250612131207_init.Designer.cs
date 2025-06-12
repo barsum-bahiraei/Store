@@ -11,7 +11,7 @@ using Persistent;
 
 namespace Persistent.Migrations
 {
-    [DbContext(typeof(DbContext))]
+    [DbContext(typeof(AppDbContext))]
     [Migration("20250612131207_init")]
     partial class init
     {

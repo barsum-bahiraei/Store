@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Persistent.Implementation;
-internal class ProductRepository(DbContext context) : IProductRepository
+public class ProductRepository(AppDbContext context) : IProductRepository
 {
     public async Task DetailAsync(int id, CancellationToken cancellation)
     {

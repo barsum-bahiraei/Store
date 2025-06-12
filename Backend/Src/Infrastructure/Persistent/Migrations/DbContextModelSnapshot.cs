@@ -10,7 +10,7 @@ using Persistent;
 
 namespace Persistent.Migrations
 {
-    [DbContext(typeof(DbContext))]
+    [DbContext(typeof(AppDbContext))]
     partial class DbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
