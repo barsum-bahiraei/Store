@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{372431B4-D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Src\Core\Domain\Domain.csproj", "{FF0BE016-5E25-47F6-90CF-EEC22B41C3EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppService", "Src\Core\AppService\AppService.csproj", "{3FFBFF17-7171-4FC8-9A80-DFFA2038E87D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Src\Core\AppService\Service.csproj", "{3FFBFF17-7171-4FC8-9A80-DFFA2038E87D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Endpoint", "Endpoint", "{61CB0F13-F7D2-4312-BB62-C5969935A70C}"
 EndProject

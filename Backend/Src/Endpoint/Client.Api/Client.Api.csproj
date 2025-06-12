@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\AppService\AppService.csproj" />
+    <ProjectReference Include="..\..\Core\AppService\Service.csproj" />
     <ProjectReference Include="..\..\Core\Domain\Domain.csproj" />
     <ProjectReference Include="..\..\Infrastructure\ExternalAdapter\ExternalAdapter.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Persistent\Persistent.csproj" />
