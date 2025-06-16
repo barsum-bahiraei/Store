@@ -1,4 +1,6 @@
 ﻿using Domain.Products;
+using Domain.Products.Models.Input;
+using Domain.Products.Models.Output;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -14,9 +16,21 @@ public class ProductRepository(AppDbContext context) : IProductRepository
         await context.Products.FindAsync(id, cancellation);
     }
 
-    public async Task ListAsync(CancellationToken cancellation)
+    public async Task<List<ProductListOutput>> ListAsync(ProductListInput parameters, CancellationToken cancellation)
     {
-        await context.Products.OrderBy(x => x.Id).ToListAsync(cancellation);
+        var products = await context.Products
+            .OrderBy(x => x.Id)
+            .Select(x => new ProductListOutput
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Price = x.Price,
+                Description = x.Description,
+                CreatedDate = x.CreatedDate,
+                UpdatedDate = x.UpdatedDate,
+            })
+            .ToListAsync(cancellation);
+        return products;
     }
 
     public Task CreateAsync(CancellationToken cancellation)

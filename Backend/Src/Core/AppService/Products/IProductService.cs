@@ -6,13 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Products;
-public interface IProductRepository
+namespace Service.Products;
+public interface IProductService
 {
     Task DetailAsync(int id, CancellationToken cancellation);
     Task<List<ProductListOutput>> ListAsync(ProductListInput parameters, CancellationToken cancellation);
     Task CreateAsync(CancellationToken cancellation);
     Task UpdateAsync(CancellationToken cancellation);
     Task DeleteAsync(CancellationToken cancellation);
-
 }
