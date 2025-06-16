@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\AppService\Service.csproj" />
     <ProjectReference Include="..\..\Core\Service\Service.csproj" />
     <ProjectReference Include="..\..\Core\Domain\Domain.csproj" />
     <ProjectReference Include="..\..\Infrastructure\ExternalAdapter\ExternalAdapter.csproj" />
