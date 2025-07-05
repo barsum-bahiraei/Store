@@ -9,5 +9,4 @@ public interface IProductRepository
     Task CreateAsync(CancellationToken cancellation);
     Task UpdateAsync(CancellationToken cancellation);
     Task DeleteAsync(CancellationToken cancellation);
-
 }

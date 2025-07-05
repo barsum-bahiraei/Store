@@ -1,6 +1,7 @@
 ﻿using Store.Domain.Products;
 using Microsoft.EntityFrameworkCore;
 using Store.Domain;
+using Store.Domain.Categories;
 
 namespace Store.Persistent.Database.Sql;
 
@@ -11,6 +12,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<ProductEntity> Products { get; set; }
+    public DbSet<CategoryEntity> Categories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
