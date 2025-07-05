@@ -22,8 +22,8 @@ public class ProductRepository(AppDbContext context) : IProductRepository
                 Name = x.Name,
                 Price = x.Price,
                 Description = x.Description,
-                CreatedDate = x.CreatedDate,
-                UpdatedDate = x.UpdatedDate,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt,
             })
             .ToListAsync(cancellation);
         return products;
