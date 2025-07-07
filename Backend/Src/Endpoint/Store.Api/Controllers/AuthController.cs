@@ -9,7 +9,7 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class AuthController(IUserService userService) : Controller
 {
-    [HttpPost]
+    [HttpPost("Login")]
     public async Task<ActionResult<UserCreateOutput>> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
     {
         var user = await userService.CreateAsync(parameters, cancellation);

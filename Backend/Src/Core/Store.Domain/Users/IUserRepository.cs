@@ -10,4 +10,6 @@ public interface IUserRepository
     Task<UserCreateOutput> CreateAsync(UserCreateInput parameters, CancellationToken cancellation);
     Task UpdateAsync(CancellationToken cancellation);
     Task DeleteAsync(CancellationToken cancellation);
+
+    string GenerateToken(UserCreateInput parameters);
 }

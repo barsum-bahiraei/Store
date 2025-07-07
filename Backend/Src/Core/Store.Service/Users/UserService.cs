@@ -16,9 +16,10 @@ public class UserService(IUserRepository userRepository) : IUserService
         throw new NotImplementedException();
     }
 
-    public Task<UserCreateOutput> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
+    public async Task<UserCreateOutput> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        var user = await userRepository.CreateAsync(parameters, cancellation);
+        return user;
     }
 
     public Task UpdateAsync(CancellationToken cancellation)
