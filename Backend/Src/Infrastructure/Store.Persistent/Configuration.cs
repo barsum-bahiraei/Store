@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Store.Domain.Categories;
+using Store.Domain.Users;
 using Store.Persistent.Database.Sql;
 using Store.Persistent.Implementation;
 
@@ -20,6 +21,7 @@ public static class Configuration
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }
