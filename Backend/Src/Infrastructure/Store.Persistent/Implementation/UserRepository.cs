@@ -1,8 +1,5 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using Store.Domain.Users;
 using Store.Domain.Users.Models.Input;
 using Store.Domain.Users.Models.Output;
@@ -10,54 +7,39 @@ using Store.Persistent.Database.Sql;
 
 namespace Store.Persistent.Implementation;
 
-public class UserRepository(AppDbContext context,IConfiguration configuration) : IUserRepository
+public class UserRepository(AppDbContext context) : IUserRepository
 {
-    public Task DetailAsync(int id, CancellationToken cancellation)
+    public async Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        var user = new UserEntity
+        {
+            Name = parameters.Name,
+            Email = parameters.Email,
+            Password = parameters.Password,
+            Role = parameters.Role
+        };
+        await context.Users.AddAsync(user, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return user.Email;
     }
 
-    public Task ListAsync(CancellationToken cancellation)
+    public async Task<UserDetailOutput> DetailAsync(string email, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task<UserCreateOutput> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
-    {
-        var role = parameters.Role.ToString();
-        Console.WriteLine(role);
-        throw new NotImplementedException();
+        var user = await context.Users
+            .Where(u => u.Email == email)
+            .Select(u => new UserDetailOutput
+            {
+                Name = u.Name,
+                Family = u.Email,
+                Email = u.Email,
+                Role = u.Role,
+            })
+            .FirstOrDefaultAsync(cancellation);
+        return user;
     }
 
     public Task UpdateAsync(CancellationToken cancellation)
     {
         throw new NotImplementedException();
-    }
-
-    public Task DeleteAsync(CancellationToken cancellation)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GenerateToken(UserCreateInput parameters)
-    {
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.Email, parameters.Email),
-            new Claim(ClaimTypes.Role, parameters.Role.ToString())
-        };
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: configuration["Jwt:Issuer"],
-            audience: configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

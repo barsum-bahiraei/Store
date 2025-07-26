@@ -1,24 +1,27 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Store.Domain.Users;
 using Store.Domain.Users.Models.Input;
 using Store.Domain.Users.Models.Output;
 
 namespace Store.Service.Users;
 
-public class UserService(IUserRepository userRepository) : IUserService
+public class UserService(IUserRepository userRepository, IConfiguration configuration) : IUserService
 {
-    public Task DetailAsync(int id, CancellationToken cancellation)
+    public async Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        // var email = await userRepository.CreateAsync(parameters, cancellation);
+        // var user = await userRepository.DetailAsync(email, cancellation);
+        // var token = GenerateToken(user.Email, user.Role);
+        return "token";
     }
 
-    public Task ListAsync(CancellationToken cancellation)
+    public async Task<UserDetailOutput> DetailAsync(string email, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
-    }
-
-    public async Task<UserCreateOutput> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
-    {
-        var user = await userRepository.CreateAsync(parameters, cancellation);
+        var user = await userRepository.DetailAsync(email, cancellation);
         return user;
     }
 
@@ -27,8 +30,25 @@ public class UserService(IUserRepository userRepository) : IUserService
         throw new NotImplementedException();
     }
 
-    public Task DeleteAsync(CancellationToken cancellation)
+    public string GenerateToken(string email, UserRoleEnum role)
     {
-        throw new NotImplementedException();
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Role, role.ToString())
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: configuration["Jwt:Issuer"],
+            audience: configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
