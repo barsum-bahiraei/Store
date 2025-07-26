@@ -1,6 +1,7 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Store.Domain.Users.Models.Input;
-using Store.Domain.Users.Models.Output;
 using Store.Service.Users;
 
 namespace Store.Api.Controllers;
@@ -23,5 +24,14 @@ public class UserController(IUserService userService) : Controller
     {
         var token = await userService.CreateAsync(parameters, cancellation);
         return Ok(token);
+    }
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpGet("Detail")]
+    public async Task<ActionResult> DetailAsync(CancellationToken cancellation)
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        var user = await userService.DetailAsync(email, cancellation);
+        return Ok(user);
     }
 }

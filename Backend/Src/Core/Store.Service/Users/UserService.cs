@@ -52,7 +52,7 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.AddHours(10),
             signingCredentials: credentials
         );
 
