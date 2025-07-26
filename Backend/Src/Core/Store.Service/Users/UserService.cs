@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -13,10 +14,16 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
 {
     public async Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
     {
-        // var email = await userRepository.CreateAsync(parameters, cancellation);
-        // var user = await userRepository.DetailAsync(email, cancellation);
-        // var token = GenerateToken(user.Email, user.Role);
-        return "token";
+        var hasUser = await userRepository.HasUserAsync(parameters.Email, cancellation);
+        if (!hasUser)
+        {
+            parameters.Password = HashPassword(parameters.Password);
+            await userRepository.CreateAsync(parameters, cancellation);
+            var token = GenerateToken(parameters.Email, parameters.Role);
+            return token;
+        }
+
+        return null;
     }
 
     public async Task<UserDetailOutput> DetailAsync(string email, CancellationToken cancellation)
@@ -50,5 +57,13 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string HashPassword(string password)
+    {
+        using var sha256 = SHA256.Create();
+        byte[] bytes = Encoding.UTF8.GetBytes(password + configuration["SecretKey"]);
+        byte[] hash = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
     }
 }

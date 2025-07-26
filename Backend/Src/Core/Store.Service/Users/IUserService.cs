@@ -10,4 +10,5 @@ public interface IUserService
     Task<UserDetailOutput> DetailAsync(string email, CancellationToken cancellation);
     Task UpdateAsync(CancellationToken cancellation);
     string GenerateToken(string email, UserRoleEnum role);
+    string HashPassword(string password);
 }
