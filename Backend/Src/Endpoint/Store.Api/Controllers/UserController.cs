@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Store.Domain.Users.Models.Input;
+using Store.Domain.Users.Models.Output;
 using Store.Service.Users;
 
 namespace Store.Api.Controllers;
@@ -11,10 +12,10 @@ namespace Store.Api.Controllers;
 public class UserController(IUserService userService) : Controller
 {
     [HttpPost("Login")]
-    public async Task<ActionResult<string>> LoginAsync(UserCreateInput parameters,
+    public async Task<ActionResult<UserLoginOutput>> LoginAsync(UserLoginInput parameters,
         CancellationToken cancellation)
     {
-        var user = await userService.CreateAsync(parameters, cancellation);
+        var user = await userService.LoginAsync(parameters, cancellation);
         return Ok(user);
     }
 
@@ -28,7 +29,7 @@ public class UserController(IUserService userService) : Controller
 
     [Authorize(Roles = "User,Admin")]
     [HttpGet("Detail")]
-    public async Task<ActionResult> DetailAsync(CancellationToken cancellation)
+    public async Task<ActionResult<UserDetailOutput>> DetailAsync(CancellationToken cancellation)
     {
         var email = User.FindFirstValue(ClaimTypes.Email);
         var user = await userService.DetailAsync(email, cancellation);

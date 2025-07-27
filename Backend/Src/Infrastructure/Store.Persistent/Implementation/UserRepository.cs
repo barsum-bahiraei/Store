@@ -39,11 +39,6 @@ public class UserRepository(AppDbContext context) : IUserRepository
         return user;
     }
 
-    public Task UpdateAsync(CancellationToken cancellation)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<bool> HasUserAsync(string email, CancellationToken cancellation)
     {
         return await context.Users.AnyAsync(x => x.Email == email, cancellation);

@@ -12,6 +12,11 @@ namespace Store.Service.Users;
 
 public class UserService(IUserRepository userRepository, IConfiguration configuration) : IUserService
 {
+    public async Task<UserLoginOutput> LoginAsync(UserLoginInput parameters, CancellationToken cancellation)
+    {
+        
+    }
+
     public async Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
     {
         var hasUser = await userRepository.HasUserAsync(parameters.Email, cancellation);
@@ -30,11 +35,6 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
     {
         var user = await userRepository.DetailAsync(email, cancellation);
         return user;
-    }
-
-    public Task UpdateAsync(CancellationToken cancellation)
-    {
-        throw new NotImplementedException();
     }
 
     public string GenerateToken(string email, UserRoleEnum role)
