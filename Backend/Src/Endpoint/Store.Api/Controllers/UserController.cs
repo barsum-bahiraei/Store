@@ -12,7 +12,7 @@ namespace Store.Api.Controllers;
 public class UserController(IUserService userService) : Controller
 {
     [HttpPost("Login")]
-    public async Task<ActionResult<UserLoginOutput>> LoginAsync(UserLoginInput parameters,
+    public async Task<ActionResult<UserLoginOutput>> Login(UserLoginInput parameters,
         CancellationToken cancellation)
     {
         var user = await userService.LoginAsync(parameters, cancellation);
@@ -20,7 +20,7 @@ public class UserController(IUserService userService) : Controller
     }
 
     [HttpPost("Register")]
-    public async Task<ActionResult<string>> RegisterAsync(UserCreateInput parameters,
+    public async Task<ActionResult<string>> Register(UserCreateInput parameters,
         CancellationToken cancellation)
     {
         var token = await userService.CreateAsync(parameters, cancellation);
@@ -29,7 +29,7 @@ public class UserController(IUserService userService) : Controller
 
     [Authorize(Roles = "User,Admin")]
     [HttpGet("Detail")]
-    public async Task<ActionResult<UserDetailOutput>> DetailAsync(CancellationToken cancellation)
+    public async Task<ActionResult<UserDetailOutput>> Detail(CancellationToken cancellation = default)
     {
         var email = User.FindFirstValue(ClaimTypes.Email);
         var user = await userService.DetailAsync(email, cancellation);

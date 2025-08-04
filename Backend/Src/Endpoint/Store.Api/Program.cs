@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using Store.Domain;
 using Store.Persistent;
 using Store.Service;
+using Store.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,9 +64,11 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.RegisterStorePersistent(builder.Configuration);
-builder.Services.RegisterStoreDomain();
-builder.Services.RegisterStoreService();
+builder.Services
+    .RegisterStorePersistent(builder.Configuration)
+    .RegisterStoreDomain()
+    .RegisterStoreService()
+    .RegisterStoreShared();
 
 var app = builder.Build();
 
