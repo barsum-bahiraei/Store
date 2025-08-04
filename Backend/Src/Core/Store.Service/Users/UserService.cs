@@ -14,7 +14,16 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
 {
     public async Task<UserLoginOutput> LoginAsync(UserLoginInput parameters, CancellationToken cancellation)
     {
-        
+        var user = await userRepository.DetailAsync(parameters.Email, cancellation);
+        var token = GenerateToken(user.Email, user.Role);
+        var userLogin = new UserLoginOutput
+        {
+            Name = user.Name,
+            Family = user.Family,
+            Email = user.Email,
+            Token = token,
+        };
+        return userLogin;
     }
 
     public async Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
@@ -22,8 +31,15 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
         var hasUser = await userRepository.HasUserAsync(parameters.Email, cancellation);
         if (!hasUser)
         {
+            var user = new UserEntity
+            {
+                Email = parameters.Email,
+                Name = parameters.Name,
+                Family = parameters.Family,
+                Role = parameters.Role
+            };
             parameters.Password = HashPassword(parameters.Password);
-            await userRepository.CreateAsync(parameters, cancellation);
+            await userRepository.CreateAsync(user, cancellation);
             var token = GenerateToken(parameters.Email, parameters.Role);
             return token;
         }
@@ -34,7 +50,14 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
     public async Task<UserDetailOutput> DetailAsync(string email, CancellationToken cancellation)
     {
         var user = await userRepository.DetailAsync(email, cancellation);
-        return user;
+        var userDetail = new UserDetailOutput
+        {
+            Role = user.Role,
+            Name = user.Name,
+            Family = user.Family,
+            Email = user.Email,
+        };
+        return userDetail;
     }
 
     public string GenerateToken(string email, UserRoleEnum role)
