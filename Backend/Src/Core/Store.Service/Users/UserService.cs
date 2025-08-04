@@ -15,7 +15,7 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
     public async Task<UserLoginOutput> LoginAsync(UserLoginInput parameters, CancellationToken cancellation)
     {
         var user = await userRepository.DetailAsync(parameters.Email, cancellation);
-        var token = GenerateToken(user.Email, user.Role);
+        var token = GenerateToken(user.Email);
         var userLogin = new UserLoginOutput
         {
             Name = user.Name,
@@ -35,12 +35,11 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
             {
                 Email = parameters.Email,
                 Name = parameters.Name,
-                Family = parameters.Family,
-                Role = parameters.Role
+                Family = parameters.Family
             };
             parameters.Password = HashPassword(parameters.Password);
             await userRepository.CreateAsync(user, cancellation);
-            var token = GenerateToken(parameters.Email, parameters.Role);
+            var token = GenerateToken(parameters.Email);
             return token;
         }
 
@@ -52,7 +51,6 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
         var user = await userRepository.DetailAsync(email, cancellation);
         var userDetail = new UserDetailOutput
         {
-            Role = user.Role,
             Name = user.Name,
             Family = user.Family,
             Email = user.Email,
@@ -60,12 +58,11 @@ public class UserService(IUserRepository userRepository, IConfiguration configur
         return userDetail;
     }
 
-    public string GenerateToken(string email, UserRoleEnum role)
+    public string GenerateToken(string email)
     {
         var claims = new[]
         {
             new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, role.ToString())
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
