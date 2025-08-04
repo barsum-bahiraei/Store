@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Store.Shared.Attributes;
-internal class AutorizeAttribute
+namespace Store.Shared.Enums;
+public enum PermissionEnum
 {
+    AccountDetail = 1,
 }

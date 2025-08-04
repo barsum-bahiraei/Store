@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Store.Domain.Users.Models.Input;
 using Store.Domain.Users.Models.Output;
 using Store.Service.Users;
+using Store.Shared.Attributes;
+using Store.Shared.Enums;
 
 namespace Store.Api.Controllers;
 
@@ -27,7 +29,7 @@ public class UserController(IUserService userService) : Controller
         return Ok(token);
     }
 
-    [Authorize(Roles = "User,Admin")]
+    [Permission(PermissionEnum.AccountDetail)]
     [HttpGet("Detail")]
     public async Task<ActionResult<UserDetailOutput>> Detail(CancellationToken cancellation = default)
     {
