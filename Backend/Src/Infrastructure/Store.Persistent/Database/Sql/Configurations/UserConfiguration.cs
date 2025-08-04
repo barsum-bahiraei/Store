@@ -15,6 +15,8 @@ public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
         builder.Property(x => x.Email).IsRequired();
         builder.Property(x => x.Password).IsRequired();
         builder.Property(x => x.Email).IsRequired();
-        builder.Property(x => x.Role).IsRequired();
+        builder.HasMany(x => x.Roles)
+            .WithMany(x => x.Users)
+            .UsingEntity(x => x.ToTable("UserRole"));
     }
 }

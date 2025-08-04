@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<ProductEntity> Products { get; set; }
     public DbSet<CategoryEntity> Categories { get; set; }
     public DbSet<UserEntity> Users { get; set; }
+    public DbSet<PermissionEntity> Permissions { get; set; }
+    public DbSet<RoleEntity> Roles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
