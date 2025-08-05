@@ -1,4 +1,4 @@
-namespace Store.Domain.Users.Models.Input;
+namespace Store.Domain.Accounts.Models.Input;
 
 public class UserLoginInput
 {

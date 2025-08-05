@@ -1,10 +1,9 @@
-using Store.Domain.Users;
-using Store.Domain.Users.Models.Input;
-using Store.Domain.Users.Models.Output;
+using Store.Domain.Accounts.Models.Input;
+using Store.Domain.Accounts.Models.Output;
 
-namespace Store.Service.Users;
+namespace Store.Service.Accounts;
 
-public interface IUserService
+public interface IAccountService
 {
     Task<UserLoginOutput> LoginAsync(UserLoginInput parameters, CancellationToken cancellation);
     Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation);

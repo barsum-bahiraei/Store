@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Store.Domain;
 using Store.Domain.Categories;
-using Store.Domain.Users;
+using Store.Domain.Accounts;
 
 namespace Store.Persistent.Database.Sql;
 

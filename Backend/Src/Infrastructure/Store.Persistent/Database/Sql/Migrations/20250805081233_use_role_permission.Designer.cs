@@ -118,7 +118,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
-            modelBuilder.Entity("Store.Domain.Users.PermissionEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.PermissionEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -141,7 +141,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("Permissions");
                 });
 
-            modelBuilder.Entity("Store.Domain.Users.RoleEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.RoleEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -164,7 +164,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("Store.Domain.Users.UserEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -201,13 +201,13 @@ namespace Store.Persistent.Database.Sql.Migrations
 
             modelBuilder.Entity("PermissionEntityRoleEntity", b =>
                 {
-                    b.HasOne("Store.Domain.Users.PermissionEntity", null)
+                    b.HasOne("Store.Domain.Accounts.PermissionEntity", null)
                         .WithMany()
                         .HasForeignKey("PermissionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Store.Domain.Users.RoleEntity", null)
+                    b.HasOne("Store.Domain.Accounts.RoleEntity", null)
                         .WithMany()
                         .HasForeignKey("RolesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -216,13 +216,13 @@ namespace Store.Persistent.Database.Sql.Migrations
 
             modelBuilder.Entity("RoleEntityUserEntity", b =>
                 {
-                    b.HasOne("Store.Domain.Users.RoleEntity", null)
+                    b.HasOne("Store.Domain.Accounts.RoleEntity", null)
                         .WithMany()
                         .HasForeignKey("RolesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Store.Domain.Users.UserEntity", null)
+                    b.HasOne("Store.Domain.Accounts.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)

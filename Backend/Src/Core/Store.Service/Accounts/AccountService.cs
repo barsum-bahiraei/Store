@@ -4,13 +4,13 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Store.Domain.Users;
-using Store.Domain.Users.Models.Input;
-using Store.Domain.Users.Models.Output;
+using Store.Domain.Accounts;
+using Store.Domain.Accounts.Models.Input;
+using Store.Domain.Accounts.Models.Output;
 
-namespace Store.Service.Users;
+namespace Store.Service.Accounts;
 
-public class UserService(IUserRepository userRepository, IConfiguration configuration) : IUserService
+public class UserService(IAccountRepository userRepository, IConfiguration configuration) : IAccountService
 {
     public async Task<UserLoginOutput> LoginAsync(UserLoginInput parameters, CancellationToken cancellation)
     {

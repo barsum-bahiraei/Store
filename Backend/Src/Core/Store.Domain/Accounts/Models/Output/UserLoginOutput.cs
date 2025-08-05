@@ -1,8 +1,9 @@
-namespace Store.Domain.Users.Models.Output;
+namespace Store.Domain.Accounts.Models.Output;
 
-public class UserDetailOutput
+public class UserLoginOutput
 {
     public string Name { get; set; }
     public string Family { get; set; }
     public string Email { get; set; }
+    public string Token { get; set; }
 }

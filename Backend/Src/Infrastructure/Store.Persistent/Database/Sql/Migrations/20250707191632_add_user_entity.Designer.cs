@@ -88,7 +88,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
-            modelBuilder.Entity("Store.Domain.Users.UserEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

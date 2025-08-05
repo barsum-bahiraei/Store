@@ -1,9 +1,8 @@
-namespace Store.Domain.Users.Models.Input;
+namespace Store.Domain.Accounts.Models.Output;
 
-public class UserCreateInput
+public class UserDetailOutput
 {
     public string Name { get; set; }
     public string Family { get; set; }
     public string Email { get; set; }
-    public string Password { get; set; }
 }

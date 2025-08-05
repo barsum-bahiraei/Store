@@ -1,9 +1,8 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Store.Domain.Users.Models.Input;
-using Store.Domain.Users.Models.Output;
-using Store.Service.Users;
+using Store.Domain.Accounts.Models.Input;
+using Store.Domain.Accounts.Models.Output;
+using Store.Service.Accounts;
 using Store.Shared.Attributes;
 using Store.Shared.Enums;
 
@@ -11,7 +10,7 @@ namespace Store.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UserController(IUserService userService) : Controller
+public class AccountController(IAccountService userService) : Controller
 {
     [HttpPost("Login")]
     public async Task<ActionResult<UserLoginOutput>> Login(UserLoginInput parameters,

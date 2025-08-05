@@ -1,13 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Store.Domain.Users;
-using Store.Domain.Users.Models.Input;
-using Store.Domain.Users.Models.Output;
+using Store.Domain.Accounts;
 using Store.Persistent.Database.Sql;
 
 namespace Store.Persistent.Implementation;
 
-public class UserRepository(AppDbContext context) : IUserRepository
+public class AccountRepository(AppDbContext context) : IAccountRepository
 {
     public async Task<UserEntity> CreateAsync(UserEntity parameters, CancellationToken cancellation)
     {

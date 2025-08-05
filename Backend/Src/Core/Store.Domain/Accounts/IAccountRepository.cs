@@ -1,9 +1,6 @@
-using Store.Domain.Users.Models.Input;
-using Store.Domain.Users.Models.Output;
+namespace Store.Domain.Accounts;
 
-namespace Store.Domain.Users;
-
-public interface IUserRepository
+public interface IAccountRepository
 {
     Task<UserEntity> DetailAsync(string email, CancellationToken cancellation);
     Task<UserEntity> CreateAsync(UserEntity parameters, CancellationToken cancellation);
