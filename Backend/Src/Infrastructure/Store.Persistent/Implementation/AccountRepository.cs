@@ -23,4 +23,29 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     {
         return await context.Users.AnyAsync(x => x.Email == email, cancellation);
     }
+
+    public async Task<List<RoleEntity>> RoleListAsync(string email, CancellationToken cancellation)
+    {
+        var user = await context.Users
+            .Include(x => x.Roles)
+            .FirstOrDefaultAsync(x => x.Email == email, cancellation);
+        return user.Roles.ToList();
+    }
+
+    public async Task<List<PermissionEntity>> PermissionListAsync(string email, CancellationToken cancellation)
+    {
+        var permissions = await context.Users
+            .Where(x => x.Email == email)
+            .SelectMany(x => x.Roles.SelectMany(z => z.Permissions))
+            .Distinct()
+            .ToListAsync(cancellation);
+        return permissions;
+    }
+
+    public async Task<RoleEntity> RoleCreateAsync(RoleEntity parameters, CancellationToken cancellation)
+    {
+        await context.Roles.AddAsync(parameters, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return parameters;
+    }
 }

@@ -36,4 +36,11 @@ public class AccountController(IAccountService userService) : Controller
         var user = await userService.DetailAsync(email, cancellation);
         return Ok(user);
     }
+
+    [HttpPost("RoleCreate")]
+    public async Task<ActionResult<UserRoleCreateOutput>> RoleCreate(UserRoleCreateInput parameters, CancellationToken cancellation = default)
+    {
+        var role = await userService.RoleCreateAsync(parameters, cancellation);
+        return Ok(role);
+    }
 }

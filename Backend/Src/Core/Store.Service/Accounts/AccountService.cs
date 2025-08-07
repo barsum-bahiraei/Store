@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -35,7 +35,7 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
             {
                 Email = parameters.Email,
                 Name = parameters.Name,
-                Family = parameters.Family
+                Family = parameters.Family,
             };
             parameters.Password = HashPassword(parameters.Password);
             await userRepository.CreateAsync(user, cancellation);
@@ -57,6 +57,48 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         };
         return userDetail;
     }
+
+    public async Task<List<UserRoleListOutput>> RoleListAsync(string email, CancellationToken cancellation)
+    {
+        var roleList = await userRepository.RoleListAsync(email, cancellation);
+        var roles = roleList.Select(x => new UserRoleListOutput
+        {
+            Id = x.Id,
+            Name = x.Name,
+        }).ToList();
+        return roles;
+    }
+
+    public async Task<List<UserPermissionListOutput>> PermissionListAsync(string email, CancellationToken cancellation)
+    {
+        var permissionList = await userRepository.PermissionListAsync(email, cancellation);
+        var permissions = permissionList.Select(x => new UserPermissionListOutput
+        {
+            Id = x.Id,
+            Name = x.Name,
+        }).ToList();
+        return permissions;
+    }
+    public async Task<UserRoleCreateOutput> RoleCreateAsync(UserRoleCreateInput parameters, CancellationToken cancellation)
+    {
+
+        var roleEntity = new RoleEntity
+        {
+            Name = parameters.Name,
+        };
+
+        var createdRole = await userRepository.RoleCreateAsync(roleEntity, cancellation);
+
+        var output = new UserRoleCreateOutput
+        {
+            Id = createdRole.Id,
+            Name = createdRole.Name,
+        };
+
+        return output;
+
+    }
+
 
     public string GenerateToken(string email)
     {
