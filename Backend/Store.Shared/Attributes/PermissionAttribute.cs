@@ -13,7 +13,7 @@ public class PermissionAttribute(PermissionEnum permission) : Attribute, IAsyncA
         var email = context.HttpContext.User.FindFirst(x => x.Type == ClaimTypes.Email)?.Value;
         var userService = context.HttpContext.RequestServices.GetService<IAccountService>();
 
-        var permissions = await userService.PermissionListAsync(email, context.HttpContext.RequestAborted);
+        var permissions = await userService.UserPermissionListAsync(email, context.HttpContext.RequestAborted);
         var hasPermission = permissions.Any(x => x.Id == (int)permission);
 
         if (!hasPermission)

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Store.Shared.Enums;
+﻿namespace Store.Shared.Enums;
 public enum PermissionEnum
 {
-    AccountDetail = 1,
+    UserDetail = 1,
+    RoleList = 2,
 }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Store.Domain.Accounts.Models.Output;
-public class UserRoleListOutput
+public class RoleListOutput
 {
     public int Id { get; set; }
     public string Name { get; set; }

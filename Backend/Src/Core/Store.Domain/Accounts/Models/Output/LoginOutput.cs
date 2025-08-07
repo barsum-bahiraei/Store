@@ -1,6 +1,6 @@
 namespace Store.Domain.Accounts.Models.Output;
 
-public class UserLoginOutput
+public class LoginOutput
 {
     public string Name { get; set; }
     public string Family { get; set; }
