@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Store.Domain.Accounts;
 using Store.Persistent.Database.Sql;
+using System.Security;
 
 namespace Store.Persistent.Implementation;
 
@@ -48,5 +49,13 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         await context.Roles.AddAsync(parameters, cancellation);
         await context.SaveChangesAsync(cancellation);
         return parameters;
+    }
+
+    public async Task PermissionsAssignRoleAsync(int roleId, List<int> parameters, CancellationToken cancellation)
+    {
+        var permissions = await context.Permissions.Where(x => parameters.Contains(x.Id)).ToListAsync();
+        var role = await context.Roles.Include(x => x.Permissions).FirstOrDefaultAsync(x => x.Id == roleId, cancellation);
+        role.Permissions.AddRange(permissions);
+        await context.SaveChangesAsync(cancellation);
     }
 }

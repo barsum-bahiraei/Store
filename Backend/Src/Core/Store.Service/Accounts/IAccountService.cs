@@ -11,6 +11,7 @@ public interface IAccountService
     Task<List<RoleListOutput>> RoleListAsync(CancellationToken cancellation);
     Task<List<UserPermissionListOutput>> UserPermissionListAsync(string email, CancellationToken cancellation);
     Task<RoleCreateOutput> RoleCreateAsync(UserRoleCreateInput parameters, CancellationToken cancellation);
+    Task PermissionsAssignRoleAsync(PermissionsAssignRoleInput parameters, CancellationToken cancellation);
     string GenerateToken(string email);
     string HashPassword(string password);
 }

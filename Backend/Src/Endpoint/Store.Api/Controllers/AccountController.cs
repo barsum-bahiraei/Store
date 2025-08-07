@@ -13,16 +13,14 @@ namespace Store.Api.Controllers;
 public class AccountController(IAccountService userService) : Controller
 {
     [HttpPost("Login")]
-    public async Task<ActionResult<LoginOutput>> Login(UserLoginInput parameters,
-        CancellationToken cancellation)
+    public async Task<ActionResult<LoginOutput>> Login(UserLoginInput parameters, CancellationToken cancellation = default)
     {
         var user = await userService.LoginAsync(parameters, cancellation);
         return Ok(user);
     }
 
     [HttpPost("Register")]
-    public async Task<ActionResult<string>> Register(UserCreateInput parameters,
-        CancellationToken cancellation)
+    public async Task<ActionResult<string>> Register(UserCreateInput parameters, CancellationToken cancellation = default)
     {
         var token = await userService.CreateAsync(parameters, cancellation);
         return Ok(token);
@@ -37,6 +35,7 @@ public class AccountController(IAccountService userService) : Controller
         return Ok(user);
     }
 
+    [Permission(PermissionEnum.RoleCreate)]
     [HttpPost("RoleCreate")]
     public async Task<ActionResult<RoleCreateOutput>> RoleCreate(UserRoleCreateInput parameters, CancellationToken cancellation = default)
     {
@@ -44,11 +43,11 @@ public class AccountController(IAccountService userService) : Controller
         return Ok(role);
     }
 
-    [Permission(PermissionEnum.RoleList)]
-    [HttpPost("RoleList")]
-    public async Task<ActionResult<List<RoleListOutput>>> RoleList(CancellationToken cancellation = default)
+    [Permission(PermissionEnum.PermissionsAssignRole)]
+    [HttpPost("PermissionsAssignRole")]
+    public async Task<ActionResult> PermissionsAssignRole(PermissionsAssignRoleInput parameters, CancellationToken cancellation = default)
     {
-        var roles = await userService.RoleListAsync(cancellation);
-        return Ok(roles);
+        await userService.PermissionsAssignRoleAsync(parameters, cancellation);
+        return Ok();
     }
 }

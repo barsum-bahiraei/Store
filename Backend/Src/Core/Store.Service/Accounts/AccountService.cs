@@ -101,6 +101,10 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
 
     }
 
+    public async Task PermissionsAssignRoleAsync(PermissionsAssignRoleInput parameters, CancellationToken cancellation)
+    {
+        await userRepository.PermissionsAssignRoleAsync(parameters.RoleId, parameters.PermissionIds, cancellation);
+    }
 
     public string GenerateToken(string email)
     {
