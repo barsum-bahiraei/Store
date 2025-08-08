@@ -4,7 +4,7 @@ using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
 using Store.Service.Accounts;
 using Store.Shared.Attributes;
-using Store.Shared.Enums;
+using Store.Shared.Security;
 
 namespace Store.Api.Controllers;
 
@@ -26,7 +26,7 @@ public class AccountController(IAccountService userService) : Controller
         return Ok(token);
     }
 
-    [Permission(PermissionEnum.UserDetail)]
+    [Security(Permissions.UserDetail)]
     [HttpGet("Detail")]
     public async Task<ActionResult<UserDetailOutput>> Detail(CancellationToken cancellation = default)
     {
@@ -35,7 +35,15 @@ public class AccountController(IAccountService userService) : Controller
         return Ok(user);
     }
 
-    [Permission(PermissionEnum.RoleCreate)]
+    [Security(Permissions.RoleList)]
+    [HttpPost("RoleList")]
+    public async Task<ActionResult<RoleCreateOutput>> RoleCreate(CancellationToken cancellation = default)
+    {
+        var roles = await userService.RoleListAsync(cancellation);
+        return Ok(roles);
+    }
+
+    [Security(Permissions.RoleCreate)]
     [HttpPost("RoleCreate")]
     public async Task<ActionResult<RoleCreateOutput>> RoleCreate(UserRoleCreateInput parameters, CancellationToken cancellation = default)
     {
@@ -43,7 +51,7 @@ public class AccountController(IAccountService userService) : Controller
         return Ok(role);
     }
 
-    [Permission(PermissionEnum.PermissionsAssignRole)]
+    [Security(Permissions.PermissionsAssignRole)]
     [HttpPost("PermissionsAssignRole")]
     public async Task<ActionResult> PermissionsAssignRole(PermissionsAssignRoleInput parameters, CancellationToken cancellation = default)
     {

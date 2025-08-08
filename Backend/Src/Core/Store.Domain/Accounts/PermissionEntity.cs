@@ -8,5 +8,6 @@ namespace Store.Domain.Accounts;
 public class PermissionEntity : BaseEntity
 {
     public string Name { get; set; }
+    public string? DisplayName { get; set; }
     public List<RoleEntity> Roles { get; set; }
 }

@@ -23,4 +23,8 @@
     <ProjectReference Include="..\..\Core\Store.Domain\Store.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Database\Sql\Migrations\" />
+  </ItemGroup>
+
 </Project>
