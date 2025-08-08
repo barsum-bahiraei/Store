@@ -59,6 +59,25 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         };
         return userDetail;
     }
+    public async Task<RoleCreateOutput> RoleCreateAsync(UserRoleCreateInput parameters, CancellationToken cancellation)
+    {
+
+        var roleEntity = new RoleEntity
+        {
+            Name = parameters.Name,
+        };
+
+        var createdRole = await userRepository.RoleCreateAsync(roleEntity, cancellation);
+
+        var output = new RoleCreateOutput
+        {
+            Id = createdRole.Id,
+            Name = createdRole.Name,
+        };
+
+        return output;
+
+    }
 
     public async Task<List<RoleListOutput>> RoleListAsync(CancellationToken cancellation)
     {
@@ -81,24 +100,26 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         }).ToList();
         return permissions;
     }
-    public async Task<RoleCreateOutput> RoleCreateAsync(UserRoleCreateInput parameters, CancellationToken cancellation)
-    {
 
-        var roleEntity = new RoleEntity
+    public async Task PermissionCreateAsync(PermissionCreateInput parameters, CancellationToken cancellation)
+    {
+        var permission = new PermissionEntity
         {
             Name = parameters.Name,
         };
+        await userRepository.PermissionCreateAsync(permission, cancellation);
+    }
 
-        var createdRole = await userRepository.RoleCreateAsync(roleEntity, cancellation);
-
-        var output = new RoleCreateOutput
+    public async Task<List<PermissionListOutput>> PermissionListAsync(CancellationToken cancellation)
+    {
+        var permissions = await userRepository.PermissionListAsync(cancellation);
+        var output = permissions.Select(x => new PermissionListOutput
         {
-            Id = createdRole.Id,
-            Name = createdRole.Name,
-        };
-
+            Id = x.Id,
+            Name = x.Name,
+            DisplayName = x.DisplayName,
+        }).ToList();
         return output;
-
     }
 
     public async Task PermissionsAssignRoleAsync(PermissionsAssignRoleInput parameters, CancellationToken cancellation)

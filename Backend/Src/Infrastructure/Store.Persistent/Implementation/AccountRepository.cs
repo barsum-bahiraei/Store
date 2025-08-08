@@ -34,6 +34,17 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return roles;
     }
 
+    public async Task PermissionCreateAsync(PermissionEntity parameters, CancellationToken cancellation)
+    {
+        await context.Permissions.AddAsync(parameters, cancellation);
+    }
+
+    public async Task<List<PermissionEntity>> PermissionListAsync(CancellationToken cancellation)
+    {
+        var permissions = await context.Permissions.ToListAsync(cancellation);
+        return permissions;
+    }
+
     public async Task<List<PermissionEntity>> UserPermissionListAsync(string email, CancellationToken cancellation)
     {
         var permissions = await context.Users
