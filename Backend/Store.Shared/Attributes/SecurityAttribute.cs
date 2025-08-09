@@ -38,7 +38,10 @@ namespace Store.Shared.Attributes
                 }
 
                 var Accesss = await userService.UserAccessListAsync(email, context.HttpContext.RequestAborted);
-                if (Accesss == null || !Accesss.Any(p => p.Name == "AAA"))
+                var controllerName = context.RouteData.Values["controller"]?.ToString();
+                var actionName = context.RouteData.Values["action"]?.ToString();
+                var hasAccess = !Accesss.Any(a => a.Name == actionName && a.ControllerName == controllerName);
+                if (Accesss == null || hasAccess)
                 {
                     // دسترسی لازم وجود ندارد
                     context.Result = new ForbidResult();

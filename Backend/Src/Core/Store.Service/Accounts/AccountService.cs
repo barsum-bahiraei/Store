@@ -97,6 +97,7 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         {
             Id = x.Id,
             Name = x.Name,
+            ControllerName = x.ControllerName,
         }).ToList();
         return Accesss;
     }
