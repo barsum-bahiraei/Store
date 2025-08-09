@@ -90,30 +90,30 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         return roles;
     }
 
-    public async Task<List<UserPermissionListOutput>> UserPermissionListAsync(string email, CancellationToken cancellation)
+    public async Task<List<UserAccessListOutput>> UserAccessListAsync(string email, CancellationToken cancellation)
     {
-        var permissionList = await userRepository.UserPermissionListAsync(email, cancellation);
-        var permissions = permissionList.Select(x => new UserPermissionListOutput
+        var AccessList = await userRepository.UserAccessListAsync(email, cancellation);
+        var Accesss = AccessList.Select(x => new UserAccessListOutput
         {
             Id = x.Id,
             Name = x.Name,
         }).ToList();
-        return permissions;
+        return Accesss;
     }
 
-    public async Task PermissionCreateAsync(PermissionCreateInput parameters, CancellationToken cancellation)
+    public async Task AccessCreateAsync(AccessCreateInput parameters, CancellationToken cancellation)
     {
-        var permission = new PermissionEntity
+        var Access = new AccessEntity
         {
             Name = parameters.Name,
         };
-        await userRepository.PermissionCreateAsync(permission, cancellation);
+        await userRepository.AccessCreateAsync(Access, cancellation);
     }
 
-    public async Task<List<PermissionListOutput>> PermissionListAsync(CancellationToken cancellation)
+    public async Task<List<AccessListOutput>> AccessListAsync(CancellationToken cancellation)
     {
-        var permissions = await userRepository.PermissionListAsync(cancellation);
-        var output = permissions.Select(x => new PermissionListOutput
+        var Accesss = await userRepository.AccessListAsync(cancellation);
+        var output = Accesss.Select(x => new AccessListOutput
         {
             Id = x.Id,
             Name = x.Name,
@@ -122,9 +122,9 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         return output;
     }
 
-    public async Task PermissionsAssignRoleAsync(PermissionsAssignRoleInput parameters, CancellationToken cancellation)
+    public async Task AccesssAssignRoleAsync(AccesssAssignRoleInput parameters, CancellationToken cancellation)
     {
-        await userRepository.PermissionsAssignRoleAsync(parameters.RoleId, parameters.PermissionIds, cancellation);
+        await userRepository.AccesssAssignRoleAsync(parameters.RoleId, parameters.AccessIds, cancellation);
     }
 
     public string GenerateToken(string email)

@@ -10,8 +10,8 @@ internal class RoleConfiguration : IEntityTypeConfiguration<RoleEntity>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name)
             .IsRequired();
-        builder.HasMany(x => x.Permissions)
+        builder.HasMany(x => x.Access)
             .WithMany(x => x.Roles)
-            .UsingEntity(x => x.ToTable("RolePermission"));
+            .UsingEntity(x => x.ToTable("RoleAccess"));
     }
 }

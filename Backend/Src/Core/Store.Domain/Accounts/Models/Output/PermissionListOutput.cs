@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Store.Domain.Accounts.Models.Output;
-public class PermissionListOutput
+public class AccessListOutput
 {
     public int Id { get; set; }
     public string Name { get; set; }

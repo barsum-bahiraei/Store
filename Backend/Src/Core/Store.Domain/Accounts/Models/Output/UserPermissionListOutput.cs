@@ -1,7 +1,7 @@
 ﻿
 
 namespace Store.Domain.Accounts.Models.Output;
-public class UserPermissionListOutput
+public class UserAccessListOutput
 {
     public int Id { get; set; }
     public string Name { get; set; }

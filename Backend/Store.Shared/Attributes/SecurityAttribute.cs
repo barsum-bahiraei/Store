@@ -8,12 +8,6 @@ namespace Store.Shared.Attributes
 {
     public class SecurityAttribute : Attribute, IAsyncAuthorizationFilter
     {
-        private readonly string permissionName;
-
-        public SecurityAttribute(string permissionName)
-        {
-            this.permissionName = permissionName;
-        }
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
@@ -43,8 +37,8 @@ namespace Store.Shared.Attributes
                     return;
                 }
 
-                var permissions = await userService.UserPermissionListAsync(email, context.HttpContext.RequestAborted);
-                if (permissions == null || !permissions.Any(p => p.Name == permissionName))
+                var Accesss = await userService.UserAccessListAsync(email, context.HttpContext.RequestAborted);
+                if (Accesss == null || !Accesss.Any(p => p.Name == "AAA"))
                 {
                     // دسترسی لازم وجود ندارد
                     context.Result = new ForbidResult();

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Store.Domain.Accounts.Models.Input;
-public class PermissionCreateInput
+public class AccessCreateInput
 {
     public string Name { get; set; }
 }

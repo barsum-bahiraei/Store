@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Store.Domain.Accounts;
-public class PermissionEntity : BaseEntity
+public class AccessEntity : BaseEntity
 {
     public string Name { get; set; }
-    public string? DisplayName { get; set; }
+    public string ControllerName { get; set; }
     public List<RoleEntity> Roles { get; set; }
 }

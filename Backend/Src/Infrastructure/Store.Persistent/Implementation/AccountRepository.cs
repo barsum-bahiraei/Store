@@ -34,25 +34,25 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return roles;
     }
 
-    public async Task PermissionCreateAsync(PermissionEntity parameters, CancellationToken cancellation)
+    public async Task AccessCreateAsync(AccessEntity parameters, CancellationToken cancellation)
     {
-        await context.Permissions.AddAsync(parameters, cancellation);
+        await context.Accesss.AddAsync(parameters, cancellation);
     }
 
-    public async Task<List<PermissionEntity>> PermissionListAsync(CancellationToken cancellation)
+    public async Task<List<AccessEntity>> AccessListAsync(CancellationToken cancellation)
     {
-        var permissions = await context.Permissions.ToListAsync(cancellation);
-        return permissions;
+        var Accesss = await context.Accesss.ToListAsync(cancellation);
+        return Accesss;
     }
 
-    public async Task<List<PermissionEntity>> UserPermissionListAsync(string email, CancellationToken cancellation)
+    public async Task<List<AccessEntity>> UserAccessListAsync(string email, CancellationToken cancellation)
     {
-        var permissions = await context.Users
+        var Accesss = await context.Users
             .Where(x => x.Email == email)
-            .SelectMany(x => x.Roles.SelectMany(z => z.Permissions))
+            .SelectMany(x => x.Roles.SelectMany(z => z.Access))
             .Distinct()
             .ToListAsync(cancellation);
-        return permissions;
+        return Accesss;
     }
 
     public async Task<RoleEntity> RoleCreateAsync(RoleEntity parameters, CancellationToken cancellation)
@@ -62,11 +62,11 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return parameters;
     }
 
-    public async Task PermissionsAssignRoleAsync(int roleId, List<int> parameters, CancellationToken cancellation)
+    public async Task AccesssAssignRoleAsync(int roleId, List<int> parameters, CancellationToken cancellation)
     {
-        var permissions = await context.Permissions.Where(x => parameters.Contains(x.Id)).ToListAsync();
-        var role = await context.Roles.Include(x => x.Permissions).FirstOrDefaultAsync(x => x.Id == roleId, cancellation);
-        role.Permissions.AddRange(permissions);
+        var Accesss = await context.Accesss.Where(x => parameters.Contains(x.Id)).ToListAsync();
+        var role = await context.Roles.Include(x => x.Access).FirstOrDefaultAsync(x => x.Id == roleId, cancellation);
+        role.Access.AddRange(Accesss);
         await context.SaveChangesAsync(cancellation);
     }
 }

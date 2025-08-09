@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Store.Domain.Accounts.Models.Input;
-public class PermissionsAssignRoleInput
+public class AccesssAssignRoleInput
 {
     public int RoleId { get; set; }
-    public List<int> PermissionIds { get; set; }
+    public List<int> AccessIds { get; set; }
 }
