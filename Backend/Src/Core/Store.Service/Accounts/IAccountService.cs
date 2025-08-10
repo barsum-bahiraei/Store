@@ -10,6 +10,7 @@ public interface IAccountService
     Task<UserDetailOutput> DetailAsync(string email, CancellationToken cancellation);
     Task<RoleCreateOutput> RoleCreateAsync(UserRoleCreateInput parameters, CancellationToken cancellation);
     Task<List<RoleListOutput>> RoleListAsync(CancellationToken cancellation);
+    Task<List<AccessListOutput>> UserRoleAccessListAsync(string email, CancellationToken cancellation);
     string GenerateToken(string email);
     string HashPassword(string password);
 }

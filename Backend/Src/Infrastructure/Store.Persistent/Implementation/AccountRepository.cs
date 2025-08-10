@@ -40,4 +40,13 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         await context.SaveChangesAsync(cancellation);
         return parameters;
     }
+
+    public Task<List<RoleAccessEntity>> UserRoleAccessListAsync(string email, CancellationToken cancellation)
+    {
+        var output = context.UserRoles
+            .Where(x => x.User.Email == email)
+            .SelectMany(x => x.Role.RoleAccess)
+            .ToListAsync(cancellation);
+        return output;
+    }
 }

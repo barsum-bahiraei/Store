@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Store.Domain.Accounts;
+﻿namespace Store.Domain.Accounts;
 public class RoleAccessEntity : BaseEntity
 {
     public string AccessName { get; set; }

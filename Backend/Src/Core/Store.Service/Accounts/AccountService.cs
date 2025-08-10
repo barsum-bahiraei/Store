@@ -117,4 +117,18 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         byte[] hash = sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
     }
+
+    public async Task<List<AccessListOutput>> UserRoleAccessListAsync(string email, CancellationToken cancellation)
+    {
+        var accessList = await userRepository.UserRoleAccessListAsync(email, cancellation);
+        var output = accessList
+            .Select(x => new AccessListOutput
+            {
+                Id = x.Id,
+                AccessName = x.AccessName,
+                ControllerName = x.ControllerName,
+            })
+            .ToList();
+        return output;
+    }
 }

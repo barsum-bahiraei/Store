@@ -37,16 +37,16 @@ namespace Store.Shared.Attributes
                     return;
                 }
 
-                //var Accesss = await userService.UserAccessListAsync(email, context.HttpContext.RequestAborted);
+                var accesss = await userService.UserRoleAccessListAsync(email, context.HttpContext.RequestAborted);
                 var controllerName = context.RouteData.Values["controller"]?.ToString();
                 var actionName = context.RouteData.Values["action"]?.ToString();
-                //var hasAccess = !Accesss.Any(a => a.Name == actionName && a.ControllerName == controllerName);
-                //if (Accesss == null || hasAccess)
-                //{
-                //    // دسترسی لازم وجود ندارد
-                //    context.Result = new ForbidResult();
-                //    return;
-                //}
+                var hasAccess = !accesss.Any(a => a.AccessName == actionName && a.ControllerName == controllerName);
+                if (accesss == null || hasAccess)
+                {
+                    // دسترسی لازم وجود ندارد
+                    context.Result = new ForbidResult();
+                    return;
+                }
             }
             catch (OperationCanceledException)
             {
