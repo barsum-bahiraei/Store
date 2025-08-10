@@ -7,17 +7,17 @@ namespace Store.Persistent.Implementation;
 
 public class AccountRepository(AppDbContext context) : IAccountRepository
 {
-    public async Task<UserEntity> CreateAsync(UserEntity parameters, CancellationToken cancellation)
+    public async Task<UserEntity> CreateAsync(UserEntity input, CancellationToken cancellation)
     {
-        await context.Users.AddAsync(parameters, cancellation);
+        await context.Users.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        return parameters;
+        return input;
     }
 
     public async Task<UserEntity> DetailAsync(string email, CancellationToken cancellation)
     {
-        var user = await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellation);
-        return user;
+        var output = await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellation);
+        return output;
     }
 
     public async Task<bool> HasUserAsync(string email, CancellationToken cancellation)
@@ -34,11 +34,11 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return roles;
     }
 
-    public async Task<RoleEntity> RoleCreateAsync(RoleEntity parameters, CancellationToken cancellation)
+    public async Task<RoleEntity> RoleCreateAsync(RoleEntity input, CancellationToken cancellation)
     {
-        await context.Roles.AddAsync(parameters, cancellation);
+        await context.Roles.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        return parameters;
+        return input;
     }
 
     public Task<List<RoleAccessEntity>> UserRoleAccessListAsync(string email, CancellationToken cancellation)
@@ -48,5 +48,23 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .SelectMany(x => x.Role.RoleAccess)
             .ToListAsync(cancellation);
         return output;
+    }
+
+    public Task<List<RoleEntity>> RoleAccessListAsync(CancellationToken cancellation)
+    {
+        var output = context.Roles.Include(x => x.RoleAccess).ToListAsync(cancellation);
+        return output;
+    }
+
+    public async Task AccessListAsignRoleAsync(List<RoleAccessEntity> input, CancellationToken cancellation)
+    {
+        await context.RoleAccess.AddRangeAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+    }
+
+    public async Task RoleAssignUserAsync(UserRoleEntity input, CancellationToken cancellation)
+    {
+        await context.UserRoles.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
     }
 }

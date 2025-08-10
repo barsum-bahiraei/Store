@@ -10,7 +10,7 @@ namespace Store.Service.Products;
 public interface IProductService
 {
     Task DetailAsync(int id, CancellationToken cancellation);
-    Task<List<ProductListOutput>> ListAsync(ProductListInput parameters, CancellationToken cancellation);
+    Task<List<ProductListOutput>> ListAsync(ProductListInput input, CancellationToken cancellation);
     Task CreateAsync(CancellationToken cancellation);
     Task UpdateAsync(CancellationToken cancellation);
     Task DeleteAsync(CancellationToken cancellation);

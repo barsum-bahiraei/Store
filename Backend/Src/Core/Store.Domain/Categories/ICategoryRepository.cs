@@ -6,7 +6,7 @@ namespace Store.Domain.Categories;
 public interface ICategoryRepository
 {
     Task DetailAsync(int id, CancellationToken cancellation);
-    Task<List<CategoryListOutput>> ListAsync(CategoryListInput parameters,CancellationToken cancellation);
+    Task<List<CategoryListOutput>> ListAsync(CategoryListInput input,CancellationToken cancellation);
     Task CreateAsync(CancellationToken cancellation);
     Task UpdateAsync(CancellationToken cancellation);
     Task DeleteAsync(CancellationToken cancellation);

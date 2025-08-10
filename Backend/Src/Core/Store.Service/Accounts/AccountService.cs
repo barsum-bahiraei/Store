@@ -12,35 +12,35 @@ namespace Store.Service.Accounts;
 
 public class UserService(IAccountRepository userRepository, IConfiguration configuration) : IAccountService
 {
-    public async Task<LoginOutput> LoginAsync(UserLoginInput parameters, CancellationToken cancellation)
+    public async Task<LoginOutput> LoginAsync(UserLoginInput input, CancellationToken cancellation)
     {
-        var user = await userRepository.DetailAsync(parameters.Email, cancellation);
+        var user = await userRepository.DetailAsync(input.Email, cancellation);
         var token = GenerateToken(user.Email);
-        var userLogin = new LoginOutput
+        var output = new LoginOutput
         {
             Name = user.Name,
             Family = user.Family,
             Email = user.Email,
             Token = token,
         };
-        return userLogin;
+        return output;
     }
 
-    public async Task<string> CreateAsync(UserCreateInput parameters, CancellationToken cancellation)
+    public async Task<string> CreateAsync(UserCreateInput input, CancellationToken cancellation)
     {
-        var hasUser = await userRepository.HasUserAsync(parameters.Email, cancellation);
+        var hasUser = await userRepository.HasUserAsync(input.Email, cancellation);
         if (!hasUser)
         {
-            var role = await userRepository.RoleListAsync(cancellation);
+            var roles = await userRepository.RoleListAsync(cancellation);
             var user = new UserEntity
             {
-                Email = parameters.Email,
-                Name = parameters.Name,
-                Family = parameters.Family,
-                Password = HashPassword(parameters.Password),
+                Email = input.Email,
+                Name = input.Name,
+                Family = input.Family,
+                Password = HashPassword(input.Password),
             };
             await userRepository.CreateAsync(user, cancellation);
-            var token = GenerateToken(parameters.Email);
+            var token = GenerateToken(input.Email);
             return token;
         }
 
@@ -58,12 +58,12 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
         };
         return userDetail;
     }
-    public async Task<RoleCreateOutput> RoleCreateAsync(UserRoleCreateInput parameters, CancellationToken cancellation)
+    public async Task<RoleCreateOutput> RoleCreateAsync(UserRoleCreateInput input, CancellationToken cancellation)
     {
 
         var roleEntity = new RoleEntity
         {
-            Name = parameters.Name,
+            Name = input.Name,
         };
 
         var createdRole = await userRepository.RoleCreateAsync(roleEntity, cancellation);
@@ -130,5 +130,28 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
             })
             .ToList();
         return output;
+    }
+
+    public async Task AccessListAsignRoleAsync(AccessListAssignRoleInput input, CancellationToken cancellation)
+    {
+        var roleAccessList = input.AccessList
+            .Select(x => new RoleAccessEntity
+            {
+                RoleId = input.RoleId,
+                AccessName = x.AccessName,
+                ControllerName = x.ControllerName,
+            })
+            .ToList();
+        await userRepository.AccessListAsignRoleAsync(roleAccessList, cancellation);
+    }
+
+    public async Task RoleAssignUserAsync(RoleAssignUserInput input, CancellationToken cancellation)
+    {
+        var userRole = new UserRoleEntity
+        {
+            UserId = input.UserId,
+            RoleId = input.RoleId,
+        };
+        await userRepository.RoleAssignUserAsync(userRole, cancellation);
     }
 }

@@ -12,7 +12,7 @@ public class ProductRepository(AppDbContext context) : IProductRepository
         await context.Products.FindAsync(id, cancellation);
     }
 
-    public async Task<List<ProductListOutput>> ListAsync(ProductListInput parameters, CancellationToken cancellation)
+    public async Task<List<ProductListOutput>> ListAsync(ProductListInput input, CancellationToken cancellation)
     {
         var products = await context.Products
             .OrderBy(x => x.Id)

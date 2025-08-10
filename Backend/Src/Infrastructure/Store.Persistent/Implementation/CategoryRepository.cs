@@ -13,7 +13,7 @@ public class CategoryRepository(AppDbContext context) : ICategoryRepository
         throw new NotImplementedException();
     }
 
-    public async Task<List<CategoryListOutput>> ListAsync(CategoryListInput parameters, CancellationToken cancellation)
+    public async Task<List<CategoryListOutput>> ListAsync(CategoryListInput input, CancellationToken cancellation)
     {
         var categories = await context.Categories
             .OrderBy(x => x.Id)

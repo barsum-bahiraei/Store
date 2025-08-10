@@ -11,9 +11,9 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
         throw new NotImplementedException();
     }
 
-    public async Task<List<CategoryListOutput>> ListAsync(CategoryListInput parameters, CancellationToken cancellation)
+    public async Task<List<CategoryListOutput>> ListAsync(CategoryListInput input, CancellationToken cancellation)
     {
-        var categories = await categoryRepository.ListAsync(parameters, cancellation);
+        var categories = await categoryRepository.ListAsync(input, cancellation);
         return categories;
     }
 

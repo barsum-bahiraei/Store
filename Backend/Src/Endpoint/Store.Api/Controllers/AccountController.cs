@@ -12,16 +12,16 @@ namespace Store.Api.Controllers;
 public class AccountController(IAccountService userService) : Controller
 {
     [HttpPost("Login")]
-    public async Task<ActionResult<LoginOutput>> Login(UserLoginInput parameters, CancellationToken cancellation = default)
+    public async Task<ActionResult<LoginOutput>> Login(UserLoginInput input, CancellationToken cancellation = default)
     {
-        var user = await userService.LoginAsync(parameters, cancellation);
+        var user = await userService.LoginAsync(input, cancellation);
         return Ok(user);
     }
 
     [HttpPost("Register")]
-    public async Task<ActionResult<string>> Register(UserCreateInput parameters, CancellationToken cancellation = default)
+    public async Task<ActionResult<string>> Register(UserCreateInput input, CancellationToken cancellation = default)
     {
-        var token = await userService.CreateAsync(parameters, cancellation);
+        var token = await userService.CreateAsync(input, cancellation);
         return Ok(token);
     }
 
@@ -44,9 +44,25 @@ public class AccountController(IAccountService userService) : Controller
 
     [Security]
     [HttpPost("RoleCreate")]
-    public async Task<ActionResult<RoleCreateOutput>> RoleCreate(UserRoleCreateInput parameters, CancellationToken cancellation = default)
+    public async Task<ActionResult<RoleCreateOutput>> RoleCreate(UserRoleCreateInput input, CancellationToken cancellation = default)
     {
-        var role = await userService.RoleCreateAsync(parameters, cancellation);
+        var role = await userService.RoleCreateAsync(input, cancellation);
         return Ok(role);
+    }
+
+    [Security]
+    [HttpPost("AccessListAsignRole")]
+    public async Task<ActionResult> AccessListAsignRole(AccessListAssignRoleInput input, CancellationToken cancellation = default)
+    {
+        await userService.AccessListAsignRoleAsync(input, cancellation);
+        return Ok();
+    }
+
+    [Security]
+    [HttpPost("RoleAssignUser")]
+    public async Task<ActionResult> RoleAssignUser(RoleAssignUserInput input, CancellationToken cancellation = default)
+    {
+        await userService.RoleAssignUserAsync(input, cancellation);
+        return Ok();
     }
 }

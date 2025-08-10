@@ -25,9 +25,9 @@ public class ProductService(IProductRepository productRepository) : IProductServ
         throw new NotImplementedException();
     }
 
-    public async Task<List<ProductListOutput>> ListAsync(ProductListInput parameters, CancellationToken cancellation)
+    public async Task<List<ProductListOutput>> ListAsync(ProductListInput input, CancellationToken cancellation)
     {
-        var products = await productRepository.ListAsync(parameters, cancellation);
+        var products = await productRepository.ListAsync(input, cancellation);
         return products;
     }
 

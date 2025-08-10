@@ -9,9 +9,9 @@ namespace Store.Api.Controllers;
 public class ProductController(IProductService productService) : ControllerBase
 {
     [HttpPost("List")]
-    public async Task<ActionResult<List<ProductListOutput>>> ListAsync(ProductListInput parameters, CancellationToken cancellation)
+    public async Task<ActionResult<List<ProductListOutput>>> ListAsync(ProductListInput input, CancellationToken cancellation)
     {
-        var products = await productService.ListAsync(parameters, cancellation);
+        var products = await productService.ListAsync(input, cancellation);
         return Ok(products);
     }
 }

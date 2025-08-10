@@ -10,9 +10,9 @@ namespace Store.Api.Controllers;
 public class CategoryController(ICategoryService categoryService) : Controller
 {
     [HttpPost("List")]
-    public async Task<ActionResult<List<CategoryListOutput>>> ListAsync(CategoryListInput parameters, CancellationToken cancellation)
+    public async Task<ActionResult<List<CategoryListOutput>>> ListAsync(CategoryListInput input, CancellationToken cancellation)
     {
-        var categories = await categoryService.ListAsync(parameters, cancellation);
+        var categories = await categoryService.ListAsync(input, cancellation);
         return Ok(categories);
     }
 }
