@@ -67,6 +67,7 @@ public class AccountController(IAccountService userService) : Controller
         return Ok();
     }
 
+    [Security]
     [HttpGet("ControllerActionList")]
     public ActionResult ControllerActionList()
     {
