@@ -13,10 +13,10 @@ public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
         builder.Property(x => x.Name).IsRequired();
         builder.Property(x => x.Family).IsRequired();
         builder.Property(x => x.Email).IsRequired();
+        builder.HasIndex(x => x.Email).IsUnique();
         builder.Property(x => x.Password).IsRequired();
-        builder.Property(x => x.Email).IsRequired();
-        builder.HasMany(x => x.Roles)
-            .WithMany(x => x.Users)
-            .UsingEntity(x => x.ToTable("UserRole"));
+        builder.HasMany(x => x.UserRoles)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.UserId);
     }
 }

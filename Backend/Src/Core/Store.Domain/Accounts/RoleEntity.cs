@@ -2,6 +2,6 @@
 public class RoleEntity : BaseEntity
 {
     public string Name { get; set; }
-    public List<AccessEntity> Access { get; set; }
-    public List<UserEntity> Users { get; set; }
+    public List<UserRoleEntity> UserRoles { get; set; }
+    public List<RoleAccessEntity> RoleAccess { get; set; }
 }
