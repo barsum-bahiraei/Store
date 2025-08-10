@@ -12,7 +12,7 @@ using Store.Persistent.Database.Sql;
 namespace Store.Persistent.Database.Sql.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250809164955_init")]
+    [Migration("20250810174142_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -25,43 +25,17 @@ namespace Store.Persistent.Database.Sql.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("AccessEntityRoleEntity", b =>
-                {
-                    b.Property<int>("AccessId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RolesId")
-                        .HasColumnType("int");
-
-                    b.HasKey("AccessId", "RolesId");
-
-                    b.HasIndex("RolesId");
-
-                    b.ToTable("RoleAccess", (string)null);
-                });
-
-            modelBuilder.Entity("RoleEntityUserEntity", b =>
-                {
-                    b.Property<int>("RolesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("RolesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("UserRole", (string)null);
-                });
-
-            modelBuilder.Entity("Store.Domain.Accounts.AccessEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ControllerName")
                         .IsRequired()
@@ -73,16 +47,17 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Accesss");
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("RoleAccesses", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleEntity", b =>
@@ -108,7 +83,7 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
@@ -124,7 +99,7 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Family")
                         .IsRequired()
@@ -146,7 +121,42 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Accounts.UserRoleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
@@ -218,34 +228,34 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
-            modelBuilder.Entity("AccessEntityRoleEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
                 {
-                    b.HasOne("Store.Domain.Accounts.AccessEntity", null)
-                        .WithMany()
-                        .HasForeignKey("AccessId")
+                    b.HasOne("Store.Domain.Accounts.RoleEntity", "Role")
+                        .WithMany("RoleAccess")
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Store.Domain.Accounts.RoleEntity", null)
-                        .WithMany()
-                        .HasForeignKey("RolesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("RoleEntityUserEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.UserRoleEntity", b =>
                 {
-                    b.HasOne("Store.Domain.Accounts.RoleEntity", null)
-                        .WithMany()
-                        .HasForeignKey("RolesId")
+                    b.HasOne("Store.Domain.Accounts.RoleEntity", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Store.Domain.Accounts.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
@@ -267,6 +277,18 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Store.Domain.Accounts.RoleEntity", b =>
+                {
+                    b.Navigation("RoleAccess");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>

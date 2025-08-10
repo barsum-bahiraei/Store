@@ -38,7 +38,6 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
                 Name = parameters.Name,
                 Family = parameters.Family,
                 Password = HashPassword(parameters.Password),
-                Roles = new List<RoleEntity> { role.FirstOrDefault() }
             };
             await userRepository.CreateAsync(user, cancellation);
             var token = GenerateToken(parameters.Email);
@@ -88,44 +87,6 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
             Name = x.Name,
         }).ToList();
         return roles;
-    }
-
-    public async Task<List<UserAccessListOutput>> UserAccessListAsync(string email, CancellationToken cancellation)
-    {
-        var AccessList = await userRepository.UserAccessListAsync(email, cancellation);
-        var Accesss = AccessList.Select(x => new UserAccessListOutput
-        {
-            Id = x.Id,
-            Name = x.Name,
-            ControllerName = x.ControllerName,
-        }).ToList();
-        return Accesss;
-    }
-
-    public async Task AccessCreateAsync(AccessCreateInput parameters, CancellationToken cancellation)
-    {
-        var Access = new AccessEntity
-        {
-            Name = parameters.Name,
-        };
-        await userRepository.AccessCreateAsync(Access, cancellation);
-    }
-
-    public async Task<List<AccessListOutput>> AccessListAsync(CancellationToken cancellation)
-    {
-        var Accesss = await userRepository.AccessListAsync(cancellation);
-        var output = Accesss.Select(x => new AccessListOutput
-        {
-            Id = x.Id,
-            Name = x.Name,
-            ControllerName = x.ControllerName,
-        }).ToList();
-        return output;
-    }
-
-    public async Task AccesssAssignRoleAsync(AccesssAssignRoleInput parameters, CancellationToken cancellation)
-    {
-        await userRepository.AccesssAssignRoleAsync(parameters.RoleId, parameters.AccessIds, cancellation);
     }
 
     public string GenerateToken(string email)

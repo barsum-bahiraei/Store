@@ -49,12 +49,4 @@ public class AccountController(IAccountService userService) : Controller
         var role = await userService.RoleCreateAsync(parameters, cancellation);
         return Ok(role);
     }
-
-    [Security]
-    [HttpPost("AccesssAssignRole")]
-    public async Task<ActionResult> AccesssAssignRole(AccesssAssignRoleInput parameters, CancellationToken cancellation = default)
-    {
-        await userService.AccesssAssignRoleAsync(parameters, cancellation);
-        return Ok();
-    }
 }

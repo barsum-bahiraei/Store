@@ -34,39 +34,10 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return roles;
     }
 
-    public async Task AccessCreateAsync(AccessEntity parameters, CancellationToken cancellation)
-    {
-        await context.Accesss.AddAsync(parameters, cancellation);
-    }
-
-    public async Task<List<AccessEntity>> AccessListAsync(CancellationToken cancellation)
-    {
-        var Accesss = await context.Accesss.ToListAsync(cancellation);
-        return Accesss;
-    }
-
-    public async Task<List<AccessEntity>> UserAccessListAsync(string email, CancellationToken cancellation)
-    {
-        var Accesss = await context.Users
-            .Where(x => x.Email == email)
-            .SelectMany(x => x.Roles.SelectMany(z => z.Access))
-            .Distinct()
-            .ToListAsync(cancellation);
-        return Accesss;
-    }
-
     public async Task<RoleEntity> RoleCreateAsync(RoleEntity parameters, CancellationToken cancellation)
     {
         await context.Roles.AddAsync(parameters, cancellation);
         await context.SaveChangesAsync(cancellation);
         return parameters;
-    }
-
-    public async Task AccesssAssignRoleAsync(int roleId, List<int> parameters, CancellationToken cancellation)
-    {
-        var Accesss = await context.Accesss.Where(x => parameters.Contains(x.Id)).ToListAsync();
-        var role = await context.Roles.Include(x => x.Access).FirstOrDefaultAsync(x => x.Id == roleId, cancellation);
-        role.Access.AddRange(Accesss);
-        await context.SaveChangesAsync(cancellation);
     }
 }

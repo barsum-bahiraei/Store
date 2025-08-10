@@ -7,8 +7,4 @@ public interface IAccountRepository
     Task<bool> HasUserAsync(string email, CancellationToken cancellation);
     Task<RoleEntity> RoleCreateAsync(RoleEntity parameters, CancellationToken cancellation);
     Task<List<RoleEntity>> RoleListAsync(CancellationToken cancellation);
-    Task AccessCreateAsync(AccessEntity parameters, CancellationToken cancellation);
-    Task<List<AccessEntity>> AccessListAsync(CancellationToken cancellation);
-    Task<List<AccessEntity>> UserAccessListAsync(string email, CancellationToken cancellation);
-    Task AccesssAssignRoleAsync(int RoleId, List<int> parameters, CancellationToken cancellation);
 }

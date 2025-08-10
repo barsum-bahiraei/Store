@@ -1,5 +1,5 @@
 ﻿namespace Store.Domain.Accounts;
-public class UserRoleEntity
+public class UserRoleEntity : BaseEntity
 {
     public int UserId { get; set; }
     public UserEntity User { get; set; }

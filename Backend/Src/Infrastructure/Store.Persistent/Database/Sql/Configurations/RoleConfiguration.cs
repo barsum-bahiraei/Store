@@ -3,10 +3,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Store.Domain.Accounts;
 
 namespace Store.Persistent.Database.Sql.Configurations;
-internal class RoleConfiguration : IEntityTypeConfiguration<RoleEntity>
+public class RoleConfiguration : IEntityTypeConfiguration<RoleEntity>
 {
     public void Configure(EntityTypeBuilder<RoleEntity> builder)
     {
+        builder.ToTable("Roles");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name)
             .IsRequired();
