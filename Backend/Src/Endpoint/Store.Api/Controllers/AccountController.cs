@@ -4,6 +4,7 @@ using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
 using Store.Service.Accounts;
 using Store.Shared.Attributes;
+using Store.Shared.Helpers;
 
 namespace Store.Api.Controllers;
 
@@ -64,5 +65,12 @@ public class AccountController(IAccountService userService) : Controller
     {
         await userService.RoleAssignUserAsync(input, cancellation);
         return Ok();
+    }
+
+    [HttpGet("ControllerActionList")]
+    public ActionResult ControllerActionList()
+    {
+        var output = ControllerHelper.GetControllerActionList();
+        return Ok(output);
     }
 }
