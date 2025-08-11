@@ -125,7 +125,7 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
             .Select(x => new AccessListOutput
             {
                 Id = x.Id,
-                AccessName = x.AccessName,
+                ActionName = x.ActionName,
                 ControllerName = x.ControllerName,
             })
             .ToList();
@@ -134,11 +134,11 @@ public class UserService(IAccountRepository userRepository, IConfiguration confi
 
     public async Task AccessListAsignRoleAsync(AccessListAssignRoleInput input, CancellationToken cancellation)
     {
-        var roleAccessList = input.AccessList
+        var roleAccessList = input.ActionList
             .Select(x => new RoleAccessEntity
             {
                 RoleId = input.RoleId,
-                AccessName = x.AccessName,
+                ActionName = x.ActionName,
                 ControllerName = x.ControllerName,
             })
             .ToList();

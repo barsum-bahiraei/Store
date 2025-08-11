@@ -37,10 +37,10 @@ namespace Store.Shared.Attributes
                     return;
                 }
 
-                var accesss = await userService.UserRoleAccessListAsync(email, context.HttpContext.RequestAborted);
+                var access = await userService.UserRoleAccessListAsync(email, context.HttpContext.RequestAborted);
                 var controllerName = context.RouteData.Values["controller"]?.ToString();
                 var actionName = context.RouteData.Values["action"]?.ToString();
-                if (accesss == null || !accesss.Any(a => a.AccessName == actionName && a.ControllerName == controllerName))
+                if (access == null || !access.Any(a => a.ActionName == actionName && a.ControllerName == controllerName))
                 {
                     // دسترسی لازم وجود ندارد
                     context.Result = new ForbidResult();

@@ -8,6 +8,6 @@ namespace Store.Domain.Accounts.Models.Output;
 public class AccessListOutput
 {
     public int Id { get; set; }
-    public string AccessName { get; set; }
+    public string ActionName { get; set; }
     public string? ControllerName { get; set; }
 }
