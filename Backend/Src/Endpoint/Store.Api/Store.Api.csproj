@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\..\Store.Shared\Store.Shared.csproj" />
     <ProjectReference Include="..\..\Core\Store.Domain\Store.Domain.csproj" />
     <ProjectReference Include="..\..\Core\Store.Service\Store.Service.csproj" />
+    <ProjectReference Include="..\..\Core\Store.Shared\Store.Shared.csproj" />
     <ProjectReference Include="..\..\Infrastructure\ExternalAdapter\ExternalAdapter.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Store.Persistent\Store.Persistent.csproj" />
   </ItemGroup>
