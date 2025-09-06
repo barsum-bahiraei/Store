@@ -11,11 +11,15 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<ProductEntity> Products { get; set; }
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<RoleEntity> Roles { get; set; }
     public DbSet<UserRoleEntity> UserRoles { get; set; }
     public DbSet<RoleAccessEntity> RoleAccess { get; set; }
+    public DbSet<ProductEntity> Products { get; set; }
+    public DbSet<ProductAttributeEntity> ProductAttributes { get; set; }
+    public DbSet<ProductColorEntity> ProductColors { get; set; }
+    public DbSet<ProductCommentEntity> ProductComments { get; set; }
+    public DbSet<ProductImageEntity> ProductImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

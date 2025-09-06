@@ -156,7 +156,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("UserRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -174,7 +174,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ParentId")
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -182,9 +182,78 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("ProductId");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("ProductAttributes", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductColorEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HexCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductColors", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductComments", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
@@ -194,9 +263,6 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -220,9 +286,41 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductImageEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
@@ -255,25 +353,48 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
-                    b.HasOne("Store.Domain.Categories.CategoryEntity", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
-                {
-                    b.HasOne("Store.Domain.Categories.CategoryEntity", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("ProductAttributes")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Category");
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductColorEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("ProductColors")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("ProductComments")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductImageEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("ProductImages")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleEntity", b =>
@@ -288,11 +409,15 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
-                    b.Navigation("Children");
+                    b.Navigation("ProductAttributes");
 
-                    b.Navigation("Products");
+                    b.Navigation("ProductColors");
+
+                    b.Navigation("ProductComments");
+
+                    b.Navigation("ProductImages");
                 });
 #pragma warning restore 612, 618
         }
