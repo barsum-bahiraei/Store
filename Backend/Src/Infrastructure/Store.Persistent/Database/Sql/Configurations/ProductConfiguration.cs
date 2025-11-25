@@ -13,6 +13,7 @@ internal class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
         builder.Property(x => x.Name).IsRequired();
         builder.Property(x => x.Description).IsRequired();
         builder.Property(x => x.Price).IsRequired();
+        builder.Property(x => x.DiscountPrice).IsRequired();
         builder
             .HasMany(x => x.ProductAttributes)
             .WithOne(x => x.Product)

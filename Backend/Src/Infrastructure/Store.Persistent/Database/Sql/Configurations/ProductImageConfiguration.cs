@@ -9,7 +9,9 @@ public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImageEn
     public void Configure(EntityTypeBuilder<ProductImageEntity> builder)
     {
         builder.ToTable("ProductImages");
-        builder.Property(x => x.Url).IsRequired();
+        builder.Property(x=>x.Name).IsRequired();
+        builder.Property(x => x.ImageUrl).IsRequired();
+        builder.Property(x=>x.IsMain).IsRequired();
         builder
             .HasOne(x => x.Product)
             .WithMany(x => x.ProductImages)

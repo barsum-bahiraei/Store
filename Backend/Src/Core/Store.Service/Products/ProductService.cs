@@ -8,11 +8,27 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Store.Service.Products;
+
 public class ProductService(IProductRepository productRepository) : IProductService
 {
-    public Task CreateAsync(CancellationToken cancellation)
+    public async Task<ProductCreateOutput> CreateAsync(ProductCreateInput input, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        var productEntity = new ProductEntity
+        {
+            Name = input.Name,
+            Description = input.Description,
+            Price = input.Price,
+        };
+        var product = await productRepository.CreateAsync(productEntity, cancellation);
+        var result = new ProductCreateOutput
+        {
+            Name = product.Name,
+            Price = product.Price,
+            DiscountPrice = product.DiscountPrice,
+            Id = product.Id,
+            Description = product.Description,
+        };
+        return result;
     }
 
     public Task DeleteAsync(CancellationToken cancellation)

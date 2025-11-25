@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Store.Persistent.Database.Sql;
 
 namespace Store.Persistent.Implementation;
+
 public class ProductRepository(AppDbContext context) : IProductRepository
 {
     public async Task DetailAsync(int id, CancellationToken cancellation)
@@ -29,9 +30,11 @@ public class ProductRepository(AppDbContext context) : IProductRepository
         return products;
     }
 
-    public Task CreateAsync(CancellationToken cancellation)
+    public async Task<ProductEntity> CreateAsync(ProductEntity input, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        await context.Products.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return input;
     }
 
     public Task UpdateAsync(CancellationToken cancellation)
@@ -43,6 +46,4 @@ public class ProductRepository(AppDbContext context) : IProductRepository
     {
         throw new NotImplementedException();
     }
-
-
 }
