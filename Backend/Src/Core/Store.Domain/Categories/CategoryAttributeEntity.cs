@@ -5,13 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Store.Domain.Products;
+namespace Store.Domain.Categories;
 
-public class ProductAttributeEntity : BaseEntity
+public class CategoryAttributeEntity : BaseEntity
 {
-    public string Value { get; set; }
-    public int ProductId { get; set; }
-    public ProductEntity Product { get; set; }
+    public int CategoryId { get; set; }
+    public CategoryEntity Category { get; set; }
     public int AttributeId { get; set; }
     public AttributeEntity Attribute { get; set; }
 }

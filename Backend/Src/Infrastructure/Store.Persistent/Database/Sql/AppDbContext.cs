@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Store.Domain;
 using Store.Domain.Accounts;
+using Store.Domain.Categories;
+using Store.Domain.Attributes;
 
 namespace Store.Persistent.Database.Sql;
 
@@ -16,10 +18,13 @@ public class AppDbContext : DbContext
     public DbSet<UserRoleEntity> UserRoles { get; set; }
     public DbSet<RoleAccessEntity> RoleAccess { get; set; }
     public DbSet<ProductEntity> Products { get; set; }
-    public DbSet<ProductAttributeEntity> ProductAttributes { get; set; }
     public DbSet<ProductColorEntity> ProductColors { get; set; }
     public DbSet<ProductCommentEntity> ProductComments { get; set; }
     public DbSet<ProductImageEntity> ProductImages { get; set; }
+    public DbSet<ProductAttributeEntity> ProductAttributes { get; set; }
+    public DbSet<CategoryEntity> Categories { get; set; }
+    public DbSet<AttributeEntity> Attributes { get; set; }
+    public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

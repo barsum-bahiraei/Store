@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Store.Domain.Products;
+using Store.Domain.Categories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,20 +9,21 @@ using System.Threading.Tasks;
 
 namespace Store.Persistent.Database.Sql.Configurations;
 
-public class ProductAttributeConfiguration : IEntityTypeConfiguration<ProductAttributeEntity>
+public class CategoryAttributeConfiguration : IEntityTypeConfiguration<CategoryAttributeEntity>
 {
-    public void Configure(EntityTypeBuilder<ProductAttributeEntity> builder)
+    public void Configure(EntityTypeBuilder<CategoryAttributeEntity> builder)
     {
-        builder.ToTable("ProductAttributes");
-        builder.Property(x => x.Value).IsRequired();
+        builder.ToTable("CategoryAttribute");
+
         builder
-            .HasOne(x => x.Product)
-            .WithMany(x => x.ProductAttributes)
-            .HasForeignKey(x => x.ProductId)
+            .HasOne(x => x.Category)
+            .WithMany(x => x.CategoryAttributes)
+            .HasForeignKey(x => x.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
         builder
             .HasOne(x => x.Attribute)
-            .WithMany(x => x.ProductAttributes)
+            .WithMany(x => x.CategoryAttributes)
             .HasForeignKey(x => x.AttributeId)
             .OnDelete(DeleteBehavior.Restrict);
     }

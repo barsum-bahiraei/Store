@@ -15,10 +15,6 @@ internal class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
         builder.Property(x => x.Price).IsRequired();
         builder.Property(x => x.DiscountPrice).IsRequired();
         builder
-            .HasMany(x => x.ProductAttributes)
-            .WithOne(x => x.Product)
-            .HasForeignKey(x => x.ProductId);
-        builder
             .HasMany(x => x.ProductColors)
             .WithOne(x => x.Product)
             .HasForeignKey(x => x.ProductId);
@@ -28,6 +24,10 @@ internal class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
             .HasForeignKey(x => x.ProductId);
         builder
             .HasMany(x => x.ProductImages)
+            .WithOne(x => x.Product)
+            .HasForeignKey(x => x.ProductId);
+        builder
+            .HasMany(x => x.ProductAttributes)
             .WithOne(x => x.Product)
             .HasForeignKey(x => x.ProductId);
     }
