@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Store.Domain.Products;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,4 +14,5 @@ public class CategoryEntity : BaseEntity
     public CategoryEntity? Parent { get; set; }
     public List<CategoryEntity> Categories { get; set; }
     public List<CategoryAttributeEntity> CategoryAttributes { get; set; }
+    public List<ProductEntity> Products { get; set; }
 }

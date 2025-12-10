@@ -14,21 +14,18 @@ internal class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
         builder.Property(x => x.Description).IsRequired();
         builder.Property(x => x.Price).IsRequired();
         builder.Property(x => x.DiscountPrice).IsRequired();
+        //builder
+        //    .HasMany(x => x.ProductComments)
+        //    .WithOne(x => x.Product)
+        //    .HasForeignKey(x => x.ProductId);
+        //builder
+        //    .HasMany(x => x.ProductImages)
+        //    .WithOne(x => x.Product)
+        //    .HasForeignKey(x => x.ProductId);
         builder
-            .HasMany(x => x.ProductColors)
-            .WithOne(x => x.Product)
-            .HasForeignKey(x => x.ProductId);
-        builder
-            .HasMany(x => x.ProductComments)
-            .WithOne(x => x.Product)
-            .HasForeignKey(x => x.ProductId);
-        builder
-            .HasMany(x => x.ProductImages)
-            .WithOne(x => x.Product)
-            .HasForeignKey(x => x.ProductId);
-        builder
-            .HasMany(x => x.ProductAttributes)
-            .WithOne(x => x.Product)
-            .HasForeignKey(x => x.ProductId);
+            .HasOne(x => x.Category)
+            .WithMany(x => x.Products)
+            .HasForeignKey(x => x.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

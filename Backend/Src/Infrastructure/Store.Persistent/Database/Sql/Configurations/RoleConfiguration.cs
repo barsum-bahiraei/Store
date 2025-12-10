@@ -11,11 +11,11 @@ public class RoleConfiguration : IEntityTypeConfiguration<RoleEntity>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name)
             .IsRequired();
-        builder.HasMany(x => x.UserRoles)
-            .WithOne(x => x.Role)
-            .HasForeignKey(x => x.RoleId);
-        builder.HasMany(x => x.RoleAccess)
-            .WithOne(x => x.Role)
-            .HasForeignKey(x => x.RoleId);
+        //builder.HasMany(x => x.UserRoles)
+        //    .WithOne(x => x.Role)
+        //    .HasForeignKey(x => x.RoleId);
+        //builder.HasMany(x => x.RoleAccess)
+        //    .WithOne(x => x.Role)
+        //    .HasForeignKey(x => x.RoleId);
     }
 }

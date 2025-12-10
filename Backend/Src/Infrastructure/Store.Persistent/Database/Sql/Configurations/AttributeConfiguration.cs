@@ -19,13 +19,13 @@ public class AttributeConfiguration : IEntityTypeConfiguration<AttributeEntity>
         builder.Property(x => x.Type)
             .IsRequired();
         builder.Property(x => x.Unit);
-        builder
-            .HasMany(x => x.CategoryAttributes)
-            .WithOne(x => x.Attribute)
-            .HasForeignKey(x => x.Attribute);
-        builder
-            .HasMany(x => x.ProductAttributes)
-            .WithOne(x => x.Attribute)
-            .HasForeignKey(x => x.AttributeId);
+        //builder
+        //    .HasMany(x => x.CategoryAttributes)
+        //    .WithOne(x => x.Attribute)
+        //    .HasForeignKey(x => x.Attribute);
+        //builder
+        //    .HasMany(x => x.ProductAttributes)
+        //    .WithOne(x => x.Attribute)
+        //    .HasForeignKey(x => x.AttributeId);
     }
 }
