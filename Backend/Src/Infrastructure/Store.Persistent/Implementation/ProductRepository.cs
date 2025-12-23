@@ -8,26 +8,14 @@ namespace Store.Persistent.Implementation;
 
 public class ProductRepository(AppDbContext context) : IProductRepository
 {
-    public async Task DetailAsync(int id, CancellationToken cancellation)
+    public Task<List<ProductEntity>> ListAsync(ProductListInput input, CancellationToken cancellation)
     {
-        await context.Products.FindAsync(id, cancellation);
+        throw new NotImplementedException();
     }
 
-    public async Task<List<ProductListOutput>> ListAsync(ProductListInput input, CancellationToken cancellation)
+    public Task DetailAsync(int productId, CancellationToken cancellation)
     {
-        var products = await context.Products
-            .OrderBy(x => x.Id)
-            .Select(x => new ProductListOutput
-            {
-                Id = x.Id,
-                Name = x.Name,
-                Price = x.Price,
-                Description = x.Description,
-                CreatedAt = x.CreatedAt,
-                UpdatedAt = x.UpdatedAt,
-            })
-            .ToListAsync(cancellation);
-        return products;
+        throw new NotImplementedException();
     }
 
     public async Task<ProductEntity> CreateAsync(ProductEntity input, CancellationToken cancellation)
@@ -37,12 +25,12 @@ public class ProductRepository(AppDbContext context) : IProductRepository
         return input;
     }
 
-    public Task UpdateAsync(CancellationToken cancellation)
+    public Task<ProductEntity> UpdateAsync(ProductEntity input, CancellationToken cancellation)
     {
         throw new NotImplementedException();
     }
 
-    public Task DeleteAsync(CancellationToken cancellation)
+    public Task<bool> DeleteAsync(int productId, CancellationToken cancellation)
     {
         throw new NotImplementedException();
     }
