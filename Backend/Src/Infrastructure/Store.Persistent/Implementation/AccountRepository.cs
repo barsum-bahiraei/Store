@@ -56,7 +56,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return output;
     }
 
-    public async Task AccessListAsignRoleAsync(List<RoleAccessEntity> input, CancellationToken cancellation)
+    public async Task AccessListAssignRoleAsync(List<RoleAccessEntity> input, CancellationToken cancellation)
     {
         await context.RoleAccess.AddRangeAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);

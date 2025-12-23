@@ -20,8 +20,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<CategoryEntity>
             .HasOne(x => x.Parent)
             .WithMany(x => x.Categories)
             .HasForeignKey(x => x.ParentId)
-            .OnDelete(DeleteBehavior.Cascade);
-        //builder
+            .OnDelete(DeleteBehavior.Restrict);
+        //builder   
         //    .HasMany(x => x.CategoryAttributes)
         //    .WithOne(x => x.Category)
         //    .HasForeignKey(x => x.CategoryId);

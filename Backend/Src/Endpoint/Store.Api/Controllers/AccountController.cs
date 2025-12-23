@@ -52,10 +52,10 @@ public class AccountController(IAccountService userService) : Controller
     }
 
     [Security]
-    [HttpPost("AccessListAsignRole")]
-    public async Task<ActionResult> AccessListAsignRole(AccessListAssignRoleInput input, CancellationToken cancellation = default)
+    [HttpPost("AccessListAssignRole")]
+    public async Task<ActionResult> AccessListAssignRole(AccessListAssignRoleInput input, CancellationToken cancellation = default)
     {
-        await userService.AccessListAsignRoleAsync(input, cancellation);
+        await userService.AccessListAssignRoleAsync(input, cancellation);
         return Ok();
     }
 

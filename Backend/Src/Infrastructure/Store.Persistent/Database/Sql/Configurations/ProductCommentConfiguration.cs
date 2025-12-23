@@ -14,6 +14,6 @@ public class ProductCommentConfiguration : IEntityTypeConfiguration<ProductComme
             .HasOne(x => x.Product)
             .WithMany(x => x.ProductComments)
             .HasForeignKey(x => x.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

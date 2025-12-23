@@ -15,6 +15,6 @@ public class RoleAccessConfiguration : IEntityTypeConfiguration<RoleAccessEntity
         builder.HasOne(x => x.Role)
             .WithMany(x => x.RoleAccess)
             .HasForeignKey(x => x.RoleId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

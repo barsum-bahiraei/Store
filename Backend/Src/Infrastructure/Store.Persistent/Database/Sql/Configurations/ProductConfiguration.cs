@@ -26,6 +26,6 @@ internal class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
             .HasOne(x => x.Category)
             .WithMany(x => x.Products)
             .HasForeignKey(x => x.CategoryId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
