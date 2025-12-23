@@ -14,11 +14,9 @@ public class AttributeConfiguration : IEntityTypeConfiguration<AttributeEntity>
     public void Configure(EntityTypeBuilder<AttributeEntity> builder)
     {
         builder.ToTable("Attributes");
-        builder.Property(x => x.Name)
-            .IsRequired();
-        builder.Property(x => x.Type)
-            .IsRequired();
-        builder.Property(x => x.Unit);
+        builder.Property(x => x.Name).IsRequired();
+        builder.Property(x => x.Unit).IsRequired().HasConversion<int>();
+        builder.Property(x => x.Type).IsRequired().HasConversion<int>();
         //builder
         //    .HasMany(x => x.CategoryAttributes)
         //    .WithOne(x => x.Attribute)
