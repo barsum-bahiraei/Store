@@ -6,7 +6,7 @@ namespace Store.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ProductController : ControllerBase
+public class CategoryController : ControllerBase
 {
     // GET: api/<ProductController>
     [HttpGet]

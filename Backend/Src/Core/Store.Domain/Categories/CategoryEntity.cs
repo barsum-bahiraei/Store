@@ -7,5 +7,4 @@ namespace Store.Domain.Categories;
 public class CategoryEntity : BaseEntity
 {
     public string Title { get; set; }
-    public string Description { get; set; }
 }
