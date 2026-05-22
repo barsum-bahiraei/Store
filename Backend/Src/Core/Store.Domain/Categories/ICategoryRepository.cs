@@ -6,4 +6,5 @@ namespace Store.Domain.Categories;
 
 public interface ICategoryRepository
 {
+    public Task<List<CategoryEntity>> List(CancellationToken cancellation);
 }
