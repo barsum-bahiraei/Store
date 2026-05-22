@@ -1,6 +1,13 @@
-﻿namespace Store.Service;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Store.Service.Categories;
 
-public class Configuration
+namespace Store.Service;
+
+public static class Configuration
 {
-
+    public static IServiceCollection ConfigurationStoreService(this IServiceCollection services)
+    {
+        services.AddScoped<ICategoryService, CategoryService>();
+        return services;
+    }
 }
