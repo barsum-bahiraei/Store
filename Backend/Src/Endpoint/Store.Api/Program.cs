@@ -1,3 +1,4 @@
+using Microsoft.OpenApi;
 using Store.Domain;
 using Store.Persistent;
 using Store.Service;
@@ -13,6 +14,14 @@ builder.Services
     .ConfigurationStoreService()
     .ConfigurationStorePersistent()
     .ConfigurationStoreDomain();
+builder.Services.AddSwaggerGen(x =>
+{
+    x.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Store API",
+        Version = "v1",
+    });
+});
 
 var app = builder.Build();
 
@@ -20,6 +29,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
