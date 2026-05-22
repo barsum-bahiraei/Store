@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Store.Domain;
 
-public abstract class BaseEntity
+public abstract class BaseEntity : BaseEntity<int>
 {
 
 }
