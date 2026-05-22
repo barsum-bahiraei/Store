@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Src/" />
+  <Folder Name="/Src/Core/">
+    <Project Path="Src/Core/Store.Domain/Store.Domain.csproj" Id="16bb555c-ebba-43d4-8626-14531d40cf21" />
+    <Project Path="Src/Core/Store.Service/Store.Service.csproj" Id="b6778562-f34a-499e-a197-2da9c7df1a5d" />
+  </Folder>
+  <Folder Name="/Src/Endpoint/">
+    <Project Path="Src/Endpoint/Store.Api/Store.Api.csproj" Id="da68d6d9-9928-437e-b256-da20a685334f" />
+  </Folder>
+  <Folder Name="/Src/Infrastructure/">
+    <Project Path="Src/Infrastructure/Store.Persistent/Store.Persistent.csproj" Id="80d742a5-fe60-4b74-a1ec-a60738035773" />
+  </Folder>
+</Solution>
