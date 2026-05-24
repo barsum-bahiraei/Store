@@ -8,9 +8,14 @@ namespace Store.Service.Categories;
 
 public class CategoryService(ICategoryRepository categoryRepository) : ICategoryService
 {
-    public async Task<Result<List<CategoryListOutput>>> List(CancellationToken cancellation)
+    public async Task<Result<List<CategoryListOutput>>> CategoryListAsync(CancellationToken cancellation)
     {
-        var result = await categoryRepository.List(cancellation);
+        var categoryEntityList = await categoryRepository.CategoryListAsync(cancellation);
+        var result = categoryEntityList.Select(x => new CategoryListOutput
+        {
+            Id = x.Id,
+            Title = x.Title
+        });
         return Result<List<CategoryListOutput>>.Success(result);
     }
 }

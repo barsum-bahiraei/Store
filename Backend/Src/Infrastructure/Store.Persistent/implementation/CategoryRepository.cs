@@ -9,7 +9,7 @@ namespace Store.Persistent.implementation;
 
 public class CategoryRepository(StoreDbContext context) : ICategoryRepository
 {
-    public async Task<List<CategoryEntity>> List(CancellationToken cancellation)
+    public async Task<List<CategoryEntity>> CategoryListAsync(CancellationToken cancellation)
     {
         var result = await context.Categoryies.ToListAsync(cancellation);
         return result;

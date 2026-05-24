@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Store.Service;
+using Store.Service.Categories;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -6,13 +8,14 @@ namespace Store.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CategoryController : ControllerBase
+public class CategoryController(ICategoryService categoryService) : ControllerBase
 {
     // GET: api/<ProductController>
     [HttpGet]
-    public IEnumerable<string> Get()
+    public async Task<IActionResult> Get(CancellationToken cancellation = default)
     {
-        return new string[] { "value1", "value2" };
+        var result = await categoryService.CategoryListAsync(cancellation);
+        return Ok(result);
     }
 
     // GET api/<ProductController>/5

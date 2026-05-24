@@ -7,5 +7,5 @@ namespace Store.Service.Categories;
 
 public interface ICategoryService
 {
-    public Task<Result<List<CategoryListOutput>>> List(CancellationToken cancellation);
+    public Task<Result<List<CategoryListOutput>>> CategoryListAsync(CancellationToken cancellation);
 }
