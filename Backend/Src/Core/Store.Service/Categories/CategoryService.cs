@@ -15,7 +15,8 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
         {
             Id = x.Id,
             Title = x.Title
-        });
+        }).ToList();
+
         return Result<List<CategoryListOutput>>.Success(result);
     }
 }
