@@ -7,7 +7,7 @@ public static class Configuration
 {
     public static IServiceCollection ConfigurationStoreService(this IServiceCollection services)
     {
-        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<CategoryService>();
         return services;
     }
 }

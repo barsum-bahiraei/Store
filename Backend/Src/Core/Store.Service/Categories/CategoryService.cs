@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Store.Service.Categories;
 
-public class CategoryService(ICategoryRepository categoryRepository) : ICategoryService
+public class CategoryService(ICategoryRepository categoryRepository)
 {
     public async Task<Result<List<CategoryListOutput>>> CategoryListAsync(CancellationToken cancellation)
     {
