@@ -13,7 +13,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellation = default)
     {
-        var result = await categoryService.CategoryListAsync(cancellation);
+        var result = await categoryService.ListAsync(cancellation);
         return Ok(result);
     }
 

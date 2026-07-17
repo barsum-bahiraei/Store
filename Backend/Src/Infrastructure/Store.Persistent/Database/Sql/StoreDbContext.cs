@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Store.Domain;
+using Store.Domain.Attribute;
 using Store.Domain.Categories;
+using Store.Service.Products;
 
 namespace Store.Persistent.Database.Sql;
 
@@ -9,9 +11,13 @@ public class StoreDbContext : DbContext
 {
     public StoreDbContext(DbContextOptions<StoreDbContext> options) : base(options)
     {
-
     }
+
+    public DbSet<ProductEntity> Products { get; set; }
+    public DbSet<ProductAttributeEntity> ProductAttributes { get; set; }
     public DbSet<CategoryEntity> Categoryies { get; set; }
+    public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
+    public DbSet<AttributeEntity> Attributes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
