@@ -18,20 +18,20 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         return result;
     }
 
-    public async Task<ProductEntity> CreateAsync(ProductEntity parameters, CancellationToken cancellation)
+    public async Task<ProductEntity> CreateAsync(ProductEntity input, CancellationToken cancellation)
     {
-        await context.Products.AddAsync(parameters, cancellation);
+        await context.Products.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        return parameters;
+        return input;
     }
 
-    public async Task<ProductEntity> UpdateAsync(ProductEntity parameters, CancellationToken cancellation)
+    public async Task<ProductEntity> UpdateAsync(ProductEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Products.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellation);
-        entity.Title = parameters.Title;
-        entity.Description = parameters.Description;
-        entity.Price = parameters.Price;
-        entity.Discount = parameters.Discount;
+        var entity = await context.Products.FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
+        entity.Title = input.Title;
+        entity.Description = input.Description;
+        entity.Price = input.Price;
+        entity.Discount = input.Discount;
         await context.SaveChangesAsync(cancellation);
         return entity;
     }

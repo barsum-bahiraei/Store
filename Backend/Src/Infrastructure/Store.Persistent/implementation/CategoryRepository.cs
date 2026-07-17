@@ -21,17 +21,17 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
         return result;
     }
 
-    public async Task<CategoryEntity> CreateAsync(CategoryEntity parameters, CancellationToken cancellation)
+    public async Task<CategoryEntity> CreateAsync(CategoryEntity input, CancellationToken cancellation)
     {
-        await context.Categoryies.AddAsync(parameters, cancellation);
+        await context.Categoryies.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        return parameters;
+        return input;
     }
 
-    public async Task<CategoryEntity> UpdateAsync(CategoryEntity parameters, CancellationToken cancellation)
+    public async Task<CategoryEntity> UpdateAsync(CategoryEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Categoryies.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellation);
-        entity.Title = parameters.Title;
+        var entity = await context.Categoryies.FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
+        entity.Title = input.Title;
         await context.SaveChangesAsync(cancellation);
         return entity;
     }

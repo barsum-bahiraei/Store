@@ -25,10 +25,12 @@ public class AttributeRepository(StoreDbContext context) : IAttributeRepository
         return entity;
     }
 
-    public async Task<AttributeEntity> UpdateAsync(AttributeEntity parameters, CancellationToken cancellation)
+    public async Task<AttributeEntity> UpdateAsync(AttributeEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Attributes.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellation);
-        entity.Title = parameters.Title;
+        var entity = await context.Attributes.FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
+        entity.Title = input.Title;
+        entity.Unit = input.Unit;
+        entity.Type = input.Type;
         await context.SaveChangesAsync(cancellation);
         return entity;
     }
