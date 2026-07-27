@@ -5,3 +5,7 @@
 # React Router
 /.react-router/
 /build/
+.opencode
+.vscode
+prompt.md
+package-lock.json
