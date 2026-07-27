@@ -59,6 +59,17 @@ src/
 - Use the appropriate Material Symbols icon variant and weight to match the design.
 - Do not use emoji as UI icons.
 
+## Dark & Light Mode
+
+- Support both **dark mode and light mode** throughout the application.
+- Use Tailwind's `dark:` variant for theme-specific styles.
+- Ensure every UI component works correctly in both themes.
+- Maintain proper contrast, readability, and accessibility in both themes.
+- Do not hardcode colors that only work in one theme.
+- Use consistent theme-aware colors for backgrounds, text, borders, inputs, cards, tables, and interactive elements.
+- Avoid creating separate duplicated components for dark and light modes.
+- Use the project's existing theme system when available.
+
 ## Tailwind CSS
 
 - Use **Tailwind CSS as the primary styling solution**.
@@ -77,10 +88,15 @@ src/
 
 ## Responsive Design
 
-- The application must work well on desktop, tablet, and mobile.
-- Use responsive Tailwind utilities instead of hardcoded responsive CSS.
-- Design mobile layouts intentionally rather than simply shrinking desktop layouts.
-- Use appropriate breakpoints based on the actual UI requirements.
+- The application must work properly on **mobile, tablet, and desktop**.
+- Design and implement each view intentionally for different screen sizes.
+- Do not simply shrink the desktop layout for mobile.
+- Use Tailwind responsive utilities and breakpoints appropriately.
+- Ensure navigation, sidebar, tables, forms, cards, dialogs, and other components adapt correctly to smaller screens.
+- Avoid unnecessary horizontal scrolling on mobile.
+- Make touch targets large enough for mobile users.
+- Verify layouts at mobile, tablet, and desktop breakpoints.
+- Ensure both dark and light modes work correctly across all screen sizes.
 
 ## Before Coding
 
@@ -96,8 +112,9 @@ src/
 - Check for TypeScript and lint errors when available.
 - Remove unused code.
 - Verify that the implementation follows the existing architecture.
-- Verify responsive behavior.
-- Make sure unrelated functionality was not affected.
+- Verify dark and light modes.
+- Verify mobile, tablet, and desktop layouts.
+- Make sure existing functionality is not affected.
 
 ## Important
 
