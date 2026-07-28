@@ -31,10 +31,15 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()`,
+          }}
+        />
         <Meta />
         <Links />
       </head>
@@ -70,14 +75,16 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
+    <main className="flex min-h-screen items-center justify-center bg-white p-4 dark:bg-gray-950">
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{message}</h1>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">{details}</p>
+        {stack && (
+          <pre className="mt-4 w-full max-w-xl overflow-x-auto rounded-lg bg-gray-100 p-4 text-left text-sm dark:bg-gray-900">
+            <code className="text-gray-700 dark:text-gray-300">{stack}</code>
+          </pre>
+        )}
+      </div>
     </main>
   );
 }
