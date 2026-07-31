@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { attributeApi } from "../api/attribute-api";
 import type { Attribute } from "../models/attribute";
-import type { CreateAttributeInput } from "../models/create-attribute-input";
-import type { UpdateAttributeInput } from "../models/update-attribute-input";
+import type { AttributeCreateInput } from "../models/input/attribute-create-input";
+import type { AttributeUpdateInput } from "../models/input/attribute-update-input";
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
@@ -14,8 +14,8 @@ interface AttributeStore {
   loading: boolean;
   error: string | null;
   fetchAttributes: () => Promise<void>;
-  createAttribute: (input: CreateAttributeInput) => Promise<void>;
-  updateAttribute: (id: number, input: UpdateAttributeInput) => Promise<void>;
+  createAttribute: (input: AttributeCreateInput) => Promise<void>;
+  updateAttribute: (id: number, input: AttributeUpdateInput) => Promise<void>;
   deleteAttribute: (id: number) => Promise<void>;
 }
 
@@ -25,6 +25,7 @@ export const useAttributeStore = create<AttributeStore>((set, get) => ({
   error: null,
 
   fetchAttributes: async () => {
+    if (get().loading) return;
     set({ loading: true, error: null });
     try {
       const items = await attributeApi.list();

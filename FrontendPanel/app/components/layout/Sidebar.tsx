@@ -9,6 +9,7 @@ interface SidebarProps {
 
 const navItems = [
   { to: "/attributes", label: "Attributes", icon: "list_alt" },
+  { to: "/categories", label: "Categories", icon: "folder" },
 ];
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {

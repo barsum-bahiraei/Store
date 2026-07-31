@@ -5,5 +5,6 @@ export default [
   route("register", "features/auth/pages/RegisterPage.tsx"),
   layout("components/layout/DashboardLayout.tsx", [
     route("attributes", "features/attributes/pages/AttributesPage.tsx"),
+    route("categories", "features/categories/pages/CategoriesPage.tsx"),
   ]),
 ] satisfies RouteConfig;
