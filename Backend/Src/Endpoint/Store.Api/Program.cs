@@ -7,6 +7,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+// config cors
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -24,6 +41,9 @@ builder.Services.AddSwaggerGen(x =>
 });
 
 var app = builder.Build();
+
+// use cors
+app.UseCors("Frontend");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
