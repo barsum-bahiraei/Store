@@ -1,8 +1,8 @@
 import { httpClient } from "~/shared/http/http-client";
 import type { ApiResult } from "~/shared/models/api-result";
-import type { AttributeDto } from "../models/attribute";
-import type { CreateAttributeInput } from "../models/attribute-inputs";
-import type { UpdateAttributeInput } from "../models/attribute-inputs";
+import type { AttributeDto } from "../models/attribute-dto";
+import type { CreateAttributeInput } from "../models/create-attribute-input";
+import type { UpdateAttributeInput } from "../models/update-attribute-input";
 
 function resolve<T>(result: ApiResult<T> | null, fallbackMessage: string): T {
   if (!result?.isSuccess) {

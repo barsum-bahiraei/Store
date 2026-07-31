@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAttributeStore } from "../store/attribute-store";
+import { type Attribute } from "../models/attribute";
 import {
   AttributeType,
-  AttributeUnit,
   ATTRIBUTE_TYPE_OPTIONS,
-  ATTRIBUTE_UNIT_OPTIONS,
   getAttributeTypeLabel,
+} from "../models/enums/attribute-type";
+import {
+  AttributeUnit,
+  ATTRIBUTE_UNIT_OPTIONS,
   getAttributeUnitLabel,
-  type Attribute,
-} from "../models/attribute";
+} from "../models/enums/attribute-unit";
 
 export default function AttributesPage() {
   const {

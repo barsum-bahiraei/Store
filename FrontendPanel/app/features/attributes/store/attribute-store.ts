@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { attributeApi } from "../api/attribute-api";
 import type { Attribute } from "../models/attribute";
-import type { CreateAttributeInput } from "../models/attribute-inputs";
-import type { UpdateAttributeInput } from "../models/attribute-inputs";
+import type { CreateAttributeInput } from "../models/create-attribute-input";
+import type { UpdateAttributeInput } from "../models/update-attribute-input";
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
