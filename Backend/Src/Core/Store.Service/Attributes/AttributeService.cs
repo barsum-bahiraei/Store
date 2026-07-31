@@ -34,7 +34,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
     }
 
 
-    public async Task<Result<AttributeListOutput>> CreateAsync(CreateAttributeInput input, CancellationToken cancellation)
+    public async Task<Result<AttributeCreateOutput>> CreateAsync(AttributeCreateInput input, CancellationToken cancellation)
     {
         var entity = new AttributeEntity
         {
@@ -44,17 +44,17 @@ public class AttributeService(IAttributeRepository attributeRepository)
         };
         var created = await attributeRepository.CreateAsync(entity, cancellation);
 
-        var result = new AttributeListOutput
+        var result = new AttributeCreateOutput
         {
             Title = created.Title,
             Type = created.Type,
             Unit = created.Unit
         };
-        return Result<AttributeListOutput>.Success(result);
+        return Result<AttributeCreateOutput>.Success(result);
     }
 
 
-    public async Task<Result<AttributeListOutput>> UpdateAsync(int id, UpdateAttributeInput input, CancellationToken cancellation)
+    public async Task<Result<AttributeUpdateOutput>> UpdateAsync(int id, AttributeUpdateInput input, CancellationToken cancellation)
     {
         var entity = new AttributeEntity
         {
@@ -65,13 +65,13 @@ public class AttributeService(IAttributeRepository attributeRepository)
         };
         var updated = await attributeRepository.UpdateAsync(entity, cancellation);
 
-        var result = new AttributeListOutput
+        var result = new AttributeUpdateOutput
         {
             Title = updated.Title,
             Type = updated.Type,
             Unit = updated.Unit
         };
-        return Result<AttributeListOutput>.Success(result);
+        return Result<AttributeUpdateOutput>.Success(result);
     }
 
 

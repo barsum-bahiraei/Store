@@ -2,7 +2,7 @@ using Store.Domain.Attribute;
 
 namespace Store.Domain.Categories;
 
-public class CategoryAttributeEntity
+public class CategoryAttributeEntity : BaseEntity
 {
     public int CategoryId { get; set; }
     public CategoryEntity Category { get; set; }

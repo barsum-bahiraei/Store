@@ -1,8 +1,8 @@
 using Store.Service.Attributes;
 
-namespace Store.Domain.Attribute.Models.Input;
+namespace Store.Domain.Attribute.Models.Output;
 
-public class CreateAttributeInput
+public class AttributeCreateOutput
 {
     public string Title { get; set; }
     public AttributeUnitEnum Unit { get; set; }

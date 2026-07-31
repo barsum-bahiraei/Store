@@ -24,14 +24,14 @@ public class AttributeController(AttributeService attributeService) : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post(CreateAttributeInput input, CancellationToken cancellation = default)
+    public async Task<IActionResult> Post(AttributeCreateInput input, CancellationToken cancellation = default)
     {
         var result = await attributeService.CreateAsync(input, cancellation);
         return Ok(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, UpdateAttributeInput input, CancellationToken cancellation = default)
+    public async Task<IActionResult> Put(int id, AttributeUpdateInput input, CancellationToken cancellation = default)
     {
         var result = await attributeService.UpdateAsync(id, input, cancellation);
         return Ok(result);
