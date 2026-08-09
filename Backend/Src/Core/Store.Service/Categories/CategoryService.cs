@@ -48,7 +48,7 @@ public class CategoryService(ICategoryRepository categoryRepository)
         return Result<CategoryCreateOutput>.Success(result);
     }
 
-    public async Task<Result<CategoryUpdateOutput>> UpdateAsync(int id, CategoryUpdateInput input, CancellationToken cancellation)
+    public async Task<Result<CategoryUpdateOutput>> UpdateAsync(int id, CategoryUpdateInput input,        CancellationToken cancellation)
     {
         var entity = new CategoryEntity
         {
@@ -67,6 +67,46 @@ public class CategoryService(ICategoryRepository categoryRepository)
     public async Task<Result<bool>> DeleteAsync(int id, CancellationToken cancellation)
     {
         await categoryRepository.DeleteAsync(id, cancellation);
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<List<CategoryAttributeListOutput>>> AttributeListAsync(int categoryId,
+        CancellationToken cancellation)
+    {
+        var entityList = await categoryRepository.AttributeListAsync(categoryId, cancellation);
+        var result = entityList.Select(x => new CategoryAttributeListOutput
+            {
+                CategoryId = x.Category.Id,
+                CategoryTitle = x.Category.Title,
+                AttributeId = x.Attribute.Id,
+                AttributeTitle = x.Attribute.Title
+            })
+            .ToList();
+        return Result<List<CategoryAttributeListOutput>>.Success(result);
+    }
+
+    public async Task<Result<CategoryAttributeAddOutput>> AttributeAddAsync(CategoryAttributeAddInput input,
+        CancellationToken cancellation)
+    {
+        var entity = new CategoryAttributeEntity
+        {
+            CategoryId = input.CategoryId,
+            AttributeId = input.AttributeId
+        };
+        var created = await categoryRepository.AttributeAddAsync(entity, cancellation);
+        var result = new CategoryAttributeAddOutput
+        {
+            CategoryId = created.Category.Id,
+            CategoryTitle = created.Category.Title,
+            AttributeId = created.Attribute.Id,
+            AttributeTitle = created.Attribute.Title
+        };
+        return Result<CategoryAttributeAddOutput>.Success(result);
+    }
+
+    public async Task<Result<bool>> AttributeDeleteAsync(int id, CancellationToken cancellation)
+    {
+        await categoryRepository.AttributeDeleteAsync(id, cancellation);
         return Result<bool>.Success(true);
     }
 }

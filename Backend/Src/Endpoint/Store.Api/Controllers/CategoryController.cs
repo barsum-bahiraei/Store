@@ -49,4 +49,25 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
         var result = await categoryService.DeleteAsync(id, cancellation);
         return Ok(result);
     }
+
+    [HttpGet("Attribute/{categoryid}")]
+    public async Task<IActionResult> AttributeGet(int categoryid, CancellationToken cancellation = default)
+    {
+        var result = await categoryService.AttributeListAsync(categoryid, cancellation);
+        return Ok(result);
+    }
+
+    [HttpPost("Attribute")]
+    public async Task<IActionResult> AttributePost(CategoryAttributeAddInput input, CancellationToken cancellation = default)
+    {
+        var result = await categoryService.AttributeAddAsync(input, cancellation);
+        return Ok(result);
+    }
+
+    [HttpDelete("Attribute/{id}")]
+    public async Task<IActionResult> AttributeDelete(int id, CancellationToken cancellation = default)
+    {
+        var result = await categoryService.AttributeDeleteAsync(id, cancellation);
+        return Ok(result);
+    } 
 }

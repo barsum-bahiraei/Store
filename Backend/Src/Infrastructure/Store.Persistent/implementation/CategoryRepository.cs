@@ -42,4 +42,24 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
         context.Categoryies.Remove(entity);
         await context.SaveChangesAsync(cancellation);
     }
+
+    public async Task<List<CategoryAttributeEntity>> AttributeListAsync(int categoryId, CancellationToken cancellation)
+    {
+        var result = await context.CategoryAttributes.Where(x=>x.CategoryId == categoryId).ToListAsync(cancellation);
+        return result;
+    }
+
+    public async Task<CategoryAttributeEntity> AttributeAddAsync(CategoryAttributeEntity input, CancellationToken cancellation)
+    {
+        await context.CategoryAttributes.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
+
+    public async Task AttributeDeleteAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await context.CategoryAttributes.FirstOrDefaultAsync(c => c.Id == id, cancellation);
+        context.CategoryAttributes.Remove(entity);
+        await context.SaveChangesAsync(cancellation);
+    }
 }
