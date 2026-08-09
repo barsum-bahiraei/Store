@@ -45,15 +45,24 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
 
     public async Task<List<CategoryAttributeEntity>> AttributeListAsync(int categoryId, CancellationToken cancellation)
     {
-        var result = await context.CategoryAttributes.Where(x=>x.CategoryId == categoryId).ToListAsync(cancellation);
+        var result = await context.CategoryAttributes
+            .Where(x => x.CategoryId == categoryId)
+            .Include(x => x.Category)
+            .Include(x => x.Attribute)
+            .ToListAsync(cancellation);
         return result;
     }
 
-    public async Task<CategoryAttributeEntity> AttributeAddAsync(CategoryAttributeEntity input, CancellationToken cancellation)
+    public async Task<CategoryAttributeEntity> AttributeAddAsync(CategoryAttributeEntity input,
+        CancellationToken cancellation)
     {
         await context.CategoryAttributes.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        return input;
+        var result = await context.CategoryAttributes
+            .Include(x => x.Category)
+            .Include(x => x.Attribute)
+            .FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
+        return result;
     }
 
     public async Task AttributeDeleteAsync(int id, CancellationToken cancellation)
