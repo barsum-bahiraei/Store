@@ -48,7 +48,8 @@ public class CategoryService(ICategoryRepository categoryRepository)
         return Result<CategoryCreateOutput>.Success(result);
     }
 
-    public async Task<Result<CategoryUpdateOutput>> UpdateAsync(int id, CategoryUpdateInput input,        CancellationToken cancellation)
+    public async Task<Result<CategoryUpdateOutput>> UpdateAsync(int id, CategoryUpdateInput input,
+        CancellationToken cancellation)
     {
         var entity = new CategoryEntity
         {
@@ -89,11 +90,18 @@ public class CategoryService(ICategoryRepository categoryRepository)
     public async Task<Result<CategoryAttributeAddOutput>> AttributeAddAsync(CategoryAttributeAddInput input,
         CancellationToken cancellation)
     {
+        var hasData = await categoryRepository.AttributeGetAsync(input.CategoryId, input.AttributeId, cancellation);
+        if (hasData != null)
+        {
+            return Result<CategoryAttributeAddOutput>.Failure("parameters is exist!");
+        }
+        
         var entity = new CategoryAttributeEntity
         {
             CategoryId = input.CategoryId,
             AttributeId = input.AttributeId
         };
+        
         var created = await categoryRepository.AttributeAddAsync(entity, cancellation);
         var result = new CategoryAttributeAddOutput
         {

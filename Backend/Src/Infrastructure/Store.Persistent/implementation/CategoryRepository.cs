@@ -53,6 +53,16 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
         return result;
     }
 
+    public async Task<CategoryAttributeEntity?> AttributeGetAsync(int categoryId, int attributeId,
+        CancellationToken cancellation)
+    {
+        var result = await context.CategoryAttributes
+            .Include(x => x.Category)
+            .Include(x => x.Attribute)
+            .FirstOrDefaultAsync(x => x.CategoryId == categoryId && x.AttributeId == attributeId, cancellation);
+        return result;
+    }
+
     public async Task<CategoryAttributeEntity> AttributeAddAsync(CategoryAttributeEntity input,
         CancellationToken cancellation)
     {
