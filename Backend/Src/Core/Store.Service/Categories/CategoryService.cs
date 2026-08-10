@@ -76,6 +76,7 @@ public class CategoryService(ICategoryRepository categoryRepository)
         var entityList = await categoryRepository.AttributeListAsync(categoryId, cancellation);
         var result = entityList.Select(x => new CategoryAttributeListOutput
             {
+                Id = x.Id,
                 CategoryId = x.Category.Id,
                 CategoryTitle = x.Category.Title,
                 AttributeId = x.Attribute.Id,
@@ -96,6 +97,7 @@ public class CategoryService(ICategoryRepository categoryRepository)
         var created = await categoryRepository.AttributeAddAsync(entity, cancellation);
         var result = new CategoryAttributeAddOutput
         {
+            Id = created.Id,
             CategoryId = created.Category.Id,
             CategoryTitle = created.Category.Title,
             AttributeId = created.Attribute.Id,
