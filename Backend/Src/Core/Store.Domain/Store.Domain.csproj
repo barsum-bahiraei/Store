@@ -10,8 +10,4 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Products\Models\Input\" />
-  </ItemGroup>
-
 </Project>

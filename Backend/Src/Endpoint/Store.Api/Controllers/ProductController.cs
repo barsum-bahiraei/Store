@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Store.Domain.Products.Models.Input;
 using Store.Service.Products;
 
 namespace Store.Api.Controllers;
@@ -18,6 +19,20 @@ public class ProductController(ProductService productService) : ControllerBase
     public async Task<IActionResult> Get(int id, CancellationToken cancellation = default)
     {
         var result = await productService.GetAsync(id, cancellation);
+        return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Post(ProductCreateInput input, CancellationToken cancellation = default)
+    {
+        var result = await productService.CreateAsync(input, cancellation);
+        return Ok(result);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
+    {
+        var result = await productService.DeleteAsync(id, cancellation);
         return Ok(result);
     }
 }
