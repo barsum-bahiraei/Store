@@ -86,7 +86,9 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
                 CategoryId = x.Category.Id,
                 CategoryTitle = x.Category.Title,
                 AttributeId = x.Attribute.Id,
-                AttributeTitle = x.Attribute.Title
+                AttributeTitle = x.Attribute.Title,
+                AttributeUnit = x.Attribute.Unit,
+                AttributeType = x.Attribute.Type,
             })
             .ToList();
         return Result<List<CategoryAttributeListOutput>>.Success(result);

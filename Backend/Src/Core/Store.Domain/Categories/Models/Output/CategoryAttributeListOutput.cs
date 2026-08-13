@@ -1,3 +1,6 @@
+using Store.Domain.Attribute;
+using Store.Service.Attributes;
+
 namespace Store.Domain.Categories.Models.Output;
 
 public class CategoryAttributeListOutput
@@ -7,4 +10,6 @@ public class CategoryAttributeListOutput
     public string? CategoryTitle { get; set; }
     public int AttributeId { get; set; }
     public string? AttributeTitle { get; set; }
+    public AttributeUnitEnum AttributeUnit { get; set; }
+    public AttributeTypeEnum AttributeType { get; set; }
 }
