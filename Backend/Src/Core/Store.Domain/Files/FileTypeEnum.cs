@@ -1,6 +1,6 @@
 namespace Store.Domain.Files;
 
-public enum AttributeFileTypeEnum
+public enum FileTypeEnum
 {
     Image,
     Pdf,

@@ -6,7 +6,7 @@ namespace Store.Persistent.implementation;
 
 public class FilesRepository(StoreDbContext context) : IFilesRepository
 {
-    public async Task<List<FileEntity>> ListAsync(string tableName, string targetName, int targetId,
+    public async Task<List<FileEntity>> ListAsync(TableNameEnum tableName, TargetNameEnum targetName, int targetId,
         CancellationToken cancellationToken)
     {
         var result = await context.Files

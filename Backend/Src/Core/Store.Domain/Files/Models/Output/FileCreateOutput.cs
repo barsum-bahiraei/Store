@@ -1,7 +1,8 @@
-namespace Store.Domain.Files;
+namespace Store.Domain.Files.Models.Output;
 
-public class FileEntity : BaseEntity
+public class FileCreateOutput
 {
+    public int Id { get; set; }
     public string Name { get; set; }
     public string Url { get; set; }
     public TableNameEnum TableName { get; set; }

@@ -56,7 +56,6 @@ public class ProductService(IProductRepository productRepository)
             Price = input.Price,
             Discount = input.Discount,
             CategoryId = input.CategoryId,
-            MainImageUrl = "test.png",
             ProductAttributes = input.Attributes.Select(x => new ProductAttributeEntity
             {
                 AttributeId = x.AttributeId,
@@ -78,6 +77,7 @@ public class ProductService(IProductRepository productRepository)
                 Value = x.Value
             }).ToList()
         };
+
         return Result<ProductCreateOutput>.Success(result);
     }
 

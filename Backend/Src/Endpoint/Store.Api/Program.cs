@@ -28,8 +28,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services
-    .ConfigurationStoreService()
-    .ConfigurationStorePersistent()
+    .ConfigurationStoreService(builder.Configuration)
+    .ConfigurationStorePersistent(builder.Configuration)
     .ConfigurationStoreDomain();
 builder.Services.AddSwaggerGen(x =>
 {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
@@ -11,12 +12,11 @@ namespace Store.Persistent;
 
 public static class Configuration
 {
-    public static IServiceCollection ConfigurationStorePersistent(this IServiceCollection services)
+    public static IServiceCollection ConfigurationStorePersistent(this IServiceCollection services,IConfiguration configuration)
     {
         services.AddDbContext<StoreDbContext>(options =>
         {
-            options.UseSqlServer(
-                "Server=localhost,1433;Database=StoreDb;User Id=sa;Password=DataB@se@1234;TrustServerCertificate=True;");
+            options.UseSqlServer(configuration.GetConnectionString("StoreDb"));
         });
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();

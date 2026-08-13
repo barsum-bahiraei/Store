@@ -114,22 +114,24 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FieldType")
-                        .HasColumnType("int");
-
                     b.Property<int>("FileType")
                         .HasColumnType("int");
 
-                    b.Property<string>("TableName")
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TableName")
+                        .HasColumnType("int");
 
                     b.Property<int>("TargetId")
                         .HasColumnType("int");
 
-                    b.Property<string>("TargetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("TargetName")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -198,7 +200,6 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("MainImageUrl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")

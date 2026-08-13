@@ -12,8 +12,8 @@ using Store.Persistent.Database.Sql;
 namespace Store.Persistent.Database.Sql.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    [Migration("20260731195624_Initial")]
-    partial class Initial
+    [Migration("20260813231545_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -106,7 +106,49 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("Categories", (string)null);
                 });
 
-            modelBuilder.Entity("Store.Service.Products.ProductAttributeEntity", b =>
+            modelBuilder.Entity("Store.Domain.Files.FileEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TableName")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetName")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Files", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -139,7 +181,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.ToTable("ProductsAttributes", (string)null);
                 });
 
-            modelBuilder.Entity("Store.Service.Products.ProductEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -159,6 +201,9 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.Property<decimal>("Discount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("MainImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -196,7 +241,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Store.Service.Products.ProductAttributeEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
                     b.HasOne("Store.Domain.Attribute.AttributeEntity", "Attribute")
                         .WithMany("ProductAttributes")
@@ -204,7 +249,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Store.Service.Products.ProductEntity", "Product")
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
                         .WithMany("ProductAttributes")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -215,7 +260,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("Store.Service.Products.ProductEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
                     b.HasOne("Store.Domain.Categories.CategoryEntity", "Category")
                         .WithMany("Products")
@@ -240,7 +285,7 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("Store.Service.Products.ProductEntity", b =>
+            modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
                     b.Navigation("ProductAttributes");
                 });
