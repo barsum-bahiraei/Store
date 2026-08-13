@@ -4,5 +4,6 @@ public enum AttributeFileTypeEnum
 {
     Image,
     Pdf,
-    Video
+    Video,
+    Svg
 }
