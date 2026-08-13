@@ -8,11 +8,13 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
 {
     public async Task<List<ProductEntity>> ListAsync(CancellationToken cancellation)
     {
-        var result = await context.Products.ToListAsync(cancellation);
+        var result = await context.Products
+            .Include(x => x.Category)
+            .ToListAsync(cancellation);
         return result;
     }
 
-    public async Task<ProductEntity> GetAsync(int id, CancellationToken cancellation)
+    public async Task<ProductEntity?> GetAsync(int id, CancellationToken cancellation)
     {
         var result = await context.Products.FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
