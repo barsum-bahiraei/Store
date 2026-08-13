@@ -1,6 +1,6 @@
 using Store.Domain.Categories;
+using Store.Domain.Products;
 using Store.Service.Attributes;
-using Store.Service.Products;
 
 namespace Store.Domain.Attribute;
 

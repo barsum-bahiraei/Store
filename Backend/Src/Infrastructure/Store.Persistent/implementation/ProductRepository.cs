@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Store.Domain.Products;
 using Store.Persistent.Database.Sql;
-using Store.Service.Products;
 
 namespace Store.Persistent.implementation;
 

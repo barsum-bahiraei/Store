@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Store.Service.Products;
+using Store.Domain.Products;
 
 namespace Store.Domain.Categories;
 

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Store.Service.Products;
+using Store.Domain.Products;
 
 namespace Store.Persistent.Database.Sql.Configuration;
 

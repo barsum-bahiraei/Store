@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Store.Domain;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
-using Store.Service.Products;
+using Store.Domain.Products;
 
 namespace Store.Persistent.Database.Sql;
 

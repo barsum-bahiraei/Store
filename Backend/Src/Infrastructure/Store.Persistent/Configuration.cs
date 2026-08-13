@@ -2,9 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
+using Store.Domain.Products;
 using Store.Persistent.Database.Sql;
 using Store.Persistent.implementation;
-using Store.Service.Products;
 
 namespace Store.Persistent;
 

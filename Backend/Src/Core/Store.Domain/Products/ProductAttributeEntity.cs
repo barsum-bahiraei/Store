@@ -1,7 +1,6 @@
-using Store.Domain;
 using Store.Domain.Attribute;
 
-namespace Store.Service.Products;
+namespace Store.Domain.Products;
 
 public class ProductAttributeEntity : BaseEntity
 {
