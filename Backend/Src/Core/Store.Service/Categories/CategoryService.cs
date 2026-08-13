@@ -25,6 +25,10 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
     public async Task<Result<CategoryGetOutput?>> GetAsync(int id, CancellationToken cancellation)
     {
         var eniity = await categoryRepository.GetAsync(id, cancellation);
+        if (eniity == null)
+        {
+            return Result<CategoryGetOutput?>.Failure("Category not found!");
+        }
         var result = new CategoryGetOutput
         {
             Id = eniity.Id,

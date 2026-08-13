@@ -24,6 +24,10 @@ public class AttributeService(IAttributeRepository attributeRepository)
     public async Task<Result<AttributeGetOutput?>> GetAsync(int id, CancellationToken cancellation)
     {
         var entity = await attributeRepository.GetAsync(id, cancellation);
+        if (entity == null)
+        {
+            return Result<AttributeGetOutput?>.Failure("Attribute not found!");
+        }
 
         var result = new AttributeGetOutput
         {
@@ -36,7 +40,8 @@ public class AttributeService(IAttributeRepository attributeRepository)
     }
 
 
-    public async Task<Result<AttributeCreateOutput>> CreateAsync(AttributeCreateInput input, CancellationToken cancellation)
+    public async Task<Result<AttributeCreateOutput>> CreateAsync(AttributeCreateInput input,
+        CancellationToken cancellation)
     {
         var entity = new AttributeEntity
         {
@@ -48,7 +53,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
 
         var result = new AttributeCreateOutput
         {
-            Id =  created.Id,
+            Id = created.Id,
             Title = created.Title,
             Type = created.Type,
             Unit = created.Unit
@@ -57,7 +62,8 @@ public class AttributeService(IAttributeRepository attributeRepository)
     }
 
 
-    public async Task<Result<AttributeUpdateOutput>> UpdateAsync(int id, AttributeUpdateInput input, CancellationToken cancellation)
+    public async Task<Result<AttributeUpdateOutput>> UpdateAsync(int id, AttributeUpdateInput input,
+        CancellationToken cancellation)
     {
         var entity = new AttributeEntity
         {

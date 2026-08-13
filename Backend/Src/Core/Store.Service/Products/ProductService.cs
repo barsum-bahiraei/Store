@@ -27,6 +27,10 @@ public class ProductService(IProductRepository productRepository)
     public async Task<Result<ProductGetOutput?>> GetAsync(int id, CancellationToken cancellation)
     {
         var entity = await productRepository.GetAsync(id, cancellation);
+        if (entity == null)
+        {
+            return Result<ProductGetOutput?>.Failure("Product not found");
+        }
         var result = new ProductGetOutput
         {
             Id = entity.Id,
