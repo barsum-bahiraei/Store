@@ -22,7 +22,8 @@ public class FileService(IFilesRepository filesRepository, IMinioClient minioCli
         }
 
         var folder = input.TableName.ToString().Trim("/");
-        var fileName = input.Name;
+        var extension = Path.GetExtension(file.FileName);
+        var fileName = $"{input.Name}{extension}";
         var objectName = $"{folder}/{fileName}";
 
         await using var stream = file.OpenReadStream();
