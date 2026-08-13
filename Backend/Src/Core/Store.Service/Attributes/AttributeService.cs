@@ -21,18 +21,18 @@ public class AttributeService(IAttributeRepository attributeRepository)
     }
 
 
-    public async Task<Result<AttributeListOutput>> GetAsync(int id, CancellationToken cancellation)
+    public async Task<Result<AttributeGetOutput?>> GetAsync(int id, CancellationToken cancellation)
     {
         var entity = await attributeRepository.GetAsync(id, cancellation);
 
-        var result = new AttributeListOutput
+        var result = new AttributeGetOutput
         {
             Id = entity.Id,
             Title = entity.Title,
             Type = entity.Type,
             Unit = entity.Unit,
         };
-        return Result<AttributeListOutput>.Success(result);
+        return Result<AttributeGetOutput?>.Success(result);
     }
 
 

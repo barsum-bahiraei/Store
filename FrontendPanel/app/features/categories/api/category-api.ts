@@ -1,6 +1,9 @@
 import { httpClient } from "~/shared/http/http-client";
 import { resolveResult } from "~/shared/http/resolve-result";
 import type { ApiResult } from "~/shared/models/api-result";
+import type { CategoryAttributeAddInput } from "../models/input/category-attribute-add-input";
+import type { CategoryAttributeAddOutput } from "../models/output/category-attribute-add-output";
+import type { CategoryAttributeListOutput } from "../models/output/category-attribute-list-output";
 import type { CategoryCreateInput } from "../models/input/category-create-input";
 import type { CategoryCreateOutput } from "../models/output/category-create-output";
 import type { CategoryGetOutput } from "../models/output/category-get-output";
@@ -36,6 +39,30 @@ export const categoryApi = {
     const { data } = await httpClient.delete<ApiResult<boolean>>(`/api/Category/${id}`);
     if (!data?.isSuccess) {
       throw new Error(data?.errorMessage ?? "Failed to delete category");
+    }
+  },
+
+  async listCategoryAttributes(categoryId: number): Promise<CategoryAttributeListOutput[]> {
+    const { data } = await httpClient.get<ApiResult<CategoryAttributeListOutput[]>>(
+      `/api/Category/Attribute/${categoryId}`
+    );
+    return resolveResult(data, "Failed to load category attributes");
+  },
+
+  async addCategoryAttribute(input: CategoryAttributeAddInput): Promise<CategoryAttributeAddOutput> {
+    const { data } = await httpClient.post<ApiResult<CategoryAttributeAddOutput>>(
+      "/api/Category/Attribute",
+      input
+    );
+    return resolveResult(data, "Failed to add attribute to category");
+  },
+
+  async removeCategoryAttribute(id: number): Promise<void> {
+    const { data } = await httpClient.delete<ApiResult<boolean>>(
+      `/api/Category/Attribute/${id}`
+    );
+    if (!data?.isSuccess) {
+      throw new Error(data?.errorMessage ?? "Failed to remove attribute from category");
     }
   },
 };

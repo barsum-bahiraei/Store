@@ -12,7 +12,7 @@ public class AttributeRepository(StoreDbContext context) : IAttributeRepository
         return result;
     }
 
-    public async Task<AttributeEntity> GetAsync(int id, CancellationToken cancellation)
+    public async Task<AttributeEntity?> GetAsync(int id, CancellationToken cancellation)
     {
         var result = await context.Attributes.FirstAsync(x => x.Id == id, cancellation);
         return result;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAttributeStore } from "../store/attribute-store";
-import { type Attribute } from "../models/attribute";
+import { type AttributeListOutput } from "../models/output/attribute-list-output";
 import {
   AttributeType,
   ATTRIBUTE_TYPE_OPTIONS,
@@ -43,7 +43,7 @@ export default function AttributesPage() {
     setTitle("");
   };
 
-  const startEditing = (attribute: Attribute) => {
+  const startEditing = (attribute: AttributeListOutput) => {
     setEditingId(attribute.id);
     setEditTitle(attribute.title);
     setEditType(attribute.type);

@@ -15,7 +15,7 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
         return result;
     }
 
-    public async Task<CategoryEntity> GetAsync(int id, CancellationToken cancellation)
+    public async Task<CategoryEntity?> GetAsync(int id, CancellationToken cancellation)
     {
         var result = await context.Categoryies.FirstOrDefaultAsync(c => c.Id == id, cancellation);
         return result;

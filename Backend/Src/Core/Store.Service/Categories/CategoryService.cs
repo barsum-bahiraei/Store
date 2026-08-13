@@ -3,11 +3,12 @@ using Store.Domain.Categories.Models.Output;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Store.Domain.Attribute;
 using Store.Domain.Categories.Models.Input;
 
 namespace Store.Service.Categories;
 
-public class CategoryService(ICategoryRepository categoryRepository)
+public class CategoryService(ICategoryRepository categoryRepository, IAttributeRepository attributeRepository)
 {
     public async Task<Result<List<CategoryListOutput>>> ListAsync(CancellationToken cancellation)
     {
@@ -21,15 +22,15 @@ public class CategoryService(ICategoryRepository categoryRepository)
         return Result<List<CategoryListOutput>>.Success(result);
     }
 
-    public async Task<Result<CategoryGetOutput>> GetAsync(int id, CancellationToken cancellation)
+    public async Task<Result<CategoryGetOutput?>> GetAsync(int id, CancellationToken cancellation)
     {
         var eniity = await categoryRepository.GetAsync(id, cancellation);
         var result = new CategoryGetOutput
         {
             Id = eniity.Id,
-            Title = eniity.Title
+            Title = eniity?.Title
         };
-        return Result<CategoryGetOutput>.Success(result);
+        return Result<CategoryGetOutput?>.Success(result);
     }
 
     public async Task<Result<CategoryCreateOutput>> CreateAsync(CategoryCreateInput input,
@@ -90,18 +91,31 @@ public class CategoryService(ICategoryRepository categoryRepository)
     public async Task<Result<CategoryAttributeAddOutput>> AttributeAddAsync(CategoryAttributeAddInput input,
         CancellationToken cancellation)
     {
-        var hasData = await categoryRepository.AttributeGetAsync(input.CategoryId, input.AttributeId, cancellation);
-        if (hasData != null)
+        var categoryAttributeEntity =
+            await categoryRepository.AttributeGetAsync(input.CategoryId, input.AttributeId, cancellation);
+        if (categoryAttributeEntity != null)
         {
             return Result<CategoryAttributeAddOutput>.Failure("parameters is exist!");
         }
-        
+
+        var categoryEntity = await categoryRepository.GetAsync(input.CategoryId, cancellation);
+        if (categoryEntity == null)
+        {
+            return Result<CategoryAttributeAddOutput>.Failure("parameters is not exist!");
+        }
+
+        var attributeEntity = await attributeRepository.GetAsync(input.AttributeId, cancellation);
+        if (attributeEntity == null)
+        {
+            return Result<CategoryAttributeAddOutput>.Failure("parameters is not exist!");
+        }
+
         var entity = new CategoryAttributeEntity
         {
             CategoryId = input.CategoryId,
             AttributeId = input.AttributeId
         };
-        
+
         var created = await categoryRepository.AttributeAddAsync(entity, cancellation);
         var result = new CategoryAttributeAddOutput
         {

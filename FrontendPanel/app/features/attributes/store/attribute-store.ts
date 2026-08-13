@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { attributeApi } from "../api/attribute-api";
-import type { Attribute } from "../models/attribute";
 import type { AttributeCreateInput } from "../models/input/attribute-create-input";
+import type { AttributeListOutput } from "../models/output/attribute-list-output";
 import type { AttributeUpdateInput } from "../models/input/attribute-update-input";
 
 function getErrorMessage(error: unknown): string {
@@ -10,7 +10,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 interface AttributeStore {
-  attributes: Attribute[];
+  attributes: AttributeListOutput[];
   loading: boolean;
   error: string | null;
   fetchAttributes: () => Promise<void>;
@@ -28,8 +28,7 @@ export const useAttributeStore = create<AttributeStore>((set, get) => ({
     if (get().loading) return;
     set({ loading: true, error: null });
     try {
-      const items = await attributeApi.list();
-      const attributes = items.map((item, index) => ({ ...item, id: index + 1 }));
+      const attributes = await attributeApi.list();
       set({ attributes, loading: false });
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
@@ -39,9 +38,9 @@ export const useAttributeStore = create<AttributeStore>((set, get) => ({
   createAttribute: async (input) => {
     set({ loading: true, error: null });
     try {
-      await attributeApi.create(input);
+      const attribute = await attributeApi.create(input);
       set((state) => ({
-        attributes: [...state.attributes, { ...input, id: state.attributes.length + 1 }],
+        attributes: [...state.attributes, attribute],
         loading: false,
       }));
     } catch (error) {
