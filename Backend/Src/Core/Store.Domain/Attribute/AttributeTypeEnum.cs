@@ -2,7 +2,7 @@ namespace Store.Domain.Attribute;
 
 public enum AttributeTypeEnum
 {
-    Strint,
+    String,
     Int,
     Decimal,
     Bool,
