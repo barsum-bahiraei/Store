@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Store.Domain;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
+using Store.Domain.Files;
 using Store.Domain.Products;
 
 namespace Store.Persistent.Database.Sql;
@@ -18,6 +19,7 @@ public class StoreDbContext : DbContext
     public DbSet<CategoryEntity> Categoryies { get; set; }
     public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
     public DbSet<AttributeEntity> Attributes { get; set; }
+    public DbSet<FileEntity> Files { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

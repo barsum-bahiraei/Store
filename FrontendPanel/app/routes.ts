@@ -7,4 +7,5 @@ export default [
     route("attributes", "features/attributes/pages/AttributesPage.tsx"),
     route("categories", "features/categories/pages/CategoriesPage.tsx"),
   ]),
+  route("*", "features/not-found/pages/NotFoundPage.tsx"),
 ] satisfies RouteConfig;

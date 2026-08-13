@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Store.Service.Attributes;
 using Store.Service.Categories;
+using Store.Service.Files;
 using Store.Service.Products;
 
 namespace Store.Service;
@@ -12,6 +13,7 @@ public static class Configuration
         services.AddScoped<CategoryService>();
         services.AddScoped<ProductService>();
         services.AddScoped<AttributeService>();
+        services.AddScoped<FilesService>();
         return services;
     }
 }

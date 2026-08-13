@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Store.Domain.Categories;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
+namespace Store.Persistent.Database.Sql.Configuration;
 
 public class CategoryConfiguration : IEntityTypeConfiguration<CategoryEntity>
 {
