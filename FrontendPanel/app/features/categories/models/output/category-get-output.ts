@@ -1,4 +1,5 @@
 export interface CategoryGetOutput {
   id: number;
-  title: string;
+  title: string | null;
+  parentId: number | null;
 }

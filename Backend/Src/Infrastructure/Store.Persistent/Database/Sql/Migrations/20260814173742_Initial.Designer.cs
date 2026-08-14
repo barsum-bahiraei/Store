@@ -12,8 +12,8 @@ using Store.Persistent.Database.Sql;
 namespace Store.Persistent.Database.Sql.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    [Migration("20260813234709_initial")]
-    partial class initial
+    [Migration("20260814173742_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,6 +94,9 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -102,6 +105,8 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
 
                     b.ToTable("Categories", (string)null);
                 });
@@ -238,6 +243,16 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Categories.CategoryEntity", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
                     b.HasOne("Store.Domain.Attribute.AttributeEntity", "Attribute")
@@ -278,6 +293,8 @@ namespace Store.Persistent.Database.Sql.Migrations
             modelBuilder.Entity("Store.Domain.Categories.CategoryEntity", b =>
                 {
                     b.Navigation("CategoryAttributes");
+
+                    b.Navigation("Children");
 
                     b.Navigation("Products");
                 });

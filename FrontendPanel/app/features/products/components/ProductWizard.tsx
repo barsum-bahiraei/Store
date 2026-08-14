@@ -3,6 +3,7 @@ import { AttributeType } from "~/features/attributes/models/enums/attribute-type
 import { getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
 import { categoryApi } from "~/features/categories/api/category-api";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
+import { flattenCategories } from "~/features/categories/utils/category-tree";
 import type {
   ProductAttributeDefinition,
   ProductImage,
@@ -205,6 +206,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   );
   const canSaveImages = hasRetainedMainImage || (images.length > 0 && mainImageId !== null);
+  const categoryOptions = flattenCategories(categories);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
@@ -246,14 +248,14 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">The category determines which specifications this product needs.</p>
               {loading ? (
                 <div className="mt-8 flex items-center justify-center gap-2 py-12 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>Loading categories...</div>
-              ) : categories.length === 0 ? (
+              ) : categoryOptions.length === 0 ? (
                 <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-10 text-center dark:border-gray-700"><span className="material-symbols-outlined text-4xl text-gray-400">category</span><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Create a category before adding products.</p></div>
               ) : (
                 <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {categories.map((category) => (
+                  {categoryOptions.map(({ category, path }) => (
                     <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`flex min-h-24 items-center gap-3 rounded-2xl border p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${categoryId === category.id ? "border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950/40 dark:text-primary-200" : "border-gray-200 bg-white text-gray-800 hover:border-primary-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-primary-700 dark:hover:bg-gray-800"}`}>
                       <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"><span className="material-symbols-outlined">inventory_2</span></span>
-                      <span className="min-w-0 font-medium">{category.title}</span>
+                      <span className="min-w-0 text-sm font-medium">{path}</span>
                     </button>
                   ))}
                 </div>

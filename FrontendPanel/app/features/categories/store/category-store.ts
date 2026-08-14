@@ -19,9 +19,9 @@ interface CategoryStore {
   attributesLoading: boolean;
   attributesError: string | null;
   fetchCategories: () => Promise<void>;
-  createCategory: (input: CategoryCreateInput) => Promise<void>;
-  updateCategory: (id: number, input: CategoryUpdateInput) => Promise<void>;
-  deleteCategory: (id: number) => Promise<void>;
+  createCategory: (input: CategoryCreateInput) => Promise<boolean>;
+  updateCategory: (id: number, input: CategoryUpdateInput) => Promise<boolean>;
+  deleteCategory: (id: number) => Promise<boolean>;
   fetchCategoryAttributes: (categoryId: number) => Promise<void>;
   addAttributeToCategory: (input: CategoryAttributeAddInput) => Promise<void>;
   removeCategoryAttribute: (categoryId: number, id: number) => Promise<void>;
@@ -49,26 +49,26 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   createCategory: async (input) => {
     set({ loading: true, error: null });
     try {
-      const category = await categoryApi.create(input);
-      set((state) => ({
-        categories: [...state.categories, category],
-        loading: false,
-      }));
+      await categoryApi.create(input);
+      const categories = await categoryApi.list();
+      set({ categories, loading: false });
+      return true;
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
+      return false;
     }
   },
 
   updateCategory: async (id, input) => {
     set({ loading: true, error: null });
     try {
-      const category = await categoryApi.update(id, input);
-      set((state) => ({
-        categories: state.categories.map((c) => (c.id === id ? category : c)),
-        loading: false,
-      }));
+      await categoryApi.update(id, input);
+      const categories = await categoryApi.list();
+      set({ categories, loading: false });
+      return true;
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
+      return false;
     }
   },
 
@@ -76,12 +76,16 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await categoryApi.remove(id);
-      set((state) => ({
-        categories: state.categories.filter((category) => category.id !== id),
-        loading: false,
-      }));
+      const categories = await categoryApi.list();
+      set((state) => {
+        const categoryAttributes = { ...state.categoryAttributes };
+        delete categoryAttributes[id];
+        return { categories, categoryAttributes, loading: false };
+      });
+      return true;
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
+      return false;
     }
   },
 
