@@ -101,11 +101,12 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   addAttributeToCategory: async (input) => {
     set({ attributesLoading: true, attributesError: null });
     try {
-      const item = await categoryApi.addCategoryAttribute(input);
+      await categoryApi.addCategoryAttribute(input);
+      const list = await categoryApi.listCategoryAttributes(input.categoryId);
       set((state) => ({
         categoryAttributes: {
           ...state.categoryAttributes,
-          [input.categoryId]: [...(state.categoryAttributes[input.categoryId] ?? []), item],
+          [input.categoryId]: list,
         },
         attributesLoading: false,
       }));

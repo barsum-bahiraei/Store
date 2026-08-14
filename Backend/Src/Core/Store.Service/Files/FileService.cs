@@ -8,7 +8,7 @@ using Store.Domain.Files.Models.Output;
 
 namespace Store.Service.Files;
 
-public class FileService(IFilesRepository filesRepository, IMinioClient minioClient, IConfiguration configuration)
+public class FileService(IFileRepository fileRepository, IMinioClient minioClient, IConfiguration configuration)
 {
     public async Task<Result<FileCreateOutput>> CreateAsync(FileCreateInput input, IFormFile file,
         CancellationToken cancellation)
@@ -23,7 +23,7 @@ public class FileService(IFilesRepository filesRepository, IMinioClient minioCli
 
         var folder = input.TableName.ToString().Trim("/");
         var extension = Path.GetExtension(file.FileName);
-        var fileName = $"{input.Name}{extension}";
+        var fileName = $"{input.Title}{extension}";
         var objectName = $"{folder}/{fileName}";
 
         await using var stream = file.OpenReadStream();
@@ -39,7 +39,7 @@ public class FileService(IFilesRepository filesRepository, IMinioClient minioCli
 
         var entity = new FileEntity
         {
-            Name = input.Name,
+            Title = input.Title,
             Url = objectName,
             FileType = input.FileType,
             TableName = input.TableName,
@@ -48,11 +48,11 @@ public class FileService(IFilesRepository filesRepository, IMinioClient minioCli
             IsMain = input.IsMain,
         };
 
-        var created = await filesRepository.CreateAsync(entity, cancellation);
+        var created = await fileRepository.CreateAsync(entity, cancellation);
         var result = new FileCreateOutput
         {
             Id = created.Id,
-            Name = created.Name,
+            Title = created.Title,
             Url = created.Url,
             FileType = created.FileType,
             TableName = created.TableName,
@@ -61,6 +61,17 @@ public class FileService(IFilesRepository filesRepository, IMinioClient minioCli
             IsMain = created.IsMain,
         };
         return Result<FileCreateOutput>.Success(result);
+    }
+    public async Task<string> GetUrlAsync(string objectName, CancellationToken cancellation)
+    {
+        var bucketName = configuration["Minio:Bucket"]!;
+
+        var args = new PresignedGetObjectArgs()
+            .WithBucket(bucketName)
+            .WithObject(objectName)
+            .WithExpiry(60 * 60);
+
+        return await minioClient.PresignedGetObjectAsync(args);
     }
     
 }

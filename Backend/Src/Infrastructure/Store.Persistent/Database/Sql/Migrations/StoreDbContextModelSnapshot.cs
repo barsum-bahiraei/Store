@@ -120,10 +120,6 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Property<bool>("IsMain")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("TableName")
                         .HasColumnType("int");
 
@@ -132,6 +128,10 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.Property<int>("TargetName")
                         .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -198,9 +198,6 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.Property<decimal>("Discount")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("MainImageUrl")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");

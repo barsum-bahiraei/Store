@@ -16,7 +16,9 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
 
     public async Task<ProductEntity?> GetAsync(int id, CancellationToken cancellation)
     {
-        var result = await context.Products.FirstOrDefaultAsync(x => x.Id == id, cancellation);
+        var result = await context.Products
+            .Include(x => x.Category)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
     }
 

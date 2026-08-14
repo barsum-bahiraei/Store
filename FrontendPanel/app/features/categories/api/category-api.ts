@@ -11,10 +11,26 @@ import type { CategoryListOutput } from "../models/output/category-list-output";
 import type { CategoryUpdateInput } from "../models/input/category-update-input";
 import type { CategoryUpdateOutput } from "../models/output/category-update-output";
 
+let categoriesRequest: Promise<CategoryListOutput[]> | null = null;
+let categoriesCache: CategoryListOutput[] | null = null;
+const categoryAttributesRequests = new Map<number, Promise<CategoryAttributeListOutput[]>>();
+const categoryAttributesCache = new Map<number, CategoryAttributeListOutput[]>();
+
 export const categoryApi = {
   async list(): Promise<CategoryListOutput[]> {
-    const { data } = await httpClient.get<ApiResult<CategoryListOutput[]>>("/api/Category");
-    return resolveResult(data, "Failed to load categories");
+    if (categoriesCache) return categoriesCache;
+    if (!categoriesRequest) {
+      categoriesRequest = httpClient
+        .get<ApiResult<CategoryListOutput[]>>("/api/Category")
+        .then(({ data }) => {
+          categoriesCache = resolveResult(data, "Failed to load categories");
+          return categoriesCache;
+        })
+        .finally(() => {
+          categoriesRequest = null;
+        });
+    }
+    return categoriesRequest;
   },
 
   async get(id: number): Promise<CategoryGetOutput> {
@@ -24,7 +40,9 @@ export const categoryApi = {
 
   async create(input: CategoryCreateInput): Promise<CategoryCreateOutput> {
     const { data } = await httpClient.post<ApiResult<CategoryCreateOutput>>("/api/Category", input);
-    return resolveResult(data, "Failed to create category");
+    const category = resolveResult(data, "Failed to create category");
+    categoriesCache = null;
+    return category;
   },
 
   async update(id: number, input: CategoryUpdateInput): Promise<CategoryUpdateOutput> {
@@ -32,7 +50,9 @@ export const categoryApi = {
       `/api/Category/${id}`,
       input
     );
-    return resolveResult(data, "Failed to update category");
+    const category = resolveResult(data, "Failed to update category");
+    categoriesCache = null;
+    return category;
   },
 
   async remove(id: number): Promise<void> {
@@ -40,13 +60,29 @@ export const categoryApi = {
     if (!data?.isSuccess) {
       throw new Error(data?.errorMessage ?? "Failed to delete category");
     }
+    categoriesCache = null;
+    categoryAttributesCache.delete(id);
   },
 
   async listCategoryAttributes(categoryId: number): Promise<CategoryAttributeListOutput[]> {
-    const { data } = await httpClient.get<ApiResult<CategoryAttributeListOutput[]>>(
-      `/api/Category/Attribute/${categoryId}`
-    );
-    return resolveResult(data, "Failed to load category attributes");
+    const cached = categoryAttributesCache.get(categoryId);
+    if (cached) return cached;
+
+    const pending = categoryAttributesRequests.get(categoryId);
+    if (pending) return pending;
+
+    const request = httpClient
+      .get<ApiResult<CategoryAttributeListOutput[]>>(`/api/Category/Attribute/${categoryId}`)
+      .then(({ data }) => {
+        const list = resolveResult(data, "Failed to load category attributes");
+        categoryAttributesCache.set(categoryId, list);
+        return list;
+      })
+      .finally(() => {
+        categoryAttributesRequests.delete(categoryId);
+      });
+    categoryAttributesRequests.set(categoryId, request);
+    return request;
   },
 
   async addCategoryAttribute(input: CategoryAttributeAddInput): Promise<CategoryAttributeAddOutput> {
@@ -54,7 +90,9 @@ export const categoryApi = {
       "/api/Category/Attribute",
       input
     );
-    return resolveResult(data, "Failed to add attribute to category");
+    const item = resolveResult(data, "Failed to add attribute to category");
+    categoryAttributesCache.delete(input.categoryId);
+    return item;
   },
 
   async removeCategoryAttribute(id: number): Promise<void> {
@@ -64,5 +102,6 @@ export const categoryApi = {
     if (!data?.isSuccess) {
       throw new Error(data?.errorMessage ?? "Failed to remove attribute from category");
     }
+    categoryAttributesCache.clear();
   },
 };

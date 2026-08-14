@@ -28,6 +28,14 @@ public class ProductController(ProductService productService) : ControllerBase
         var result = await productService.CreateAsync(input, cancellation);
         return Ok(result);
     }
+    
+    // PUT api/<ProductController>/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Put(int id, ProductUpdateInput input, CancellationToken cancellation = default)
+    {
+        var result = await productService.UpdateAsync(id, input, cancellation);
+        return Ok(result);
+    }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)

@@ -1,6 +1,6 @@
 namespace Store.Domain.Files;
 
-public interface IFilesRepository
+public interface IFileRepository
 {
     Task<List<FileEntity>> ListAsync(TableNameEnum tableName, TargetNameEnum targetName, int targetId,
         CancellationToken cancellationToken);

@@ -27,12 +27,9 @@ public class AttributeRepository(StoreDbContext context) : IAttributeRepository
 
     public async Task<AttributeEntity> UpdateAsync(AttributeEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Attributes.FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
-        entity.Title = input.Title;
-        entity.Unit = input.Unit;
-        entity.Type = input.Type;
+        context.Attributes.Update(input);
         await context.SaveChangesAsync(cancellation);
-        return entity;
+        return input;
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellation)

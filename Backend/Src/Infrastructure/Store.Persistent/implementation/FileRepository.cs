@@ -4,7 +4,7 @@ using Store.Persistent.Database.Sql;
 
 namespace Store.Persistent.implementation;
 
-public class FilesRepository(StoreDbContext context) : IFilesRepository
+public class FileRepository(StoreDbContext context) : IFileRepository
 {
     public async Task<List<FileEntity>> ListAsync(TableNameEnum tableName, TargetNameEnum targetName, int targetId,
         CancellationToken cancellationToken)

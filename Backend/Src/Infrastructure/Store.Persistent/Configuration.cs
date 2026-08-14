@@ -21,7 +21,7 @@ public static class Configuration
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IAttributeRepository, AttributeRepository>();
-        services.AddScoped<IFilesRepository, FilesRepository>();
+        services.AddScoped<IFileRepository, FileRepository>();
         return services;
     }
 }

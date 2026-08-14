@@ -30,10 +30,9 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
 
     public async Task<CategoryEntity> UpdateAsync(CategoryEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Categoryies.FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
-        entity.Title = input.Title;
+        context.Categoryies.Update(input);
         await context.SaveChangesAsync(cancellation);
-        return entity;
+        return input;
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellation)

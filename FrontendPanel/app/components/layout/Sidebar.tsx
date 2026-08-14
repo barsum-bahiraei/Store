@@ -8,6 +8,7 @@ interface SidebarProps {
 }
 
 const navItems = [
+  { to: "/products", label: "Products", icon: "inventory_2" },
   { to: "/attributes", label: "Attributes", icon: "list_alt" },
   { to: "/categories", label: "Categories", icon: "folder" },
 ];
