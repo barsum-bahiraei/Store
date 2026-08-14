@@ -1,7 +1,25 @@
+import type { AttributeType } from "~/features/attributes/models/enums/attribute-type";
+import type { AttributeUnit } from "~/features/attributes/models/enums/attribute-unit";
+
 export interface ProductAttributeInput {
   attributeId: number;
   value: string;
 }
+
+export interface ProductAttributeDefinition {
+  attributeId: number;
+  attributeTitle: string | null;
+  attributeUnit: AttributeUnit;
+  attributeType: AttributeType;
+}
+
+export interface ProductAttributeOutput extends ProductAttributeInput {
+  id: number;
+}
+
+export interface ProductAttributeGetOutput
+  extends ProductAttributeOutput,
+    ProductAttributeDefinition {}
 
 export interface ProductCreateInput {
   title: string;
@@ -12,14 +30,17 @@ export interface ProductCreateInput {
   attributes: ProductAttributeInput[];
 }
 
-export interface ProductCreateOutput extends ProductCreateInput {
+export interface ProductCreateOutput extends Omit<ProductCreateInput, "attributes"> {
   id: number;
+  attributes: ProductAttributeOutput[];
 }
 
 export interface ProductUpdateInput extends ProductCreateInput {}
 
-export interface ProductUpdateOutput extends ProductUpdateInput {
+export interface ProductUpdateOutput extends Omit<ProductUpdateInput, "attributes"> {
   id: number;
+  categoryTitle: string;
+  attributes: ProductAttributeOutput[];
 }
 
 export interface ProductListOutput {
@@ -30,7 +51,7 @@ export interface ProductListOutput {
   discount: number;
   categoryId: number;
   categoryTitle: string;
-  image: ProductImage | string | null;
+  image: ProductImage | null;
 }
 
 export interface ProductImage {
@@ -42,7 +63,7 @@ export interface ProductImage {
 }
 
 export interface ProductGetOutput extends Omit<ProductListOutput, "image"> {
-  attributes: ProductAttributeInput[];
+  attributes: ProductAttributeGetOutput[];
   images: ProductImage[];
 }
 

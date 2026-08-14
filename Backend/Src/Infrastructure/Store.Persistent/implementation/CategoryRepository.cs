@@ -46,7 +46,6 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
     {
         var result = await context.CategoryAttributes
             .Where(x => x.CategoryId == categoryId)
-            .Include(x => x.Category)
             .Include(x => x.Attribute)
             .ToListAsync(cancellation);
         return result;
@@ -68,7 +67,6 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
         await context.CategoryAttributes.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
         var result = await context.CategoryAttributes
-            .Include(x => x.Category)
             .Include(x => x.Attribute)
             .FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
         return result;

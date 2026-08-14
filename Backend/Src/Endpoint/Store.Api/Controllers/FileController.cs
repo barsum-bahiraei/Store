@@ -15,4 +15,11 @@ public class FileController(FileService fileService) : ControllerBase
         var result = await fileService.CreateAsync(input, file, cancellation);
         return Ok(result);
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
+    {
+        var result = await fileService.DeleteAsync(id, cancellation);
+        return Ok(result);
+    }
 }

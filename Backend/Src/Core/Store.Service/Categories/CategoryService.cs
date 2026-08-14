@@ -29,6 +29,7 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
         {
             return Result<CategoryGetOutput?>.Failure("Category not found!");
         }
+
         var result = new CategoryGetOutput
         {
             Id = eniity.Id,
@@ -83,8 +84,6 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
         var result = entityList.Select(x => new CategoryAttributeListOutput
             {
                 Id = x.Id,
-                CategoryId = x.Category.Id,
-                CategoryTitle = x.Category.Title,
                 AttributeId = x.Attribute.Id,
                 AttributeTitle = x.Attribute.Title,
                 AttributeUnit = x.Attribute.Unit,
@@ -126,10 +125,10 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
         var result = new CategoryAttributeAddOutput
         {
             Id = created.Id,
-            CategoryId = created.Category.Id,
-            CategoryTitle = created.Category.Title,
             AttributeId = created.Attribute.Id,
-            AttributeTitle = created.Attribute.Title
+            AttributeTitle = created.Attribute.Title,
+            AttributeType = created.Attribute.Type,
+            AttributeUnit = created.Attribute.Unit,
         };
         return Result<CategoryAttributeAddOutput>.Success(result);
     }

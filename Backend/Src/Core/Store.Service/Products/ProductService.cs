@@ -14,18 +14,38 @@ public class ProductService(
     public async Task<Result<List<ProductListOutput>>> ListAsync(CancellationToken cancellation)
     {
         var entities = await productRepository.ListAsync(cancellation);
-        var result = entities
-            .Select(x => new ProductListOutput
+
+        var result = new List<ProductListOutput>();
+        foreach (var entity in entities)
+        {
+            var imageEntity = await fileRepository.GetAsync(TableNameEnum.Products, TargetNameEnum.ProductId, entity.Id, cancellation);
+            var image = new ProductImageListOutput();
+            if (imageEntity != null)
             {
-                Id = x.Id,
-                Title = x.Title,
-                Description = x.Description,
-                Price = x.Price,
-                Discount = x.Discount,
-                CategoryId = x.CategoryId,
-                CategoryTitle = x.Category.Title
-            })
-            .ToList();
+                var url = await fileService.GetUrlAsync(imageEntity.Url, cancellation);
+                image = new ProductImageListOutput
+                {
+                    Id = imageEntity.Id,
+                    Url = url,
+                    IsMain = imageEntity.IsMain,
+                    Title = imageEntity.Title,
+                    FileType = imageEntity.FileType,
+                };
+            }
+
+            result.Add(new ProductListOutput
+            {
+                Id = entity.Id,
+                Title = entity.Title,
+                Description = entity.Description,
+                Price = entity.Price,
+                Discount = entity.Discount,
+                CategoryId = entity.CategoryId,
+                CategoryTitle = entity.Category.Title,
+                Image = image
+            });
+        }
+
         return Result<List<ProductListOutput>>.Success(result);
     }
 
@@ -39,17 +59,18 @@ public class ProductService(
 
         var imagesEntity =
             await fileRepository.ListAsync(TableNameEnum.Products, TargetNameEnum.ProductId, entity.Id, cancellation);
-        var images = new List<ProductImage>();
+        var images = new List<ProductImageGetOutput>();
 
-        foreach (var x in imagesEntity)
+        foreach (var image in imagesEntity)
         {
-            var url = await fileService.GetUrlAsync(x.Url, cancellation);
-            images.Add(new ProductImage
+            var url = await fileService.GetUrlAsync(image.Url, cancellation);
+            images.Add(new ProductImageGetOutput
             {
-                Title = x.Title,
+                Id = image.Id,
                 Url = url,
-                FileType = x.FileType,
-                IsMain = x.IsMain,
+                IsMain = image.IsMain,
+                Title = image.Title,
+                FileType = image.FileType,
             });
         }
 
@@ -63,6 +84,15 @@ public class ProductService(
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Title,
             Images = images,
+            Attributes = entity.ProductAttributes.Select(x => new ProductAttributeGetOutput
+            {
+                Id = x.Id,
+                AttributeId = x.AttributeId,
+                Value = x.Value,
+                AttributeTitle = x.Attribute.Title,
+                AttributeType = x.Attribute.Type,
+                AttributeUnit = x.Attribute.Unit,
+            }).ToList()
         };
         return Result<ProductGetOutput?>.Success(result);
     }
@@ -93,6 +123,7 @@ public class ProductService(
             CategoryId = created.CategoryId,
             Attributes = created.ProductAttributes.Select(x => new ProductAttributeOutput
             {
+                Id = x.Id,
                 AttributeId = x.AttributeId,
                 Value = x.Value
             }).ToList()
@@ -101,22 +132,28 @@ public class ProductService(
         return Result<ProductCreateOutput>.Success(result);
     }
 
-    public async Task<Result<ProductUpdateOutput>> UpdateAsync(int id, ProductUpdateInput input, CancellationToken cancellation)
+    public async Task<Result<ProductUpdateOutput>> UpdateAsync(int id, ProductUpdateInput input,
+        CancellationToken cancellation)
     {
-        var entity = new ProductEntity
+        var entity = await productRepository.GetAsync(id, cancellation);
+        if (entity == null)
         {
-            Id = id,
-            Title = input.Title,
-            Description = input.Description,
-            Price = input.Price,
-            Discount = input.Discount,
-            CategoryId = input.CategoryId,
-            ProductAttributes = input.Attributes.Select(x => new ProductAttributeEntity
+            return Result<ProductUpdateOutput>.Failure("Product not found");
+        }
+
+        entity.Title = input.Title;
+        entity.Description = input.Description;
+        entity.Price = input.Price;
+        entity.Discount = input.Discount;
+        entity.CategoryId = input.CategoryId;
+        foreach (var item in input.Attributes)
+        {
+            var attribute = entity.ProductAttributes.FirstOrDefault(x => x.AttributeId == item.AttributeId);
+            if (attribute != null)
             {
-                AttributeId = x.AttributeId,
-                Value = x.Value
-            }).ToList()
-        };
+                attribute.Value = item.Value;
+            }
+        }
 
         var updated = await productRepository.UpdateAsync(entity, cancellation);
 
@@ -128,6 +165,7 @@ public class ProductService(
             Price = updated.Price,
             Discount = updated.Discount,
             CategoryId = updated.CategoryId,
+            CategoryTitle = updated.Category.Title,
             Attributes = updated.ProductAttributes.Select(x => new ProductAttributeUpdateOutput
             {
                 AttributeId = x.AttributeId,

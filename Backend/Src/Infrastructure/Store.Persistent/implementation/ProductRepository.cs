@@ -18,6 +18,8 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
     {
         var result = await context.Products
             .Include(x => x.Category)
+            .Include(x => x.ProductAttributes)
+            .ThenInclude(x => x.Attribute)
             .FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
     }
@@ -31,12 +33,11 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
 
     public async Task<ProductEntity> UpdateAsync(ProductEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Products.FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
-        entity.Title = input.Title;
-        entity.Description = input.Description;
-        entity.Price = input.Price;
-        entity.Discount = input.Discount;
+        context.Products.Update(input);
         await context.SaveChangesAsync(cancellation);
+        var entity = await context.Products
+            .Include(x => x.Category)
+            .FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
         return entity;
     }
 

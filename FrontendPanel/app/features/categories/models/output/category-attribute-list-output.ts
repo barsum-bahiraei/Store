@@ -3,10 +3,8 @@ import type { AttributeUnit } from "~/features/attributes/models/enums/attribute
 
 export interface CategoryAttributeListOutput {
   id: number;
-  categoryId: number;
-  categoryTitle: string;
   attributeId: number;
-  attributeTitle: string;
+  attributeTitle: string | null;
   attributeUnit: AttributeUnit;
   attributeType: AttributeType;
 }

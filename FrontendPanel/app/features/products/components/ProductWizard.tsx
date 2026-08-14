@@ -2,9 +2,12 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import { AttributeType } from "~/features/attributes/models/enums/attribute-type";
 import { getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
 import { categoryApi } from "~/features/categories/api/category-api";
-import type { CategoryAttributeListOutput } from "~/features/categories/models/output/category-attribute-list-output";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
-import type { ProductImage, ProductListOutput } from "../models/product";
+import type {
+  ProductAttributeDefinition,
+  ProductImage,
+  ProductListOutput,
+} from "../models/product";
 import { useProductStore } from "../store/product-store";
 import { resolveProductImageUrl } from "../utils/resolve-product-image-url";
 
@@ -40,7 +43,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const isEditing = editingProductId !== undefined;
   const [step, setStep] = useState(isEditing ? 1 : 0);
   const [categories, setCategories] = useState<CategoryListOutput[]>([]);
-  const [attributes, setAttributes] = useState<CategoryAttributeListOutput[]>([]);
+  const [attributes, setAttributes] = useState<ProductAttributeDefinition[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -60,8 +63,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   useEffect(() => {
     let active = true;
     const request = isEditing
-      ? Promise.all([categoryApi.list(), getProduct(editingProductId)]).then(async ([list, details]) => {
-          const categoryAttributes = await categoryApi.listCategoryAttributes(details.categoryId);
+      ? Promise.all([categoryApi.list(), getProduct(editingProductId)]).then(([list, details]) => {
           if (!active) return;
           setCategories(list);
           setCategoryId(details.categoryId);
@@ -69,7 +71,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           setDescription(details.description);
           setPrice(String(details.price));
           setDiscount(String(details.discount));
-          setAttributes(categoryAttributes);
+          setAttributes(details.attributes ?? []);
           setAttributeValues(
             Object.fromEntries((details.attributes ?? []).map((item) => [item.attributeId, item.value]))
           );
@@ -98,7 +100,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     setLoading(true);
     setError(null);
     try {
-      setAttributes(await categoryApi.listCategoryAttributes(categoryId));
+      const categoryAttributes = await categoryApi.listCategoryAttributes(categoryId);
+      setAttributes(categoryAttributes.map((attribute) => ({ ...attribute, value: "" })));
       setAttributeValues({});
       setStep(1);
     } catch (reason) {
@@ -273,7 +276,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                   <div className="flex items-center gap-2"><span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span><h4 className="font-semibold text-gray-900 dark:text-white">Specifications</h4></div>
                   <div className="mt-4 grid gap-5 sm:grid-cols-2">
                     {attributes.map((attribute) => (
-                      <label key={attribute.id}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle}</span>
+                      <label key={attribute.attributeId}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle ?? `Attribute ${attribute.attributeId}`}</span>
                         {attribute.attributeType === AttributeType.Bool ? (
                           <select value={attributeValues[attribute.attributeId] ?? ""} onChange={(event) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: event.target.value }))} className={inputClasses}><option value="">Select</option><option value="true">Yes</option><option value="false">No</option></select>
                         ) : (
@@ -315,10 +318,14 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               {images.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {images.map((image) => (
-                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
+                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!hasRetainedMainImage && mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
                       <img src={image.previewUrl} alt={image.file.name} className="aspect-square w-full object-cover" />
                       <button type="button" onClick={() => removeImage(image.id)} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`Remove ${image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
-                      <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => setMainImageId(image.id)} className="size-4 accent-primary-600" />Main image</label>
+                      {hasRetainedMainImage ? (
+                        <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">New image</span>
+                      ) : (
+                        <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => setMainImageId(image.id)} className="size-4 accent-primary-600" />Main image</label>
+                      )}
                     </div>
                   ))}
                 </div>

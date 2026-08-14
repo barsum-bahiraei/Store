@@ -15,10 +15,12 @@ public class FileRepository(StoreDbContext context) : IFileRepository
         return result;
     }
 
-    public async Task<FileEntity?> GetAsync(int id, CancellationToken cancellationToken)
+    public async Task<FileEntity?> GetAsync(TableNameEnum tableName, TargetNameEnum targetName, int targetId,
+        CancellationToken cancellationToken)
     {
         var result = await context.Files
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(x => x.TableName == tableName && x.TargetId == targetId && x.TargetName == targetName,
+                cancellationToken);
         return result;
     }
 

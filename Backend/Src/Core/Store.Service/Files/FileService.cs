@@ -62,6 +62,7 @@ public class FileService(IFileRepository fileRepository, IMinioClient minioClien
         };
         return Result<FileCreateOutput>.Success(result);
     }
+
     public async Task<string> GetUrlAsync(string objectName, CancellationToken cancellation)
     {
         var bucketName = configuration["Minio:Bucket"]!;
@@ -73,5 +74,10 @@ public class FileService(IFileRepository fileRepository, IMinioClient minioClien
 
         return await minioClient.PresignedGetObjectAsync(args);
     }
-    
+
+    public async Task<Result<bool>> DeleteAsync(int id, CancellationToken cancellation)
+    {
+        await fileRepository.DeleteAsync(id, cancellation);
+        return Result<bool>.Success(true);
+    }
 }
