@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Store.Domain;
+using Store.Domain.Accounts;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
@@ -20,6 +21,10 @@ public class StoreDbContext : DbContext
     public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
     public DbSet<AttributeEntity> Attributes { get; set; }
     public DbSet<FileEntity> Files { get; set; }
+    public DbSet<UserEntity> Users { get; set; }
+    public DbSet<RoleEntity> Roles { get; set; }
+    public DbSet<UserRoleEntity> UserRoles { get; set; }
+    public DbSet<RoleAccessEntity> RoleAccess { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

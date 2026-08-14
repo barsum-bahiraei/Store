@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Store.Domain.Accounts;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
@@ -12,7 +13,8 @@ namespace Store.Persistent;
 
 public static class Configuration
 {
-    public static IServiceCollection ConfigurationStorePersistent(this IServiceCollection services,IConfiguration configuration)
+    public static IServiceCollection ConfigurationStorePersistent(this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddDbContext<StoreDbContext>(options =>
         {
@@ -22,6 +24,7 @@ public static class Configuration
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IAttributeRepository, AttributeRepository>();
         services.AddScoped<IFileRepository, FileRepository>();
+        services.AddScoped<IAccountRepository, AccountRepository>();
         return services;
     }
 }
