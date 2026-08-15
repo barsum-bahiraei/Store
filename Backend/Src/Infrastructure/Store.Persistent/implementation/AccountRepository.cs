@@ -31,4 +31,36 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
         await context.SaveChangesAsync(cancellation);
         return input;
     }
+
+    public async Task<List<RoleEntity>> RoleListAsync(CancellationToken cancellation = default)
+    {
+        var result = await context.Roles.ToListAsync(cancellation);
+        return result;
+    }
+
+    public async Task<RoleEntity?> RoleGetAsync(int id, CancellationToken cancellation = default)
+    {
+        var result = await context.Roles.FirstOrDefaultAsync(x => x.Id == id, cancellation);
+        return result;
+    }
+
+    public async Task<RoleEntity> RoleCreateAsync(RoleEntity input, CancellationToken cancellation = default)
+    {
+        await context.Roles.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
+
+    public async Task<RoleEntity> RoleUpdateAsync(RoleEntity input, CancellationToken cancellation = default)
+    {
+        context.Roles.Update(input);
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
+
+    public async Task RoleDeleteAsync(RoleEntity input, CancellationToken cancellation = default)
+    {
+        context.Roles.Remove(input);
+        await context.SaveChangesAsync(cancellation);
+    }
 }

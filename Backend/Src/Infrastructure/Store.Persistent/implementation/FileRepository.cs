@@ -19,7 +19,11 @@ public class FileRepository(StoreDbContext context) : IFileRepository
         CancellationToken cancellationToken)
     {
         var result = await context.Files
-            .FirstOrDefaultAsync(x => x.TableName == tableName && x.TargetId == targetId && x.TargetName == targetName,
+            .FirstOrDefaultAsync(x =>
+                    x.TableName == tableName
+                    && x.TargetId == targetId
+                    && x.TargetName == targetName
+                    && x.IsMain == true,
                 cancellationToken);
         return result;
     }
