@@ -8,13 +8,28 @@ namespace Store.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AccountController(AccountService accountService, ControllerAccessProvider controllerAccessProvider) : ControllerBase
+public class AccountController(AccountService accountService, ControllerAccessProvider controllerAccessProvider)
+    : ControllerBase
 {
     [HasAccess]
     [HttpGet("User")]
     public async Task<IActionResult> UserGet(CancellationToken cancellation = default)
     {
         var result = await accountService.UserListAsync(cancellation);
+        return Ok(result);
+    }
+
+    [HttpPost("UserRegister")]
+    public async Task<IActionResult> UserRegisterPost(UserRegisterInput input, CancellationToken cancellation = default)
+    {
+        var result = await accountService.UserCreateAsync(input, cancellation);
+        return Ok(result);
+    }
+
+    [HttpPost("UserLogin")]
+    public async Task<IActionResult> UserLoginPost(UserLoginInput input, CancellationToken cancellation = default)
+    {
+        var result = await accountService.UserLoginAsync(input, cancellation);
         return Ok(result);
     }
 

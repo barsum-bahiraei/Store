@@ -1,10 +1,20 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Store.Domain.Accounts;
 using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
 
 namespace Store.Service.Accounts;
 
-public class AccountService(IAccountRepository accountRepository)
+public class AccountService(
+    IAccountRepository accountRepository,
+    IConfiguration configuration,
+    IPasswordHasher<UserEntity> passwordHasher
+)
 {
     public async Task<Result<List<UserListOutput>>> UserListAsync(CancellationToken cancellation)
     {
@@ -46,6 +56,76 @@ public class AccountService(IAccountRepository accountRepository)
             IsEmailVerified = entity.IsEmailVerified,
         };
         return Result<UserGetOutput>.Success(result);
+    }
+
+    public async Task<Result<UserRegisterOutput>> UserCreateAsync(UserRegisterInput input,
+        CancellationToken cancellation)
+    {
+        var user = await accountRepository.UserGetAsync(input.Email, cancellation);
+        if (user != null)
+        {
+            return Result<UserRegisterOutput>.Failure("User exists!");
+        }
+
+        var entity = new UserEntity
+        {
+            FirstName = input.FirstName,
+            LastName = input.LastName,
+            Email = input.Email,
+            Gender = input.Gender,
+        };
+        entity.PasswordHash = passwordHasher.HashPassword(entity, input.Password);
+        var created = await accountRepository.UserCreateAsync(entity, cancellation);
+        var result = new UserRegisterOutput
+        {
+            FirstName = created.FirstName,
+            LastName = created.LastName,
+            Email = created.Email,
+            Gender = created.Gender,
+            Address = created.Address,
+            BirthDate = created.BirthDate,
+            NationalCode = created.NationalCode,
+            PhoneNumber = created.PhoneNumber,
+            IsEmailVerified = created.IsEmailVerified,
+            Token = GenerateToken(created.Email)
+        };
+        return Result<UserRegisterOutput>.Success(result);
+    }
+
+    public async Task<Result<UserLoginOutput>> UserLoginAsync(UserLoginInput input, CancellationToken cancellation)
+    {
+        var entity = await accountRepository.UserGetAsync(input.Email, cancellation);
+        if (entity == null)
+        {
+            return Result<UserLoginOutput>.Failure("Invalid email or password");
+        }
+
+        var passwordResult = passwordHasher.VerifyHashedPassword(entity, entity.PasswordHash, input.Password);
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            return Result<UserLoginOutput>.Failure("Invalid email or password");
+        }
+
+        if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)
+        {
+            entity.PasswordHash = passwordHasher.HashPassword(entity, input.Password);
+            await accountRepository.UserUpdateAsync(entity, cancellation);
+        }
+
+        var result = new UserLoginOutput
+        {
+            FirstName = entity.FirstName,
+            LastName = entity.LastName,
+            Email = entity.Email,
+            Gender = entity.Gender,
+            Address = entity.Address,
+            BirthDate = entity.BirthDate,
+            NationalCode = entity.NationalCode,
+            PhoneNumber = entity.PhoneNumber,
+            IsEmailVerified = entity.IsEmailVerified,
+            Token = GenerateToken(entity.Email)
+        };
+        return Result<UserLoginOutput>.Success(result);
     }
 
     public async Task<Result<List<RoleListOutput>>> RoleListAsync(CancellationToken cancellation)
@@ -163,5 +243,24 @@ public class AccountService(IAccountRepository accountRepository)
 
         await accountRepository.RoleAccessDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
+    }
+
+    private string GenerateToken(string email)
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Email, email),
+        };
+        var jwt = configuration.GetSection("Jwt");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var tokne = new JwtSecurityToken(
+            issuer: jwt["Issuer"],
+            audience: jwt["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(int.Parse(jwt["ExpireMinutes"])),
+            signingCredentials: credentials
+        );
+        return new JwtSecurityTokenHandler().WriteToken(tokne);
     }
 }

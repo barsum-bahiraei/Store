@@ -1,6 +1,6 @@
 namespace Store.Domain.Accounts.Models.Output;
 
-public class UserGetOutput
+public class UserRegisterOutput
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
@@ -11,4 +11,5 @@ public class UserGetOutput
     public GenderTypeEnum Gender { get; set; }
     public string? Address { get; set; }
     public bool IsEmailVerified { get; set; }
+    public string Token { get; set; }
 }

@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Minio;
+using Store.Domain.Accounts;
 using Store.Service.Accounts;
 using Store.Service.Attributes;
 using Store.Service.Categories;
@@ -19,6 +21,7 @@ public static class Configuration
         services.AddScoped<AttributeService>();
         services.AddScoped<FileService>();
         services.AddScoped<AccountService>();
+        services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
         services.AddSingleton<IMinioClient>(_ =>
         {
             var endpoint = configuration["Minio:Endpoint"];
