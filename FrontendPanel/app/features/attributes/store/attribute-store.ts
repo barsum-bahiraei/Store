@@ -14,9 +14,9 @@ interface AttributeStore {
   loading: boolean;
   error: string | null;
   fetchAttributes: () => Promise<void>;
-  createAttribute: (input: AttributeCreateInput) => Promise<void>;
-  updateAttribute: (id: number, input: AttributeUpdateInput) => Promise<void>;
-  deleteAttribute: (id: number) => Promise<void>;
+  createAttribute: (input: AttributeCreateInput) => Promise<boolean>;
+  updateAttribute: (id: number, input: AttributeUpdateInput) => Promise<boolean>;
+  deleteAttribute: (id: number) => Promise<boolean>;
 }
 
 export const useAttributeStore = create<AttributeStore>((set, get) => ({
@@ -43,8 +43,10 @@ export const useAttributeStore = create<AttributeStore>((set, get) => ({
         attributes: [...state.attributes, attribute],
         loading: false,
       }));
+      return true;
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
+      return false;
     }
   },
 
@@ -58,8 +60,10 @@ export const useAttributeStore = create<AttributeStore>((set, get) => ({
         ),
         loading: false,
       }));
+      return true;
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
+      return false;
     }
   },
 
@@ -71,8 +75,10 @@ export const useAttributeStore = create<AttributeStore>((set, get) => ({
         attributes: state.attributes.filter((attribute) => attribute.id !== id),
         loading: false,
       }));
+      return true;
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });
+      return false;
     }
   },
 }));
