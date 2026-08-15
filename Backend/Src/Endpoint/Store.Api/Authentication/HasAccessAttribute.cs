@@ -1,8 +1,7 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Store.Service.Accounts;
+namespace Store.Api.Authentication;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class HasAccessAttribute : Attribute, IAsyncAuthorizationFilter

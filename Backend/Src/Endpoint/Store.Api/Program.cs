@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Store.Api.Authentication;
 using Store.Domain;
 using Store.Persistent;
 using Store.Service;
@@ -66,7 +67,7 @@ builder.Services
     .ConfigurationStoreService(builder.Configuration)
     .ConfigurationStorePersistent(builder.Configuration)
     .ConfigurationStoreDomain();
-
+builder.Services.AddScoped<ControllerAccessProvider>();
 var app = builder.Build();
 
 app.UseHttpsRedirection();

@@ -1,15 +1,53 @@
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Store.Domain.Accounts;
 using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
 
 namespace Store.Service.Accounts;
 
-public class AccountService(
-    IAccountRepository accountRepository,
-    IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
+public class AccountService(IAccountRepository accountRepository)
 {
+    public async Task<Result<List<UserListOutput>>> UserListAsync(CancellationToken cancellation)
+    {
+        var entities = await accountRepository.UserListAsync(cancellation);
+        var result = entities.Select(x => new UserListOutput
+        {
+            Id = x.Id,
+            FirstName = x.FirstName,
+            LastName = x.LastName,
+            Email = x.Email,
+            BirthDate = x.BirthDate,
+            Address = x.Address,
+            Gender = x.Gender,
+            PhoneNumber = x.PhoneNumber,
+            NationalCode = x.NationalCode,
+            IsEmailVerified = x.IsEmailVerified,
+        }).ToList();
+        return Result<List<UserListOutput>>.Success(result);
+    }
+
+    public async Task<Result<UserGetOutput>> UserGetAsync(string email, CancellationToken cancellation)
+    {
+        var entity = await accountRepository.UserGetAsync(email, cancellation);
+        if (entity == null)
+        {
+            return Result<UserGetOutput>.Failure("User not found");
+        }
+
+        var result = new UserGetOutput
+        {
+            FirstName = entity.FirstName,
+            LastName = entity.LastName,
+            Email = entity.Email,
+            BirthDate = entity.BirthDate,
+            Address = entity.Address,
+            Gender = entity.Gender,
+            PhoneNumber = entity.PhoneNumber,
+            NationalCode = entity.NationalCode,
+            IsEmailVerified = entity.IsEmailVerified,
+        };
+        return Result<UserGetOutput>.Success(result);
+    }
+
     public async Task<Result<List<RoleListOutput>>> RoleListAsync(CancellationToken cancellation)
     {
         var entities = await accountRepository.RoleListAsync(cancellation);
@@ -125,28 +163,5 @@ public class AccountService(
 
         await accountRepository.RoleAccessDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
-    }
-
-    public Result<List<ControllerActionListOutput>> ControllerActionList()
-    {
-        var items = actionDescriptorCollectionProvider.ActionDescriptors.Items
-            .OfType<ControllerActionDescriptor>()
-            .Where(x => x.MethodInfo.IsDefined(typeof(HasAccessAttribute), true));
-
-        var result = items
-            .GroupBy(x => x.ControllerName)
-            .Select(x => new ControllerActionListOutput
-            {
-                ControllerName = x.Key,
-                ActionsName = x
-                    .Select(a => a.ActionName)
-                    .Distinct()
-                    .OrderBy(a => a)
-                    .ToList()
-            })
-            .OrderBy(x => x.ControllerName)
-            .ToList();
-
-        return Result<List<ControllerActionListOutput>>.Success(result);
     }
 }
