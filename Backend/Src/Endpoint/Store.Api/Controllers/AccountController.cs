@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Store.Api.Authentication;
+using Store.Api.Authorization;
 using Store.Domain.Accounts.Models.Input;
 using Store.Service.Accounts;
 
@@ -8,7 +8,7 @@ namespace Store.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AccountController(AccountService accountService,ControllerAccessProvider controllerAccessProvider) : ControllerBase
+public class AccountController(AccountService accountService, ControllerAccessProvider controllerAccessProvider) : ControllerBase
 {
     [HasAccess]
     [HttpGet("User")]

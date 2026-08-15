@@ -2,7 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Store.Api.Authentication;
+using Store.Api.Authorization;
 using Store.Domain;
 using Store.Persistent;
 using Store.Service;

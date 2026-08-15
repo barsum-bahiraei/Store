@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Store.Domain.Accounts.Models.Output;
 using Store.Service;
 
-namespace Store.Api.Authentication;
+namespace Store.Api.Authorization;
 
 public class ControllerAccessProvider(IActionDescriptorCollectionProvider actionDescriptorCollectionProvider)
 {
