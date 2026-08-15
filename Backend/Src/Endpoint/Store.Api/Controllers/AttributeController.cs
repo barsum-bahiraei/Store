@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Store.Api.Authorization;
 using Store.Domain.Attribute.Models.Input;
 using Store.Domain.Attribute.Models.Output;
 using Store.Service.Attributes;
@@ -23,6 +24,7 @@ public class AttributeController(AttributeService attributeService) : Controller
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpPost]
     public async Task<IActionResult> Post(AttributeCreateInput input, CancellationToken cancellation = default)
     {
@@ -30,6 +32,7 @@ public class AttributeController(AttributeService attributeService) : Controller
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, AttributeUpdateInput input, CancellationToken cancellation = default)
     {
@@ -37,6 +40,7 @@ public class AttributeController(AttributeService attributeService) : Controller
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {

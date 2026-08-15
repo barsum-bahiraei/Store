@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Accounts.Models.Input;
@@ -41,7 +42,7 @@ public class AccountController(AccountService accountService, ControllerAccessPr
         return Ok(result);
     }
 
-    [HasAccess]
+    [Authorize]
     [HttpGet("UserProfile")]
     public async Task<IActionResult> UserProfileGet(CancellationToken cancellation = default)
     {
@@ -55,14 +56,6 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     public async Task<IActionResult> RoleGet(CancellationToken cancellation = default)
     {
         var result = await accountService.RoleListAsync(cancellation);
-        return Ok(result);
-    }
-
-    [HasAccess]
-    [HttpGet("Role/{id}")]
-    public async Task<IActionResult> RoleGet(int id, CancellationToken cancellation = default)
-    {
-        var result = await accountService.RoleGetAsync(id, cancellation);
         return Ok(result);
     }
 
@@ -107,9 +100,19 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     }
 
     [HasAccess]
+    [HttpGet("RoleAccess/{roleId}")]
+    public async Task<IActionResult> RoleAccessGet(int roleId, CancellationToken cancellation = default)
+    {
+        var result = await accountService.RoleAccessListAsync(roleId, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
     [HttpPost("RoleAccess")]
-    public async Task<IActionResult> RoleAccessPost(RoleAccessCreateInput input,
-        CancellationToken cancellation = default)
+    public async Task<IActionResult> RoleAccessPost(
+        RoleAccessCreateInput input,
+        CancellationToken cancellation = default
+    )
     {
         var result = await accountService.RoleAccessCreateAsync(input, cancellation);
         return Ok(result);

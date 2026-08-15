@@ -42,6 +42,7 @@ public class AccountService(
         {
             return Result<UserGetOutput>.Failure("User not found");
         }
+
         var roleAccessList = await accountRepository.RoleAccessListAsync(cancellation);
 
         var result = new UserGetOutput
@@ -62,8 +63,8 @@ public class AccountService(
                 RoleId = x.RoleId,
                 RoleName = x.Role.Name,
                 Access = roleAccessList
-                    .Where(ra=>ra.RoleId == x.RoleId)
-                    .Select(ra=> new UserRoleAccessGetOutput
+                    .Where(ra => ra.RoleId == x.RoleId)
+                    .Select(ra => new UserRoleAccessGetOutput
                     {
                         Id = ra.Id,
                         ControllerName = ra.ControllerName,
@@ -185,22 +186,6 @@ public class AccountService(
         return Result<List<RoleListOutput>>.Success(result);
     }
 
-    public async Task<Result<RoleGetOutput>> RoleGetAsync(int id, CancellationToken cancellation)
-    {
-        var entity = await accountRepository.RoleGetAsync(id, cancellation);
-        if (entity == null)
-        {
-            return Result<RoleGetOutput>.Failure("Role not found");
-        }
-
-        var result = new RoleGetOutput
-        {
-            Id = entity.Id,
-            Name = entity.Name,
-        };
-        return Result<RoleGetOutput>.Success(result);
-    }
-
     public async Task<Result<RoleCreateOutput>> RoleCreateAsync(RoleCreateInput input, CancellationToken cancellation)
     {
         var entity = new RoleEntity
@@ -275,6 +260,23 @@ public class AccountService(
 
         await accountRepository.UserRoleDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<List<RoleAccessListOutput>>> RoleAccessListAsync(
+        int roleId,
+        CancellationToken cancellation
+    )
+    {
+        var entities = await accountRepository.RoleAccessListAsync(roleId, cancellation);
+        var result = entities.Select(x => new RoleAccessListOutput
+            {
+                Id = x.Id,
+                RoleId = x.RoleId,
+                ControllerName = x.ControllerName,
+                ActionName = x.ActionName,
+            }
+        ).ToList();
+        return Result<List<RoleAccessListOutput>>.Success(result);
     }
 
     public async Task<Result<RoleAccessCreateOutput>> RoleAccessCreateAsync(RoleAccessCreateInput input,

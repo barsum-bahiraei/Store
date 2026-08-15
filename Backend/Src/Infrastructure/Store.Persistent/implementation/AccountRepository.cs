@@ -22,6 +22,7 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
     {
         var result = await context.Users
             .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
             .FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
     }
@@ -48,7 +49,9 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
 
     public async Task<RoleEntity?> RoleGetAsync(int id, CancellationToken cancellation = default)
     {
-        var result = await context.Roles.FirstOrDefaultAsync(x => x.Id == id, cancellation);
+        var result = await context.Roles
+            .Include(x => x.RoleAccess)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
     }
 
@@ -95,6 +98,14 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
     public async Task<List<RoleAccessEntity>> RoleAccessListAsync(CancellationToken cancellation = default)
     {
         var result = await context.RoleAccess.ToListAsync(cancellation);
+        return result;
+    }
+
+    public async Task<List<RoleAccessEntity>> RoleAccessListAsync(int roleId, CancellationToken cancellation = default)
+    {
+        var result = await context.RoleAccess
+            .Where(x => x.RoleId == roleId)
+            .ToListAsync(cancellation);
         return result;
     }
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Store.Api.Authorization;
 using Store.Domain.Files.Models.Input;
 using Store.Service.Files;
 
@@ -8,6 +9,7 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class FileController(FileService fileService) : ControllerBase
 {
+    [HasAccess]
     [HttpPost]
     public async Task<IActionResult> Post(IFormFile file, [FromForm] FileCreateInput input,
         CancellationToken cancellation = default)
@@ -16,6 +18,7 @@ public class FileController(FileService fileService) : ControllerBase
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {

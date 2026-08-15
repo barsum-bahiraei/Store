@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Store.Api.Authorization;
 using Store.Domain.Products.Models.Input;
 using Store.Service.Products;
 
@@ -22,6 +23,7 @@ public class ProductController(ProductService productService) : ControllerBase
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpPost]
     public async Task<IActionResult> Post(ProductCreateInput input, CancellationToken cancellation = default)
     {
@@ -30,6 +32,7 @@ public class ProductController(ProductService productService) : ControllerBase
     }
     
     // PUT api/<ProductController>/5
+    [HasAccess]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, ProductUpdateInput input, CancellationToken cancellation = default)
     {
@@ -37,6 +40,7 @@ public class ProductController(ProductService productService) : ControllerBase
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {

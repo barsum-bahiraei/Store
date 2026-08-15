@@ -11,6 +11,8 @@ const navItems = [
   { to: "/products", label: "Products", icon: "inventory_2" },
   { to: "/attributes", label: "Attributes", icon: "list_alt" },
   { to: "/categories", label: "Categories", icon: "folder" },
+  { to: "/roles", label: "Roles", icon: "admin_panel_settings" },
+  { to: "/users", label: "Users", icon: "group" },
 ];
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {

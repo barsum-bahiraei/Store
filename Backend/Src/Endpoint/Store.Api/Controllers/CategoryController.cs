@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Store.Api.Authorization;
 using Store.Domain.Categories.Models.Input;
 using Store.Service.Categories;
 
@@ -27,6 +28,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
     }
 
     // POST api/<ProductController>
+    [HasAccess]
     [HttpPost]
     public async Task<IActionResult> Post(CategoryCreateInput input, CancellationToken cancellation = default)
     {
@@ -35,6 +37,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
     }
 
     // PUT api/<ProductController>/5
+    [HasAccess]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, CategoryUpdateInput input, CancellationToken cancellation = default)
     {
@@ -43,6 +46,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
     }
 
     // DELETE api/<ProductController>/5
+    [HasAccess]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {
@@ -50,6 +54,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpGet("Attribute/{categoryid}")]
     public async Task<IActionResult> AttributeGet(int categoryid, CancellationToken cancellation = default)
     {
@@ -57,6 +62,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpPost("Attribute")]
     public async Task<IActionResult> AttributePost(CategoryAttributeAddInput input, CancellationToken cancellation = default)
     {
@@ -64,6 +70,7 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpDelete("Attribute/{id}")]
     public async Task<IActionResult> AttributeDelete(int id, CancellationToken cancellation = default)
     {

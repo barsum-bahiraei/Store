@@ -16,6 +16,7 @@ public interface IAccountRepository
     Task<UserRoleEntity> UserRoleCreateAsync(UserRoleEntity input, CancellationToken cancellation = default);
     Task UserRoleDeleteAsync(UserRoleEntity input, CancellationToken cancellation = default);
     Task<List<RoleAccessEntity>> RoleAccessListAsync(CancellationToken cancellation = default);
+    Task<List<RoleAccessEntity>> RoleAccessListAsync(int roleId,CancellationToken cancellation = default);
     Task<RoleAccessEntity?> RoleAccessGetAsync(int id, CancellationToken cancellation = default);
     Task<RoleAccessEntity> RoleAccessCreateAsync(RoleAccessEntity input, CancellationToken cancellation = default);
     Task RoleAccessDeleteAsync(RoleAccessEntity input, CancellationToken cancellation = default);
