@@ -72,10 +72,17 @@ public class AccountService(
             FirstName = input.FirstName,
             LastName = input.LastName,
             Email = input.Email,
-            Gender = input.Gender,
+            Gender = input.Gender
         };
         entity.PasswordHash = passwordHasher.HashPassword(entity, input.Password);
         var created = await accountRepository.UserCreateAsync(entity, cancellation);
+        var userRoleEntity = new UserRoleEntity
+        {
+            UserId = created.Id,
+            RoleId = 1,
+        };
+        await accountRepository.UserRoleCreateAsync(userRoleEntity, cancellation);
+
         var result = new UserRegisterOutput
         {
             FirstName = created.FirstName,
@@ -180,6 +187,7 @@ public class AccountService(
         }
 
         entity.Name = input.Name;
+        await accountRepository.RoleUpdateAsync(entity, cancellation);
         var result = new RoleUpdateOutput
         {
             Id = entity.Id,
@@ -197,6 +205,36 @@ public class AccountService(
         }
 
         await accountRepository.RoleDeleteAsync(entity, cancellation);
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<UserRoleCreateOutput>> UserRoleCreateAsync(UserRoleCreateInput input,
+        CancellationToken cancellation)
+    {
+        var entity = new UserRoleEntity
+        {
+            RoleId = input.RoleId,
+            UserId = input.UserId,
+        };
+        var created = await accountRepository.UserRoleCreateAsync(entity, cancellation);
+        var result = new UserRoleCreateOutput
+        {
+            Id = created.Id,
+            RoleId = created.RoleId,
+            UserId = created.UserId,
+        };
+        return Result<UserRoleCreateOutput>.Success(result);
+    }
+
+    public async Task<Result<bool>> UserRoleDeleteAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await accountRepository.UserRoleGetAsync(id, cancellation);
+        if (entity == null)
+        {
+            return Result<bool>.Failure("UserRole not found");
+        }
+
+        await accountRepository.UserRoleDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
     }
 

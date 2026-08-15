@@ -91,6 +91,22 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     }
 
     [HasAccess]
+    [HttpPost("UserRole")]
+    public async Task<IActionResult> UserRolePost(UserRoleCreateInput input, CancellationToken cancellation = default)
+    {
+        var result = await accountService.UserRoleCreateAsync(input, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpDelete("UserRole/{id}")]
+    public async Task<IActionResult> UserRoleDelete(int id, CancellationToken cancellation = default)
+    {
+        var result = await accountService.UserRoleDeleteAsync(id, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
     [HttpPost("RoleAccess")]
     public async Task<IActionResult> RoleAccessPost(RoleAccessCreateInput input,
         CancellationToken cancellation = default)
