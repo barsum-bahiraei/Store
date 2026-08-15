@@ -35,15 +35,54 @@ public class AccountService(
         return Result<List<UserListOutput>>.Success(result);
     }
 
-    public async Task<Result<UserGetOutput>> UserGetAsync(string email, CancellationToken cancellation)
+    public async Task<Result<UserGetOutput>> UserGetAsync(int id, CancellationToken cancellation)
     {
-        var entity = await accountRepository.UserGetAsync(email, cancellation);
+        var entity = await accountRepository.UserGetAsync(id, cancellation);
         if (entity == null)
         {
             return Result<UserGetOutput>.Failure("User not found");
         }
+        var roleAccessList = await accountRepository.RoleAccessListAsync(cancellation);
 
         var result = new UserGetOutput
+        {
+            Id = entity.Id,
+            FirstName = entity.FirstName,
+            LastName = entity.LastName,
+            Email = entity.Email,
+            BirthDate = entity.BirthDate,
+            Address = entity.Address,
+            Gender = entity.Gender,
+            PhoneNumber = entity.PhoneNumber,
+            NationalCode = entity.NationalCode,
+            IsEmailVerified = entity.IsEmailVerified,
+            Roles = entity.UserRoles.Select(x => new UserRoleGetOutput
+            {
+                Id = x.Id,
+                RoleId = x.RoleId,
+                RoleName = x.Role.Name,
+                Access = roleAccessList
+                    .Where(ra=>ra.RoleId == x.RoleId)
+                    .Select(ra=> new UserRoleAccessGetOutput
+                    {
+                        Id = ra.Id,
+                        ControllerName = ra.ControllerName,
+                        ActionName = ra.ActionName
+                    }).ToList()
+            }).ToList()
+        };
+        return Result<UserGetOutput>.Success(result);
+    }
+
+    public async Task<Result<UserProfileGetOutput>> UserProfileGetAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await accountRepository.UserGetAsync(id, cancellation);
+        if (entity == null)
+        {
+            return Result<UserProfileGetOutput>.Failure("User not found");
+        }
+
+        var result = new UserProfileGetOutput
         {
             FirstName = entity.FirstName,
             LastName = entity.LastName,
@@ -55,10 +94,10 @@ public class AccountService(
             NationalCode = entity.NationalCode,
             IsEmailVerified = entity.IsEmailVerified,
         };
-        return Result<UserGetOutput>.Success(result);
+        return Result<UserProfileGetOutput>.Success(result);
     }
 
-    public async Task<Result<UserRegisterOutput>> UserCreateAsync(UserRegisterInput input,
+    public async Task<Result<UserRegisterOutput>> UserRegisterAsync(UserRegisterInput input,
         CancellationToken cancellation)
     {
         var user = await accountRepository.UserGetAsync(input.Email, cancellation);
@@ -94,7 +133,7 @@ public class AccountService(
             NationalCode = created.NationalCode,
             PhoneNumber = created.PhoneNumber,
             IsEmailVerified = created.IsEmailVerified,
-            Token = GenerateToken(created.Email)
+            Token = GenerateToken(created.Id)
         };
         return Result<UserRegisterOutput>.Success(result);
     }
@@ -130,7 +169,7 @@ public class AccountService(
             NationalCode = entity.NationalCode,
             PhoneNumber = entity.PhoneNumber,
             IsEmailVerified = entity.IsEmailVerified,
-            Token = GenerateToken(entity.Email)
+            Token = GenerateToken(entity.Id)
         };
         return Result<UserLoginOutput>.Success(result);
     }
@@ -238,19 +277,6 @@ public class AccountService(
         return Result<bool>.Success(true);
     }
 
-    public async Task<Result<List<RoleAccessListOutput>>> RoleAccessListAsync(CancellationToken cancellation)
-    {
-        var entities = await accountRepository.RoleAccessListAsync(cancellation);
-        var result = entities.Select(x => new RoleAccessListOutput
-        {
-            Id = x.Id,
-            RoleId = x.RoleId,
-            ControllerName = x.ControllerName,
-            ActionName = x.ActionName,
-        }).ToList();
-        return Result<List<RoleAccessListOutput>>.Success(result);
-    }
-
     public async Task<Result<RoleAccessCreateOutput>> RoleAccessCreateAsync(RoleAccessCreateInput input,
         CancellationToken cancellation)
     {
@@ -283,22 +309,34 @@ public class AccountService(
         return Result<bool>.Success(true);
     }
 
-    private string GenerateToken(string email)
+    private string GenerateToken(int id)
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.NameIdentifier, id.ToString())
         };
+
         var jwt = configuration.GetSection("Jwt");
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var tokne = new JwtSecurityToken(
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwt["Key"]!)
+        );
+
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256
+        );
+
+        var token = new JwtSecurityToken(
             issuer: jwt["Issuer"],
             audience: jwt["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(int.Parse(jwt["ExpireMinutes"])),
+            expires: DateTime.UtcNow.AddMinutes(
+                int.Parse(jwt["ExpireMinutes"]!)
+            ),
             signingCredentials: credentials
         );
-        return new JwtSecurityTokenHandler().WriteToken(tokne);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

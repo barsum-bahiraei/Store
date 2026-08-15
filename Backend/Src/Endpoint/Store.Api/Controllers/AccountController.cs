@@ -19,10 +19,18 @@ public class AccountController(AccountService accountService, ControllerAccessPr
         return Ok(result);
     }
 
+    [HasAccess]
+    [HttpGet("User/{id}")]
+    public async Task<IActionResult> UserGet(int id, CancellationToken cancellation = default)
+    {
+        var result = await accountService.UserGetAsync(id, cancellation);
+        return Ok(result);
+    }
+
     [HttpPost("UserRegister")]
     public async Task<IActionResult> UserRegisterPost(UserRegisterInput input, CancellationToken cancellation = default)
     {
-        var result = await accountService.UserCreateAsync(input, cancellation);
+        var result = await accountService.UserRegisterAsync(input, cancellation);
         return Ok(result);
     }
 
@@ -37,8 +45,8 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     [HttpGet("UserProfile")]
     public async Task<IActionResult> UserProfileGet(CancellationToken cancellation = default)
     {
-        var email = User.FindFirst(ClaimTypes.Email)?.Value;
-        var result = await accountService.UserGetAsync(email, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await accountService.UserProfileGetAsync(userId, cancellation);
         return Ok(result);
     }
 
@@ -79,14 +87,6 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     public async Task<IActionResult> RoleDelete(int id, CancellationToken cancellation = default)
     {
         var result = await accountService.RoleDeleteAsync(id, cancellation);
-        return Ok(result);
-    }
-
-    [HasAccess]
-    [HttpGet("RoleAccess")]
-    public async Task<IActionResult> RoleAccessGet(CancellationToken cancellation = default)
-    {
-        var result = await accountService.RoleAccessListAsync(cancellation);
         return Ok(result);
     }
 
