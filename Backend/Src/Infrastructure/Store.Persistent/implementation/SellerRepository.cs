@@ -12,9 +12,9 @@ public class SellerRepository(StoreDbContext context) : ISellerRepository
         return result;
     }
 
-    public async Task<SellerEntity?> GetAsync(int id, CancellationToken cancellation)
+    public async Task<SellerEntity?> GetAsync(int id, int userId, CancellationToken cancellation)
     {
-        var result = await context.Sellers.FirstOrDefaultAsync(c => c.Id == id, cancellation);
+        var result = await context.Sellers.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId, cancellation);
         return result;
     }
 

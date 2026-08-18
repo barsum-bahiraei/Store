@@ -10,19 +10,21 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class SellerController(SellerService sellerService) : ControllerBase
 {
-    // [HasAccess]
-    // [HttpGet("{userId}")]
-    // public async Task<IActionResult> Get(int userId, CancellationToken cancellation = default)
-    // {
-    //     var result = await sellerService.ListAsync(userId, cancellation);
-    //     return Ok(result);
-    // }
+    [HasAccess]
+    [HttpGet()]
+    public async Task<IActionResult> Get(CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await sellerService.ListAsync(userId, cancellation);
+        return Ok(result);
+    }
 
     [HasAccess]
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id, CancellationToken cancellation = default)
     {
-        var result = await sellerService.GetAsync(id, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await sellerService.GetAsync(id, userId, cancellation);
         return Ok(result);
     }
 
@@ -39,7 +41,8 @@ public class SellerController(SellerService sellerService) : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, SellerUpdateInput input, CancellationToken cancellation = default)
     {
-        var result = await sellerService.UpdateAsync(id, input, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await sellerService.UpdateAsync(id, userId, input, cancellation);
         return Ok(result);
     }
 
@@ -47,7 +50,8 @@ public class SellerController(SellerService sellerService) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {
-        var result = await sellerService.DeleteAsync(id, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await sellerService.DeleteAsync(id, userId, cancellation);
         return Ok(result);
     }
 }

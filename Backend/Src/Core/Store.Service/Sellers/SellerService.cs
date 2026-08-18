@@ -38,9 +38,9 @@ public class SellerService(ISellerRepository sellerRepository, IFileRepository f
         return Result<List<SellerListOutput>>.Success(result);
     }
 
-    public async Task<Result<SellerGetOutput>> GetAsync(int id, CancellationToken cancellation)
+    public async Task<Result<SellerGetOutput>> GetAsync(int id, int userId, CancellationToken cancellation)
     {
-        var entity = await sellerRepository.GetAsync(id, cancellation);
+        var entity = await sellerRepository.GetAsync(id, userId, cancellation);
         if (entity == null)
         {
             return Result<SellerGetOutput>.Failure("Seller not found");
@@ -99,11 +99,12 @@ public class SellerService(ISellerRepository sellerRepository, IFileRepository f
 
     public async Task<Result<SellerUpdateOutput>> UpdateAsync(
         int id,
+        int userId,
         SellerUpdateInput input,
         CancellationToken cancellation
     )
     {
-        var entity = await sellerRepository.GetAsync(id, cancellation);
+        var entity = await sellerRepository.GetAsync(id, userId, cancellation);
         if (entity == null)
         {
             return Result<SellerUpdateOutput>.Failure("Seller not found");
@@ -123,9 +124,9 @@ public class SellerService(ISellerRepository sellerRepository, IFileRepository f
         return Result<SellerUpdateOutput>.Success(result);
     }
 
-    public async Task<Result<bool>> DeleteAsync(int id, CancellationToken cancellation)
+    public async Task<Result<bool>> DeleteAsync(int id, int userId, CancellationToken cancellation)
     {
-        var entity = await sellerRepository.GetAsync(id, cancellation);
+        var entity = await sellerRepository.GetAsync(id, userId, cancellation);
         if (entity == null)
         {
             return Result<bool>.Failure("Seller not found");
