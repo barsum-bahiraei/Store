@@ -8,6 +8,7 @@ using Store.Service.Attributes;
 using Store.Service.Categories;
 using Store.Service.Files;
 using Store.Service.Products;
+using Store.Service.Sellers;
 
 namespace Store.Service;
 
@@ -21,6 +22,7 @@ public static class Configuration
         services.AddScoped<AttributeService>();
         services.AddScoped<FileService>();
         services.AddScoped<AccountService>();
+        services.AddScoped<SellerService>();
         services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
         services.AddSingleton<IMinioClient>(_ =>
         {

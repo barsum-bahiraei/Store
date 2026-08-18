@@ -23,7 +23,7 @@ public class FileService(IFileRepository fileRepository, IMinioClient minioClien
 
         var folder = input.TableName.ToString().Trim("/");
         var extension = Path.GetExtension(file.FileName);
-        var fileName = $"{input.Title}{extension}";
+        var fileName = $"{input.Name}{extension}";
         var objectName = $"{folder}/{fileName}";
 
         await using var stream = file.OpenReadStream();
@@ -39,7 +39,7 @@ public class FileService(IFileRepository fileRepository, IMinioClient minioClien
 
         var entity = new FileEntity
         {
-            Title = input.Title,
+            Name = input.Name,
             Url = objectName,
             FileType = input.FileType,
             TableName = input.TableName,
@@ -52,7 +52,7 @@ public class FileService(IFileRepository fileRepository, IMinioClient minioClien
         var result = new FileCreateOutput
         {
             Id = created.Id,
-            Title = created.Title,
+            Name = created.Name,
             Url = created.Url,
             FileType = created.FileType,
             TableName = created.TableName,

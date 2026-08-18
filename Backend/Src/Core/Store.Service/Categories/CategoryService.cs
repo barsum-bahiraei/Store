@@ -17,7 +17,7 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
             .Select(x => new CategoryListOutput
             {
                 Id = x.Id,
-                Title = x.Title,
+                Name = x.Name,
                 ParentId = x.ParentId,
                 Children = BuildTree(categories, x.Id)
             }).ToList();
@@ -42,7 +42,7 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
         var result = new CategoryGetOutput
         {
             Id = eniity.Id,
-            Title = eniity?.Title,
+            Name = eniity?.Name,
             ParentId = eniity?.ParentId
         };
         return Result<CategoryGetOutput?>.Success(result);
@@ -53,14 +53,14 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
     {
         var entity = new CategoryEntity
         {
-            Title = input.Title,
+            Name = input.Name,
             ParentId = input.ParentId,
         };
         var created = await categoryRepository.CreateAsync(entity, cancellation);
         var result = new CategoryCreateOutput
         {
             Id = created.Id,
-            Title = input.Title,
+            Name = input.Name,
             ParentId = input.ParentId,
         };
         return Result<CategoryCreateOutput>.Success(result);
@@ -72,14 +72,14 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
         var entity = new CategoryEntity
         {
             Id = id,
-            Title = input.Title,
+            Name = input.Name,
             ParentId = input.ParentId
         };
         var updated = await categoryRepository.UpdateAsync(entity, cancellation);
         var result = new CategoryUpdateOutput
         {
             Id = updated.Id,
-            Title = updated.Title,
+            Name = updated.Name,
             ParentId = updated.ParentId,
         };
         return Result<CategoryUpdateOutput>.Success(result);
@@ -99,7 +99,7 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
             {
                 Id = x.Id,
                 AttributeId = x.Attribute.Id,
-                AttributeTitle = x.Attribute.Title,
+                AttributeTitle = x.Attribute.Name,
                 AttributeUnit = x.Attribute.Unit,
                 AttributeType = x.Attribute.Type,
             })
@@ -140,7 +140,7 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
         {
             Id = created.Id,
             AttributeId = created.Attribute.Id,
-            AttributeTitle = created.Attribute.Title,
+            AttributeTitle = created.Attribute.Name,
             AttributeType = created.Attribute.Type,
             AttributeUnit = created.Attribute.Unit,
         };

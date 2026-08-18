@@ -6,6 +6,7 @@ using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
 using Store.Domain.Products;
+using Store.Domain.Sellers;
 using Store.Persistent.Database.Sql;
 using Store.Persistent.implementation;
 
@@ -25,6 +26,7 @@ public static class Configuration
         services.AddScoped<IAttributeRepository, AttributeRepository>();
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<ISellerRepository, SellerRepository>();
         return services;
     }
 }

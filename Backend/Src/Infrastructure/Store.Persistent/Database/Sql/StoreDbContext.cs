@@ -6,6 +6,7 @@ using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
 using Store.Domain.Products;
+using Store.Domain.Sellers;
 
 namespace Store.Persistent.Database.Sql;
 
@@ -25,6 +26,7 @@ public class StoreDbContext : DbContext
     public DbSet<RoleEntity> Roles { get; set; }
     public DbSet<UserRoleEntity> UserRoles { get; set; }
     public DbSet<RoleAccessEntity> RoleAccess { get; set; }
+    public DbSet<SellerEntity> Sellers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

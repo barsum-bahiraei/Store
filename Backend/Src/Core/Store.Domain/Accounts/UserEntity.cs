@@ -1,3 +1,5 @@
+using Store.Domain.Sellers;
+
 namespace Store.Domain.Accounts;
 
 public class UserEntity : BaseEntity
@@ -13,4 +15,5 @@ public class UserEntity : BaseEntity
     public string? Address { get; set; }
     public bool IsEmailVerified { get; set; }
     public ICollection<UserRoleEntity> UserRoles { get; set; }
+    public ICollection<SellerEntity> Sellers { get; set; }
 }

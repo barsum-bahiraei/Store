@@ -2,7 +2,7 @@ namespace Store.Domain.Files;
 
 public class FileEntity : BaseEntity
 {
-    public string Title { get; set; }
+    public string Name { get; set; }
     public string Url { get; set; }
     public TableNameEnum TableName { get; set; }
     public int TargetId { get; set; }

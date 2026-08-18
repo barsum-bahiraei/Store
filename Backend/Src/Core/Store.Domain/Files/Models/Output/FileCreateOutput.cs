@@ -3,7 +3,7 @@
     public class FileCreateOutput
     {
         public int Id { get; set; }
-        public string Title { get; set; }
+        public string Name { get; set; }
         public string Url { get; set; }
         public TableNameEnum TableName { get; set; }
         public int TargetId { get; set; }

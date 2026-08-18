@@ -7,7 +7,7 @@ namespace Store.Domain.Categories;
 
 public class CategoryEntity : BaseEntity
 {
-    public string Title { get; set; }
+    public string Name { get; set; }
     public int? ParentId { get; set; }
     public CategoryEntity? Parent { get; set; }
     public ICollection<CategoryEntity>? Children { get; set; }

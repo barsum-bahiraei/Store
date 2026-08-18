@@ -28,7 +28,7 @@ public class ProductService(
                     Id = imageEntity.Id,
                     Url = url,
                     IsMain = imageEntity.IsMain,
-                    Title = imageEntity.Title,
+                    Name = imageEntity.Name,
                     FileType = imageEntity.FileType,
                 };
             }
@@ -36,12 +36,12 @@ public class ProductService(
             result.Add(new ProductListOutput
             {
                 Id = entity.Id,
-                Title = entity.Title,
+                Name = entity.Name,
                 Description = entity.Description,
                 Price = entity.Price,
                 Discount = entity.Discount,
                 CategoryId = entity.CategoryId,
-                CategoryTitle = entity.Category.Title,
+                CategoryTitle = entity.Category.Name,
                 Image = image
             });
         }
@@ -69,7 +69,7 @@ public class ProductService(
                 Id = image.Id,
                 Url = url,
                 IsMain = image.IsMain,
-                Title = image.Title,
+                Name = image.Name,
                 FileType = image.FileType,
             });
         }
@@ -77,19 +77,19 @@ public class ProductService(
         var result = new ProductGetOutput
         {
             Id = entity.Id,
-            Title = entity.Title,
+            Name = entity.Name,
             Description = entity.Description,
             Price = entity.Price,
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
-            CategoryTitle = entity.Category.Title,
+            CategoryTitle = entity.Category.Name,
             Images = images,
             Attributes = entity.ProductAttributes.Select(x => new ProductAttributeGetOutput
             {
                 Id = x.Id,
                 AttributeId = x.AttributeId,
                 Value = x.Value,
-                AttributeTitle = x.Attribute.Title,
+                AttributeTitle = x.Attribute.Name,
                 AttributeType = x.Attribute.Type,
                 AttributeUnit = x.Attribute.Unit,
             }).ToList()
@@ -101,7 +101,7 @@ public class ProductService(
     {
         var entity = new ProductEntity
         {
-            Title = input.Title,
+            Name = input.Name,
             Description = input.Description,
             Price = input.Price,
             Discount = input.Discount,
@@ -116,7 +116,7 @@ public class ProductService(
         var result = new ProductCreateOutput
         {
             Id = created.Id,
-            Title = created.Title,
+            Name = created.Name,
             Description = created.Description,
             Price = created.Price,
             Discount = created.Discount,
@@ -141,7 +141,7 @@ public class ProductService(
             return Result<ProductUpdateOutput>.Failure("Product not found");
         }
 
-        entity.Title = input.Title;
+        entity.Name = input.Name;
         entity.Description = input.Description;
         entity.Price = input.Price;
         entity.Discount = input.Discount;
@@ -160,12 +160,12 @@ public class ProductService(
         var result = new ProductUpdateOutput
         {
             Id = updated.Id,
-            Title = updated.Title,
+            Name = updated.Name,
             Description = updated.Description,
             Price = updated.Price,
             Discount = updated.Discount,
             CategoryId = updated.CategoryId,
-            CategoryTitle = updated.Category.Title,
+            CategoryTitle = updated.Category.Name,
             Attributes = updated.ProductAttributes.Select(x => new ProductAttributeUpdateOutput
             {
                 AttributeId = x.AttributeId,

@@ -13,7 +13,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
         var result = entities.Select(x => new AttributeListOutput
         {
             Id = x.Id,
-            Title = x.Title,
+            Name = x.Name,
             Type = x.Type,
             Unit = x.Unit,
         }).ToList();
@@ -32,7 +32,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
         var result = new AttributeGetOutput
         {
             Id = entity.Id,
-            Title = entity.Title,
+            Name = entity.Name,
             Type = entity.Type,
             Unit = entity.Unit,
         };
@@ -45,7 +45,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
     {
         var entity = new AttributeEntity
         {
-            Title = input.Title,
+            Name = input.Name,
             Type = input.Type,
             Unit = input.Unit
         };
@@ -54,7 +54,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
         var result = new AttributeCreateOutput
         {
             Id = created.Id,
-            Title = created.Title,
+            Name = created.Name,
             Type = created.Type,
             Unit = created.Unit
         };
@@ -68,7 +68,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
         var entity = new AttributeEntity
         {
             Id = id,
-            Title = input.Title,
+            Name = input.Name,
             Type = input.Type,
             Unit = input.Unit
         };
@@ -77,7 +77,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
         var result = new AttributeUpdateOutput
         {
             Id = updated.Id,
-            Title = updated.Title,
+            Name = updated.Name,
             Type = updated.Type,
             Unit = updated.Unit
         };
