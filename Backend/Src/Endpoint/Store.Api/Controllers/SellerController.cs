@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Sellers.Models.Input;
-using Store.Service.Sellers;
+using Store.Service.ProviderService;
 
 namespace Store.Api.Controllers;
 

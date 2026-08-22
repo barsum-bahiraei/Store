@@ -2,9 +2,8 @@ using Store.Domain.Files;
 using Store.Domain.Products;
 using Store.Domain.Products.Models.Input;
 using Store.Domain.Products.Models.Output;
-using Store.Service.Files;
 
-namespace Store.Service.Products;
+namespace Store.Service.ProviderService;
 
 public class ProductService(
     IProductRepository productRepository,

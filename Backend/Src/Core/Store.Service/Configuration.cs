@@ -3,12 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Minio;
 using Store.Domain.Accounts;
-using Store.Service.Accounts;
-using Store.Service.Attributes;
-using Store.Service.Categories;
-using Store.Service.Files;
-using Store.Service.Products;
-using Store.Service.Sellers;
+using Store.Service.ProviderService;
 
 namespace Store.Service;
 

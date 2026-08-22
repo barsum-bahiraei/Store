@@ -6,7 +6,7 @@ using System.Text;
 using Store.Domain.Attribute;
 using Store.Domain.Categories.Models.Input;
 
-namespace Store.Service.Categories;
+namespace Store.Service.ProviderService;
 
 public class CategoryService(ICategoryRepository categoryRepository, IAttributeRepository attributeRepository)
 {

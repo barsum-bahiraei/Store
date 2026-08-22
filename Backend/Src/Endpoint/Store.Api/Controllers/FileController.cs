@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Files.Models.Input;
-using Store.Service.Files;
+using Store.Service.ProviderService;
 
 namespace Store.Api.Controllers;
 

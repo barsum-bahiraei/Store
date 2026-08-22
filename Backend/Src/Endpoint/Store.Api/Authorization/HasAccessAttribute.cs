@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Store.Service.Accounts;
+using Store.Service.ProviderService;
 
 namespace Store.Api.Authorization;
 

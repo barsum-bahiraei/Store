@@ -6,7 +6,7 @@ using Store.Domain.Files;
 using Store.Domain.Files.Models.Input;
 using Store.Domain.Files.Models.Output;
 
-namespace Store.Service.Files;
+namespace Store.Service.ProviderService;
 
 public class FileService(IFileRepository fileRepository, IMinioClient minioClient, IConfiguration configuration)
 {

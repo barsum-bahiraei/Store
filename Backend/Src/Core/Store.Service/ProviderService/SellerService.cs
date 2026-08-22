@@ -2,9 +2,8 @@ using Store.Domain.Files;
 using Store.Domain.Sellers;
 using Store.Domain.Sellers.Models.Input;
 using Store.Domain.Sellers.Models.Output;
-using Store.Service.Files;
 
-namespace Store.Service.Sellers;
+namespace Store.Service.ProviderService;
 
 public class SellerService(ISellerRepository sellerRepository, IFileRepository fileRepository, FileService fileService)
 {
