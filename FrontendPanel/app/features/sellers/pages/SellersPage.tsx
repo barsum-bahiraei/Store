@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { SellerStatus, type SellerListOutput } from "../models/seller";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { SellerStatus, type SellerImage, type SellerListOutput } from "../models/seller";
 import { useSellerStore } from "../store/seller-store";
+import { resolveSellerImageUrl } from "../utils/resolve-seller-image-url";
 
 const inputClasses =
   "min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white";
@@ -13,18 +14,26 @@ const statuses = [
 ];
 
 export default function SellersPage() {
-  const { sellers, loading, submitting, error, fetchSellers, getSeller, createSeller, updateSeller, deleteSeller } =
+  const { sellers, loading, submitting, error, fetchSellers, getSeller, createSeller, updateSeller, saveSellerImage, deleteSeller } =
     useSellerStore();
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(SellerStatus.Active);
+  const [existingImage, setExistingImage] = useState<SellerImage | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ file: File; previewUrl: string } | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
     void fetchSellers();
   }, [fetchSellers]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedImage) URL.revokeObjectURL(selectedImage.previewUrl);
+    };
+  }, [selectedImage]);
 
   const closeForm = () => {
     setFormOpen(false);
@@ -32,36 +41,68 @@ export default function SellersPage() {
     setName("");
     setDescription("");
     setStatus(SellerStatus.Active);
+    setExistingImage(null);
+    setSelectedImage(null);
   };
 
   const startEditing = async (seller: SellerListOutput) => {
     setFormOpen(true);
     setEditingId(seller.id);
+    setExistingImage(null);
+    setSelectedImage(null);
     setFormLoading(true);
     try {
       const details = await getSeller(seller.id);
       setName(details.name);
       setDescription(details.description ?? "");
       setStatus(details.status);
+      setExistingImage(details.images.find((image) => image.isMain) ?? details.images[0] ?? null);
     } finally {
       setFormLoading(false);
     }
   };
 
+  const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file?.type.startsWith("image/")) {
+      setSelectedImage({ file, previewUrl: URL.createObjectURL(file) });
+    }
+    event.target.value = "";
+  };
+
   const save = async (event: FormEvent) => {
     event.preventDefault();
     if (!name.trim()) return;
-    const success = editingId === null
-      ? await createSeller({ name: name.trim(), description: description.trim() })
-      : await updateSeller(editingId, {
-          name: name.trim(),
-          description: description.trim() || null,
-          status,
-        });
-    if (success) {
-      closeForm();
-      await fetchSellers();
+    let sellerId = editingId;
+    if (sellerId === null) {
+      const created = await createSeller({ name: name.trim(), description: description.trim() });
+      if (!created) return;
+      sellerId = created.id;
+    } else {
+      const updated = await updateSeller(sellerId, {
+        name: name.trim(),
+        description: description.trim() || null,
+        status,
+      });
+      if (!updated) return;
     }
+
+    if (selectedImage) {
+      const imageSaved = await saveSellerImage({
+        file: selectedImage.file,
+        name: `${sellerId}-${crypto.randomUUID()}-${selectedImage.file.name.replace(/\.[^/.]+$/, "")}`,
+        sellerId,
+        imageId: existingImage?.id,
+        fileType: selectedImage.file.type === "image/svg+xml" ? 3 : 0,
+      });
+      if (!imageSaved) {
+        setEditingId(sellerId);
+        return;
+      }
+    }
+
+    closeForm();
+    await fetchSellers();
   };
 
   const remove = async (seller: SellerListOutput) => {
@@ -92,6 +133,23 @@ export default function SellersPage() {
             <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
             {editingId !== null && <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</span><select value={status} onChange={(event) => setStatus(Number(event.target.value))} className={inputClasses}>{statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>}
             <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} className={`${inputClasses} min-h-24 py-3`} /></label>
+            <div className="sm:col-span-2">
+              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Seller image</span>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950">
+                  {selectedImage || resolveSellerImageUrl(existingImage) ? <img src={selectedImage?.previewUrl ?? resolveSellerImageUrl(existingImage) ?? undefined} alt={`${name || "Seller"} preview`} className="size-full object-cover" /> : <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600">storefront</span>}
+                </div>
+                <div>
+                  <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
+                    <span className="material-symbols-outlined text-xl">add_photo_alternate</span>
+                    {existingImage || selectedImage ? "Replace image" : "Choose image"}
+                    <input type="file" accept="image/*" onChange={selectImage} className="sr-only" disabled={formLoading} />
+                  </label>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">One image only. Choosing a new image replaces the current one.</p>
+                  {selectedImage && <button type="button" onClick={() => setSelectedImage(null)} className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400">Cancel selected image</button>}
+                </div>
+              </div>
+            </div>
           </div>
           <button disabled={submitting || formLoading || !name.trim()} className="mt-4 min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">{submitting ? "Saving..." : "Save seller"}</button>
         </form>
@@ -106,7 +164,7 @@ export default function SellersPage() {
           {sellers.map((seller) => (
             <article key={seller.id} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3"><span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400"><span className="material-symbols-outlined">storefront</span></span><div className="min-w-0"><h2 className="truncate font-semibold text-gray-950 dark:text-white">{seller.name}</h2><p className="text-xs text-gray-500">{statuses.find((item) => item.value === seller.status)?.label}</p></div></div>
+                 <div className="flex min-w-0 items-center gap-3"><span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400">{resolveSellerImageUrl(seller.image) ? <img src={resolveSellerImageUrl(seller.image) ?? undefined} alt="" className="size-full object-cover" /> : <span className="material-symbols-outlined">storefront</span>}</span><div className="min-w-0"><h2 className="truncate font-semibold text-gray-950 dark:text-white">{seller.name}</h2><p className="text-xs text-gray-500">{statuses.find((item) => item.value === seller.status)?.label}</p></div></div>
                 <div className="flex"><button onClick={() => void startEditing(seller)} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-800" aria-label={`Edit ${seller.name}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void remove(seller)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label={`Delete ${seller.name}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
               </div>
               <p className="mt-4 line-clamp-3 min-h-15 text-sm leading-5 text-gray-500 dark:text-gray-400">{seller.description || "No description"}</p>

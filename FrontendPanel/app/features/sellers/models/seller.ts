@@ -24,6 +24,20 @@ export interface SellerUpdateInput {
   status: SellerStatus;
 }
 
+export interface SellerImageSaveInput {
+  file: File;
+  name: string;
+  sellerId: number;
+  imageId?: number;
+  fileType: 0 | 3;
+}
+
+export interface SellerImageOutput extends SellerImage {
+  tableName: 1;
+  targetId: number;
+  targetName: 1;
+}
+
 export interface SellerListOutput {
   id: number;
   name: string;

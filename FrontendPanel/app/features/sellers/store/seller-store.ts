@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { sellerApi } from "../api/seller-api";
-import type { SellerCreateInput, SellerGetOutput, SellerListOutput, SellerUpdateInput } from "../models/seller";
+import type {
+  SellerCreateInput,
+  SellerCreateOutput,
+  SellerGetOutput,
+  SellerImageSaveInput,
+  SellerListOutput,
+  SellerUpdateInput,
+} from "../models/seller";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error && error.message ? error.message : "An unexpected error occurred.";
@@ -12,8 +19,9 @@ interface SellerStore {
   error: string | null;
   fetchSellers: () => Promise<void>;
   getSeller: (id: number) => Promise<SellerGetOutput>;
-  createSeller: (input: SellerCreateInput) => Promise<boolean>;
+  createSeller: (input: SellerCreateInput) => Promise<SellerCreateOutput | null>;
   updateSeller: (id: number, input: SellerUpdateInput) => Promise<boolean>;
+  saveSellerImage: (input: SellerImageSaveInput) => Promise<boolean>;
   deleteSeller: (id: number) => Promise<void>;
 }
 
@@ -34,7 +42,18 @@ export const useSellerStore = create<SellerStore>((set) => ({
   createSeller: async (input) => {
     set({ submitting: true, error: null });
     try {
-      await sellerApi.create(input);
+      const seller = await sellerApi.create(input);
+      set({ submitting: false });
+      return seller;
+    } catch (error) {
+      set({ error: errorMessage(error), submitting: false });
+      return null;
+    }
+  },
+  updateSeller: async (id, input) => {
+    set({ submitting: true, error: null });
+    try {
+      await sellerApi.update(id, input);
       set({ submitting: false });
       return true;
     } catch (error) {
@@ -42,10 +61,10 @@ export const useSellerStore = create<SellerStore>((set) => ({
       return false;
     }
   },
-  updateSeller: async (id, input) => {
+  saveSellerImage: async (input) => {
     set({ submitting: true, error: null });
     try {
-      await sellerApi.update(id, input);
+      await sellerApi.saveImage(input);
       set({ submitting: false });
       return true;
     } catch (error) {
