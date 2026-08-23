@@ -11,7 +11,7 @@ namespace Store.Api.Controllers;
 public class SellerController(SellerService sellerService) : ControllerBase
 {
     [HasAccess]
-    [HttpGet()]
+    [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);

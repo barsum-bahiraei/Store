@@ -7,6 +7,7 @@ public class ProductCreateInput
     public decimal Price { get; set; }
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
+    public int SellerId { get; set; }
     public List<ProductAttributeInput> Attributes { get; set; }
 }
 

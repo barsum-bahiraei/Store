@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Products.Models.Input;
@@ -9,17 +10,21 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class ProductController(ProductService productService) : ControllerBase
 {
+    [HasAccess]
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellation = default)
     {
-        var result = await productService.ListAsync(cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.ListAsync(userId, cancellation);
         return Ok(result);
     }
 
+    [HasAccess]
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id, CancellationToken cancellation = default)
     {
-        var result = await productService.GetAsync(id, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.GetAsync(id, userId, cancellation);
         return Ok(result);
     }
 
@@ -30,13 +35,14 @@ public class ProductController(ProductService productService) : ControllerBase
         var result = await productService.CreateAsync(input, cancellation);
         return Ok(result);
     }
-    
+
     // PUT api/<ProductController>/5
     [HasAccess]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, ProductUpdateInput input, CancellationToken cancellation = default)
     {
-        var result = await productService.UpdateAsync(id, input, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.UpdateAsync(id, userId, input, cancellation);
         return Ok(result);
     }
 
@@ -44,7 +50,8 @@ public class ProductController(ProductService productService) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {
-        var result = await productService.DeleteAsync(id, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.DeleteAsync(id, userId, cancellation);
         return Ok(result);
     }
 }

@@ -12,7 +12,7 @@ using Store.Persistent.Database.Sql;
 namespace Store.Persistent.Database.Sql.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    [Migration("20260815173033_Initial")]
+    [Migration("20260822173549_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -233,12 +233,12 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -267,6 +267,10 @@ namespace Store.Persistent.Database.Sql.Migrations
                     b.Property<bool>("IsMain")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TableName")
                         .HasColumnType("int");
 
@@ -275,10 +279,6 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.Property<int>("TargetName")
                         .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -340,18 +340,20 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Discount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SellerId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -360,7 +362,43 @@ namespace Store.Persistent.Database.Sql.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("SellerId");
+
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Sellers", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
@@ -449,7 +487,26 @@ namespace Store.Persistent.Database.Sql.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Store.Domain.Sellers.SellerEntity", "Seller")
+                        .WithMany("Products")
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("Seller");
+                });
+
+            modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("Sellers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleEntity", b =>
@@ -461,6 +518,8 @@ namespace Store.Persistent.Database.Sql.Migrations
 
             modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
                 {
+                    b.Navigation("Sellers");
+
                     b.Navigation("UserRoles");
                 });
 
@@ -483,6 +542,11 @@ namespace Store.Persistent.Database.Sql.Migrations
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
                     b.Navigation("ProductAttributes");
+                });
+
+            modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

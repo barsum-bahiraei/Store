@@ -13,6 +13,7 @@ public class ProductGetOutput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public ProductSellerGetOutput Seller { get; set; }
     public List<ProductImageGetOutput>? Images { get; set; }
     public List<ProductAttributeGetOutput> Attributes { get; set; }
 }
@@ -34,4 +35,10 @@ public class ProductImageGetOutput
     public string Url { get; set; }
     public bool IsMain { get; set; }
     public FileTypeEnum FileType { get; set; }
+}
+
+public class ProductSellerGetOutput
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
 }

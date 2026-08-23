@@ -10,14 +10,15 @@ public class ProductService(
     IFileRepository fileRepository,
     FileService fileService)
 {
-    public async Task<Result<List<ProductListOutput>>> ListAsync(CancellationToken cancellation)
+    public async Task<Result<List<ProductListOutput>>> ListAsync(int userId, CancellationToken cancellation)
     {
-        var entities = await productRepository.ListAsync(cancellation);
+        var entities = await productRepository.ListAsync(userId, cancellation);
 
         var result = new List<ProductListOutput>();
         foreach (var entity in entities)
         {
-            var imageEntity = await fileRepository.GetAsync(TableNameEnum.Products, TargetNameEnum.ProductId, entity.Id, cancellation);
+            var imageEntity = await fileRepository.GetAsync(TableNameEnum.Products, TargetNameEnum.ProductId, entity.Id,
+                cancellation);
             var image = new ProductImageListOutput();
             if (imageEntity != null)
             {
@@ -32,6 +33,12 @@ public class ProductService(
                 };
             }
 
+            var seller = new ProductSellerListOutput
+            {
+                Id = entity.Seller.Id,
+                Name = entity.Seller.Name,
+            };
+
             result.Add(new ProductListOutput
             {
                 Id = entity.Id,
@@ -41,16 +48,17 @@ public class ProductService(
                 Discount = entity.Discount,
                 CategoryId = entity.CategoryId,
                 CategoryTitle = entity.Category.Name,
-                Image = image
+                Image = image,
+                Seller = seller,
             });
         }
 
         return Result<List<ProductListOutput>>.Success(result);
     }
 
-    public async Task<Result<ProductGetOutput?>> GetAsync(int id, CancellationToken cancellation)
+    public async Task<Result<ProductGetOutput?>> GetAsync(int id, int userId, CancellationToken cancellation)
     {
-        var entity = await productRepository.GetAsync(id, cancellation);
+        var entity = await productRepository.GetAsync(id, userId, cancellation);
         if (entity == null)
         {
             return Result<ProductGetOutput?>.Failure("Product not found");
@@ -83,6 +91,11 @@ public class ProductService(
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
             Images = images,
+            Seller = new ProductSellerGetOutput
+            {
+                Id = entity.Seller.Id,
+                Name = entity.Seller.Name,
+            },
             Attributes = entity.ProductAttributes.Select(x => new ProductAttributeGetOutput
             {
                 Id = x.Id,
@@ -105,6 +118,7 @@ public class ProductService(
             Price = input.Price,
             Discount = input.Discount,
             CategoryId = input.CategoryId,
+            SellerId = input.SellerId,
             ProductAttributes = input.Attributes.Select(x => new ProductAttributeEntity
             {
                 AttributeId = x.AttributeId,
@@ -120,6 +134,7 @@ public class ProductService(
             Price = created.Price,
             Discount = created.Discount,
             CategoryId = created.CategoryId,
+            SellerId = created.SellerId,
             Attributes = created.ProductAttributes.Select(x => new ProductAttributeOutput
             {
                 Id = x.Id,
@@ -131,10 +146,10 @@ public class ProductService(
         return Result<ProductCreateOutput>.Success(result);
     }
 
-    public async Task<Result<ProductUpdateOutput>> UpdateAsync(int id, ProductUpdateInput input,
+    public async Task<Result<ProductUpdateOutput>> UpdateAsync(int id, int userId, ProductUpdateInput input,
         CancellationToken cancellation)
     {
-        var entity = await productRepository.GetAsync(id, cancellation);
+        var entity = await productRepository.GetAsync(id, userId, cancellation);
         if (entity == null)
         {
             return Result<ProductUpdateOutput>.Failure("Product not found");
@@ -145,6 +160,7 @@ public class ProductService(
         entity.Price = input.Price;
         entity.Discount = input.Discount;
         entity.CategoryId = input.CategoryId;
+        entity.SellerId = input.SellerId;
         foreach (var item in input.Attributes)
         {
             var attribute = entity.ProductAttributes.FirstOrDefault(x => x.AttributeId == item.AttributeId);
@@ -165,6 +181,7 @@ public class ProductService(
             Discount = updated.Discount,
             CategoryId = updated.CategoryId,
             CategoryTitle = updated.Category.Name,
+            SellerId = updated.SellerId,
             Attributes = updated.ProductAttributes.Select(x => new ProductAttributeUpdateOutput
             {
                 AttributeId = x.AttributeId,
@@ -175,9 +192,15 @@ public class ProductService(
         return Result<ProductUpdateOutput>.Success(result);
     }
 
-    public async Task<Result<bool>> DeleteAsync(int id, CancellationToken cancellation)
+    public async Task<Result<bool>> DeleteAsync(int id, int userId, CancellationToken cancellation)
     {
-        await productRepository.DeleteAsync(id, cancellation);
+        var entity = await productRepository.GetAsync(id, userId, cancellation);
+        if (entity == null)
+        {
+            return Result<bool>.Failure("Product not found");
+        }
+
+        await productRepository.DeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
     }
 }

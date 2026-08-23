@@ -6,21 +6,24 @@ namespace Store.Persistent.implementation;
 
 public class ProductRepository(StoreDbContext context) : IProductRepository
 {
-    public async Task<List<ProductEntity>> ListAsync(CancellationToken cancellation)
+    public async Task<List<ProductEntity>> ListAsync(int userId, CancellationToken cancellation)
     {
         var result = await context.Products
+            .Where(x => x.Seller.UserId == userId)
             .Include(x => x.Category)
+            .Include(x => x.Seller)
             .ToListAsync(cancellation);
         return result;
     }
 
-    public async Task<ProductEntity?> GetAsync(int id, CancellationToken cancellation)
+    public async Task<ProductEntity?> GetAsync(int id, int userId, CancellationToken cancellation)
     {
         var result = await context.Products
+            .Include(x => x.Seller)
             .Include(x => x.Category)
             .Include(x => x.ProductAttributes)
             .ThenInclude(x => x.Attribute)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellation);
+            .FirstOrDefaultAsync(x => x.Id == id && x.Seller.UserId == userId, cancellation);
         return result;
     }
 
@@ -41,10 +44,9 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         return entity;
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellation)
+    public async Task DeleteAsync(ProductEntity input, CancellationToken cancellation)
     {
-        var entity = await context.Products.FirstOrDefaultAsync(x => x.Id == id, cancellation);
-        context.Products.Remove(entity);
+        context.Products.Remove(input);
         await context.SaveChangesAsync(cancellation);
     }
 }
