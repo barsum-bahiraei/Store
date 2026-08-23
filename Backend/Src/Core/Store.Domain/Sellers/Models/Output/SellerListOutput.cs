@@ -8,7 +8,7 @@ public class SellerListOutput
     public string Name { get; set; }
     public string? Description { get; set; }
     public SellerStatusEnum Status { get; set; }
-    public SellerImageListOutput Image { get; set; }
+    public SellerImageListOutput? Image { get; set; }
 }
 
 public class SellerImageListOutput

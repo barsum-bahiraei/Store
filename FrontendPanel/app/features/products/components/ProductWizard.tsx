@@ -4,6 +4,8 @@ import { getAttributeUnitLabel } from "~/features/attributes/models/enums/attrib
 import { categoryApi } from "~/features/categories/api/category-api";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
 import { flattenCategories } from "~/features/categories/utils/category-tree";
+import { sellerApi } from "~/features/sellers/api/seller-api";
+import type { SellerListOutput } from "~/features/sellers/models/seller";
 import type {
   ProductAttributeDefinition,
   ProductImage,
@@ -44,8 +46,10 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const isEditing = editingProductId !== undefined;
   const [step, setStep] = useState(isEditing ? 1 : 0);
   const [categories, setCategories] = useState<CategoryListOutput[]>([]);
+  const [sellers, setSellers] = useState<SellerListOutput[]>([]);
   const [attributes, setAttributes] = useState<ProductAttributeDefinition[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [sellerId, setSellerId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -64,12 +68,14 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   useEffect(() => {
     let active = true;
     const request = isEditing
-      ? Promise.all([categoryApi.list(), getProduct(editingProductId)]).then(([list, details]) => {
+      ? Promise.all([categoryApi.list(), sellerApi.list(), getProduct(editingProductId)]).then(([list, sellerList, details]) => {
           if (!active) return;
           setCategories(list);
+          setSellers(sellerList);
           setCategoryId(details.categoryId);
-          setTitle(details.title);
-          setDescription(details.description);
+          setSellerId(details.seller.id);
+          setTitle(details.name);
+          setDescription(details.description ?? "");
           setPrice(String(details.price));
           setDiscount(String(details.discount));
           setAttributes(details.attributes ?? []);
@@ -78,7 +84,12 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           );
           setExistingImages(details.images ?? []);
         })
-      : categoryApi.list().then((list) => active && setCategories(list));
+      : Promise.all([categoryApi.list(), sellerApi.list()]).then(([list, sellerList]) => {
+          if (!active) return;
+          setCategories(list);
+          setSellers(sellerList);
+          setSellerId(sellerList[0]?.id ?? null);
+        });
 
     request
       .catch((reason: unknown) => active && setError(errorMessage(reason)))
@@ -114,15 +125,16 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
   const saveDetails = async (event: FormEvent) => {
     event.preventDefault();
-    if (categoryId === null || !title.trim() || !price) return;
+    if (categoryId === null || sellerId === null || !title.trim() || !price) return;
     setError(null);
     try {
       const input = {
-        title: title.trim(),
-        description: description.trim(),
+        name: title.trim(),
+        description: description.trim() || null,
         price: Number(price),
         discount: Number(discount || 0),
         categoryId,
+        sellerId,
         attributes: attributes.map((attribute) => ({
           attributeId: attribute.attributeId,
           value: attributeValues[attribute.attributeId]?.trim() ?? "",
@@ -175,7 +187,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         images.map((image) =>
           uploadImage({
             file: image.file,
-            title: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
+            name: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
             productId: savedProductId,
             isMain: !hasExistingMain && image.id === mainImageId,
             fileType: image.file.type === "image/svg+xml" ? 3 : 0,
@@ -201,7 +213,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const canSubmitDetails =
-    title.trim().length > 0 && Number(price) > 0 && Number(discount || 0) >= 0;
+    title.trim().length > 0 && sellerId !== null && Number(price) > 0 && Number(discount || 0) >= 0;
   const hasRetainedMainImage = existingImages.some(
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   );
@@ -214,7 +226,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         <header className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7 sm:py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{isEditing ? "Edit product" : "New product"}</p>
-            <h2 id="wizard-title" className="mt-1 text-xl font-semibold text-gray-950 dark:text-white">{isEditing ? `Update ${product?.title ?? "product"}` : "Build your product listing"}</h2>
+             <h2 id="wizard-title" className="mt-1 text-xl font-semibold text-gray-950 dark:text-white">{isEditing ? `Update ${product?.name ?? "product"}` : "Build your product listing"}</h2>
           </div>
           <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-white" aria-label="Close wizard">
             <span className="material-symbols-outlined">close</span>
@@ -267,7 +279,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             <form id="product-details-form" onSubmit={saveDetails}>
               <h3 className="text-lg font-semibold text-gray-950 dark:text-white">Product details</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Add pricing, description, and category-specific specifications.</p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+               <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Seller <span className="text-red-500">*</span></span><select value={sellerId ?? ""} onChange={(event) => setSellerId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">Select a seller</option>{sellers.map((seller) => <option key={seller.id} value={seller.id}>{seller.name}</option>)}</select>{sellers.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Create a seller before saving a product.</p>}</label>
                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Title <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="e.g. Wireless headphones" required autoFocus /></label>
                 <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Price <span className="text-red-500">*</span></span><input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className={inputClasses} placeholder="0.00" required /></label>
                 <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Discount</span><input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0.00" /></label>
@@ -282,7 +295,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                         {attribute.attributeType === AttributeType.Bool ? (
                           <select value={attributeValues[attribute.attributeId] ?? ""} onChange={(event) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: event.target.value }))} className={inputClasses}><option value="">Select</option><option value="true">Yes</option><option value="false">No</option></select>
                         ) : (
-                          <div className="relative"><input type={attribute.attributeType === AttributeType.Strint ? "text" : "number"} inputMode={attribute.attributeType === AttributeType.Int ? "numeric" : attribute.attributeType === AttributeType.Decimal ? "decimal" : undefined} step={attribute.attributeType === AttributeType.Decimal ? "any" : undefined} value={attributeValues[attribute.attributeId] ?? ""} onChange={(event) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: event.target.value }))} className={`${inputClasses} pr-24`} /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{getAttributeUnitLabel(attribute.attributeUnit)}</span></div>
+                          <div className="relative"><input type={attribute.attributeType === AttributeType.String ? "text" : "number"} inputMode={attribute.attributeType === AttributeType.Int ? "numeric" : attribute.attributeType === AttributeType.Decimal ? "decimal" : undefined} step={attribute.attributeType === AttributeType.Decimal ? "any" : undefined} value={attributeValues[attribute.attributeId] ?? ""} onChange={(event) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: event.target.value }))} className={`${inputClasses} pr-24`} /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{getAttributeUnitLabel(attribute.attributeUnit)}</span></div>
                         )}
                       </label>
                     ))}
@@ -308,8 +321,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                       const isDeleted = deletedImageIds.includes(image.id);
                       return (
                         <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${image.isMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
-                          <img src={resolveProductImageUrl(image) ?? undefined} alt={image.title} className="aspect-square w-full object-cover" />
-                          <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute right-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `Keep ${image.title}` : `Delete ${image.title}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
+                           <img src={resolveProductImageUrl(image) ?? undefined} alt={image.name} className="aspect-square w-full object-cover" />
+                           <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute right-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `Keep ${image.name}` : `Delete ${image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
                           <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">{isDeleted ? "Will be deleted" : image.isMain ? "Main image" : "Current image"}</span>
                         </div>
                       );

@@ -8,7 +8,7 @@ using Store.Domain.Categories.Models.Input;
 
 namespace Store.Service.ProviderService;
 
-public class CategoryService(ICategoryRepository categoryRepository, IAttributeRepository attributeRepository)
+public class CategoryService(ICategoryRepository categoryRepository, AttributeService attributeService)
 {
     private List<CategoryListOutput> BuildTree(List<CategoryEntity> categories, int? parentId)
     {
@@ -123,8 +123,8 @@ public class CategoryService(ICategoryRepository categoryRepository, IAttributeR
             return Result<CategoryAttributeAddOutput>.Failure("parameters is not exist!");
         }
 
-        var attributeEntity = await attributeRepository.GetAsync(input.AttributeId, cancellation);
-        if (attributeEntity == null)
+        var attribute = await attributeService.GetAsync(input.AttributeId, cancellation);
+        if (attribute.Data == null)
         {
             return Result<CategoryAttributeAddOutput>.Failure("parameters is not exist!");
         }

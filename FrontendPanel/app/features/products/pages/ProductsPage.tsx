@@ -64,14 +64,14 @@ export default function ProductsPage() {
           {products.map((product) => (
             <article key={product.id} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-colors hover:border-primary-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-800">
               <div className="flex aspect-[16/8] items-center justify-center bg-gray-100 dark:bg-gray-800">
-                {resolveProductImageUrl(product.image) ? <img src={resolveProductImageUrl(product.image) ?? undefined} alt={product.title} className="size-full object-cover" /> : <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600">image</span>}
+                 {resolveProductImageUrl(product.image) ? <img src={resolveProductImageUrl(product.image) ?? undefined} alt={product.name} className="size-full object-cover" /> : <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600">image</span>}
               </div>
               <div className="p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0"><p className="text-xs font-medium text-primary-600 dark:text-primary-400">{product.categoryTitle}</p><h2 className="mt-1 truncate font-semibold text-gray-950 dark:text-white">{product.title}</h2></div>
+                   <div className="min-w-0"><p className="text-xs font-medium text-primary-600 dark:text-primary-400">{product.categoryTitle} · {product.seller.name}</p><h2 className="mt-1 truncate font-semibold text-gray-950 dark:text-white">{product.name}</h2></div>
                   <div className="flex shrink-0 items-center">
-                    <button onClick={() => { setEditingProduct(product); setWizardOpen(true); }} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-primary-50 hover:text-primary-600 disabled:opacity-50 dark:hover:bg-primary-950/30 dark:hover:text-primary-400" aria-label={`Edit ${product.title}`}><span className="material-symbols-outlined text-[20px]">edit</span></button>
-                    <button onClick={() => void deleteProduct(product.id)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30 dark:hover:text-red-400" aria-label={`Delete ${product.title}`}><span className="material-symbols-outlined text-[20px]">delete</span></button>
+                     <button onClick={() => { setEditingProduct(product); setWizardOpen(true); }} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-primary-50 hover:text-primary-600 disabled:opacity-50 dark:hover:bg-primary-950/30 dark:hover:text-primary-400" aria-label={`Edit ${product.name}`}><span className="material-symbols-outlined text-[20px]">edit</span></button>
+                     <button onClick={() => void deleteProduct(product.id)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30 dark:hover:text-red-400" aria-label={`Delete ${product.name}`}><span className="material-symbols-outlined text-[20px]">delete</span></button>
                   </div>
                 </div>
                 <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-gray-500 dark:text-gray-400">{product.description || "No description"}</p>

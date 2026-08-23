@@ -12,7 +12,7 @@ export function flattenCategories(
   parentPath = ""
 ): FlatCategory[] {
   return categories.flatMap((category) => {
-    const path = parentPath ? `${parentPath} / ${category.title}` : category.title;
+    const path = parentPath ? `${parentPath} / ${category.name}` : category.name;
     return [
       { category, depth, path },
       ...flattenCategories(category.children ?? [], depth + 1, path),

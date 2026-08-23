@@ -64,7 +64,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services
-    .ConfigurationStoreService(builder.Configuration)
+    .ConfigurationStoreService()
     .ConfigurationStorePersistent(builder.Configuration)
     .ConfigurationStoreDomain();
 builder.Services.AddScoped<ControllerAccessProvider>();

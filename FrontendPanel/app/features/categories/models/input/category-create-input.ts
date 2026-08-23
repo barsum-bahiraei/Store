@@ -1,4 +1,4 @@
 export interface CategoryCreateInput {
-  title: string;
+  name: string;
   parentId: number | null;
 }

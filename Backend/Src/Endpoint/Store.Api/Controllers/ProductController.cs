@@ -32,7 +32,8 @@ public class ProductController(ProductService productService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post(ProductCreateInput input, CancellationToken cancellation = default)
     {
-        var result = await productService.CreateAsync(input, cancellation);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.CreateAsync(userId, input, cancellation);
         return Ok(result);
     }
 

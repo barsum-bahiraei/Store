@@ -92,7 +92,7 @@ export default function CategoriesPage() {
   const handleAddRoot = async () => {
     const title = rootTitle.trim();
     if (!title) return;
-    if (await createCategory({ title, parentId: null })) {
+    if (await createCategory({ name: title, parentId: null })) {
       setRootTitle("");
       setShowRootForm(false);
     }
@@ -102,7 +102,7 @@ export default function CategoriesPage() {
     if (!selectedCategory) return;
     const title = childTitle.trim();
     if (!title) return;
-    if (await createCategory({ title, parentId: selectedCategory.id })) {
+    if (await createCategory({ name: title, parentId: selectedCategory.id })) {
       setChildTitle("");
       setExpandedIds((current) => new Set(current).add(selectedCategory.id));
     }
@@ -110,7 +110,7 @@ export default function CategoriesPage() {
 
   const startEditing = () => {
     if (!selectedCategory) return;
-    setEditTitle(selectedCategory.title);
+    setEditTitle(selectedCategory.name);
     setEditParentId(selectedCategory.parentId);
     setEditing(true);
   };
@@ -118,7 +118,7 @@ export default function CategoriesPage() {
   const handleUpdate = async () => {
     if (!selectedCategory || !editTitle.trim()) return;
     if (await updateCategory(selectedCategory.id, {
-      title: editTitle.trim(),
+      name: editTitle.trim(),
       parentId: editParentId,
     })) {
       setEditing(false);
@@ -127,7 +127,7 @@ export default function CategoriesPage() {
 
   const handleDelete = async () => {
     if (!selectedCategory || (selectedCategory.children?.length ?? 0) > 0) return;
-    if (!window.confirm(`Delete the “${selectedCategory.title}” category?`)) return;
+    if (!window.confirm(`Delete the “${selectedCategory.name}” category?`)) return;
     if (await deleteCategory(selectedCategory.id)) setSelectedId(null);
   };
 
@@ -153,12 +153,12 @@ export default function CategoriesPage() {
         return (
           <li key={category.id}>
             <div className={`flex min-h-11 items-center rounded-lg transition-colors ${selected ? "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300" : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
-              <button type="button" onClick={() => hasChildren && toggleBranch(category.id)} disabled={!hasChildren} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-400 disabled:opacity-25" aria-label={expanded ? `Collapse ${category.title}` : `Expand ${category.title}`}>
+              <button type="button" onClick={() => hasChildren && toggleBranch(category.id)} disabled={!hasChildren} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-400 disabled:opacity-25" aria-label={expanded ? `Collapse ${category.name}` : `Expand ${category.name}`}>
                 <span className="material-symbols-outlined text-xl">{hasChildren ? (expanded ? "keyboard_arrow_down" : "keyboard_arrow_right") : "remove"}</span>
               </button>
               <button type="button" onClick={() => selectCategory(category.id)} className="flex min-w-0 flex-1 items-center gap-2 self-stretch pr-3 text-left">
                 <span className="material-symbols-outlined text-xl">{hasChildren ? "folder" : "folder_open"}</span>
-                <span className="truncate text-sm font-medium">{category.title}</span>
+                <span className="truncate text-sm font-medium">{category.name}</span>
                 {hasChildren && <span className="ml-auto text-xs opacity-60">{children.length}</span>}
               </button>
             </div>
@@ -216,7 +216,7 @@ export default function CategoriesPage() {
           ) : (
             <>
               <div className="flex flex-col gap-3 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
-                <div className="min-w-0"><p className="truncate text-xs text-gray-500 dark:text-gray-400">{selectedPath}</p><h2 className="mt-1 truncate text-lg font-semibold text-gray-900 dark:text-white">{selectedCategory.title}</h2></div>
+                 <div className="min-w-0"><p className="truncate text-xs text-gray-500 dark:text-gray-400">{selectedPath}</p><h2 className="mt-1 truncate text-lg font-semibold text-gray-900 dark:text-white">{selectedCategory.name}</h2></div>
                 <div className="flex gap-1"><button onClick={startEditing} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"><span className="material-symbols-outlined text-lg">edit</span>Edit</button><button onClick={() => void handleDelete()} disabled={loading || hasChildren} title={hasChildren ? "Move or delete child categories first" : "Delete category"} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-red-950/30"><span className="material-symbols-outlined text-lg">delete</span>Delete</button></div>
               </div>
 
@@ -231,7 +231,7 @@ export default function CategoriesPage() {
               <div className="grid divide-y divide-gray-200 dark:divide-gray-800 xl:grid-cols-2 xl:divide-x xl:divide-y-0 dark:xl:divide-gray-800">
                 <section className="p-5">
                   <div className="flex items-center gap-2"><span className="material-symbols-outlined text-xl text-primary-600">create_new_folder</span><h3 className="font-semibold text-gray-900 dark:text-white">Add subcategory</h3></div>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Create a child directly under {selectedCategory.title}.</p>
+                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Create a child directly under {selectedCategory.name}.</p>
                   <form onSubmit={(event) => { event.preventDefault(); void handleAddChild(); }} className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><input value={childTitle} onChange={(event) => setChildTitle(event.target.value)} placeholder="Subcategory name" className={inputClasses} /><button disabled={loading || !childTitle.trim()} className="min-h-11 shrink-0 rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white disabled:opacity-50">Add child</button></form>
                 </section>
 
@@ -249,7 +249,7 @@ export default function CategoriesPage() {
                     <ul className="mt-4 flex flex-wrap gap-2">{connectedAttributes.map((item) => <li key={item.id} className="inline-flex min-h-9 items-center gap-1 rounded-full bg-gray-100 py-1 pl-3 pr-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">{item.attributeTitle ?? `Attribute ${item.attributeId}`}<button onClick={() => void removeCategoryAttribute(selectedCategory.id, item.id)} disabled={attributesLoading} className="flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/40" aria-label={`Remove ${item.attributeTitle ?? "attribute"}`}><span className="material-symbols-outlined text-base">close</span></button></li>)}</ul>
                   )}
 
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><select value={selectedAttributeId ?? ""} onChange={(event) => setSelectedAttributeId(event.target.value ? Number(event.target.value) : null)} disabled={attributesLoading || availableAttributes.length === 0} className={inputClasses}><option value="">{availableAttributes.length === 0 ? "All attributes assigned" : "Select an attribute"}</option>{availableAttributes.map((attribute) => <option key={attribute.id} value={attribute.id}>{attribute.title}</option>)}</select><button onClick={() => void handleAddAttribute()} disabled={attributesLoading || selectedAttributeId === null} className="min-h-11 shrink-0 rounded-lg border border-primary-600 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:text-primary-300 dark:hover:bg-primary-950/30">Assign</button></div>
+                   <div className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><select value={selectedAttributeId ?? ""} onChange={(event) => setSelectedAttributeId(event.target.value ? Number(event.target.value) : null)} disabled={attributesLoading || availableAttributes.length === 0} className={inputClasses}><option value="">{availableAttributes.length === 0 ? "All attributes assigned" : "Select an attribute"}</option>{availableAttributes.map((attribute) => <option key={attribute.id} value={attribute.id}>{attribute.name}</option>)}</select><button onClick={() => void handleAddAttribute()} disabled={attributesLoading || selectedAttributeId === null} className="min-h-11 shrink-0 rounded-lg border border-primary-600 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:text-primary-300 dark:hover:bg-primary-950/30">Assign</button></div>
                 </section>
               </div>
             </>

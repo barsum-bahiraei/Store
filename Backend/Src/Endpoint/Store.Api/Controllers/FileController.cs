@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
+using Store.Domain.Files;
 using Store.Domain.Files.Models.Input;
 using Store.Service.ProviderService;
 
@@ -10,17 +11,63 @@ namespace Store.Api.Controllers;
 public class FileController(FileService fileService) : ControllerBase
 {
     [HasAccess]
-    [HttpPost]
-    public async Task<IActionResult> Post(IFormFile file, [FromForm] FileCreateInput input,
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id, CancellationToken cancellation = default)
+    {
+        var result = await fileService.GetAsync(id, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpGet]
+    public async Task<IActionResult> Get(
+        [FromQuery] TableNameEnum tableName,
+        [FromQuery] TargetNameEnum targetName,
+        [FromQuery] int targetId,
         CancellationToken cancellation = default)
     {
-        var result = await fileService.CreateAsync(input, file, cancellation);
+        var result = await fileService.ListAsync(
+            tableName,
+            targetName,
+            targetId,
+            cancellation);
+
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpPost]
+    public async Task<IActionResult> Post(
+        IFormFile file,
+        [FromForm] FileCreateInput input,
+        CancellationToken cancellation = default)
+    {
+        var result = await fileService.CreateAsync(
+            input,
+            file,
+            cancellation);
+
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Put(int id, IFormFile file, [FromForm] FileUpdateInput input, CancellationToken cancellation = default)
+    {
+        var result = await fileService.UpdateAsync(
+            id,
+            input,
+            file,
+            cancellation);
+
         return Ok(result);
     }
 
     [HasAccess]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellation = default)
     {
         var result = await fileService.DeleteAsync(id, cancellation);
         return Ok(result);

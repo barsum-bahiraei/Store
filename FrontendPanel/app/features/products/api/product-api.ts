@@ -68,7 +68,7 @@ export const productApi = {
   async uploadImage(input: ProductImageUploadInput): Promise<ProductImageOutput> {
     const formData = new FormData();
     formData.append("file", input.file);
-    formData.append("title", input.title);
+    formData.append("name", input.name);
     formData.append("tableName", "0");
     formData.append("targetId", String(input.productId));
     formData.append("targetName", "0");

@@ -1,0 +1,24 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Store.Domain.Accounts;
+
+namespace Store.Persistent.Database.StoreDbContext.Configuration;
+
+public class UserRoleConfiguration : IEntityTypeConfiguration<UserRoleEntity>
+{
+    public void Configure(EntityTypeBuilder<UserRoleEntity> builder)
+    {
+        builder.ToTable("UserRoles");
+        builder.HasIndex(x => new { x.UserId, x.RoleId }).IsUnique();
+
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.UserRoles)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.Role)
+            .WithMany(x => x.UserRoles)
+            .HasForeignKey(x => x.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

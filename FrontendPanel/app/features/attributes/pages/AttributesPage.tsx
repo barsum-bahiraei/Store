@@ -28,11 +28,11 @@ export default function AttributesPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<AttributeType>(AttributeType.Strint);
+  const [type, setType] = useState<AttributeType>(AttributeType.String);
   const [unit, setUnit] = useState<AttributeUnit>(AttributeUnit.Geram);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [editType, setEditType] = useState<AttributeType>(AttributeType.Strint);
+  const [editType, setEditType] = useState<AttributeType>(AttributeType.String);
   const [editUnit, setEditUnit] = useState<AttributeUnit>(AttributeUnit.Geram);
 
   useEffect(() => {
@@ -40,13 +40,13 @@ export default function AttributesPage() {
   }, [fetchAttributes]);
 
   const filteredAttributes = attributes.filter((attribute) =>
-    attribute.title.toLowerCase().includes(search.trim().toLowerCase()),
+    attribute.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
   const handleAdd = async () => {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
-    if (await createAttribute({ title: trimmedTitle, type, unit })) {
+    if (await createAttribute({ name: trimmedTitle, type, unit })) {
       setTitle("");
       setShowCreate(false);
     }
@@ -54,7 +54,7 @@ export default function AttributesPage() {
 
   const startEditing = (attribute: AttributeListOutput) => {
     setEditingId(attribute.id);
-    setEditTitle(attribute.title);
+    setEditTitle(attribute.name);
     setEditType(attribute.type);
     setEditUnit(attribute.unit);
   };
@@ -62,13 +62,13 @@ export default function AttributesPage() {
   const handleUpdate = async (id: number) => {
     const trimmedTitle = editTitle.trim();
     if (!trimmedTitle) return;
-    if (await updateAttribute(id, { title: trimmedTitle, type: editType, unit: editUnit })) {
+    if (await updateAttribute(id, { name: trimmedTitle, type: editType, unit: editUnit })) {
       setEditingId(null);
     }
   };
 
   const handleDelete = async (attribute: AttributeListOutput) => {
-    if (!window.confirm(`Delete the “${attribute.title}” attribute?`)) return;
+    if (!window.confirm(`Delete the “${attribute.name}” attribute?`)) return;
     await deleteAttribute(attribute.id);
   };
 
@@ -140,10 +140,10 @@ export default function AttributesPage() {
                   </form>
                 ) : (
                   <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_10rem_10rem_6rem] sm:items-center sm:px-5">
-                    <div className="flex min-w-0 items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"><span className="material-symbols-outlined text-xl">label</span></span><div className="min-w-0"><p className="truncate text-sm font-medium text-gray-900 dark:text-white">{attribute.title}</p><p className="mt-0.5 text-xs text-gray-400 sm:hidden">{getAttributeTypeLabel(attribute.type)} · {getAttributeUnitLabel(attribute.unit)}</p></div></div>
+                     <div className="flex min-w-0 items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"><span className="material-symbols-outlined text-xl">label</span></span><div className="min-w-0"><p className="truncate text-sm font-medium text-gray-900 dark:text-white">{attribute.name}</p><p className="mt-0.5 text-xs text-gray-400 sm:hidden">{getAttributeTypeLabel(attribute.type)} · {getAttributeUnitLabel(attribute.unit)}</p></div></div>
                     <span className="hidden text-sm text-gray-600 sm:block dark:text-gray-300">{getAttributeTypeLabel(attribute.type)}</span>
                     <span className="hidden text-sm text-gray-600 sm:block dark:text-gray-300">{getAttributeUnitLabel(attribute.unit)}</span>
-                    <div className="flex justify-end"><button onClick={() => startEditing(attribute)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label={`Edit ${attribute.title}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void handleDelete(attribute)} disabled={loading} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`Delete ${attribute.title}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
+                     <div className="flex justify-end"><button onClick={() => startEditing(attribute)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label={`Edit ${attribute.name}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void handleDelete(attribute)} disabled={loading} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`Delete ${attribute.name}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
                   </div>
                 )}
               </li>

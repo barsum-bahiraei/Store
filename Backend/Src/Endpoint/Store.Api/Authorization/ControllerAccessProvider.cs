@@ -11,7 +11,8 @@ public class ControllerAccessProvider(IActionDescriptorCollectionProvider action
     {
         var items = actionDescriptorCollectionProvider.ActionDescriptors.Items
             .OfType<ControllerActionDescriptor>()
-            .Where(x => x.MethodInfo.IsDefined(typeof(HasAccessAttribute), true));
+            .Where(x => x.MethodInfo.IsDefined(typeof(HasAccessAttribute), true) ||
+                        x.ControllerTypeInfo.IsDefined(typeof(HasAccessAttribute), true));
 
         var result = items
             .GroupBy(x => x.ControllerName)

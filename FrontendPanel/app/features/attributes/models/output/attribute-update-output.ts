@@ -3,7 +3,7 @@ import type { AttributeUnit } from "../enums/attribute-unit";
 
 export interface AttributeUpdateOutput {
   id: number;
-  title: string;
+  name: string;
   unit: AttributeUnit;
   type: AttributeType;
 }

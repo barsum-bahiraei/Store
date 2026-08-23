@@ -1,6 +1,6 @@
 export interface CategoryListOutput {
   id: number;
-  title: string;
+  name: string;
   parentId: number | null;
   children: CategoryListOutput[] | null;
 }

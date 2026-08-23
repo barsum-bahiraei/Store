@@ -1,4 +1,4 @@
 export interface CategoryUpdateInput {
-  title: string;
+  name: string;
   parentId: number | null;
 }

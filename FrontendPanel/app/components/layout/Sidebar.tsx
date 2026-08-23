@@ -9,6 +9,7 @@ interface SidebarProps {
 
 const navItems = [
   { to: "/products", label: "Products", icon: "inventory_2" },
+  { to: "/sellers", label: "Sellers", icon: "storefront" },
   { to: "/attributes", label: "Attributes", icon: "list_alt" },
   { to: "/categories", label: "Categories", icon: "folder" },
   { to: "/roles", label: "Roles", icon: "admin_panel_settings" },
