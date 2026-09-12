@@ -3,7 +3,7 @@ using Store.Domain.Sellers;
 using Store.Domain.Sellers.Models.Input;
 using Store.Domain.Sellers.Models.Output;
 
-namespace Store.Service.ProviderService;
+namespace Store.Service.EntityService;
 
 public class SellerService(ISellerRepository sellerRepository, FileService fileService)
 {

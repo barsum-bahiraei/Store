@@ -2,7 +2,7 @@ using Store.Domain.Attribute;
 using Store.Domain.Attribute.Models.Input;
 using Store.Domain.Attribute.Models.Output;
 
-namespace Store.Service.ProviderService;
+namespace Store.Service.EntityService;
 
 public class AttributeService(IAttributeRepository attributeRepository)
 {

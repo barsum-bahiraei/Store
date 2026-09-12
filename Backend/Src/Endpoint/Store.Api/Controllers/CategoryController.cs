@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Categories.Models.Input;
-using Store.Service.ProviderService;
+using Store.Service.EntityService;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

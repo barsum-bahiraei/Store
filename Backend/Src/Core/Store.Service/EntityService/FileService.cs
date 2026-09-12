@@ -4,7 +4,7 @@ using Store.Domain.Files.Models.Input;
 using Store.Domain.Files.Models.Output;
 using Store.Persistent.Storage.Minio;
 
-namespace Store.Service.ProviderService;
+namespace Store.Service.EntityService;
 
 public class FileService(IFileRepository fileRepository, IMinioStorage minioStorage)
 {

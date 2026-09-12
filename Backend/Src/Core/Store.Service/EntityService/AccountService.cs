@@ -8,7 +8,7 @@ using Store.Domain.Accounts;
 using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
 
-namespace Store.Service.ProviderService;
+namespace Store.Service.EntityService;
 
 public class AccountService(
     IAccountRepository accountRepository,

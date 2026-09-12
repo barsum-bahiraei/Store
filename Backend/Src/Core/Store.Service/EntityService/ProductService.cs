@@ -4,7 +4,7 @@ using Store.Domain.Products.Models.Input;
 using Store.Domain.Products.Models.Output;
 using Store.Domain.Sellers;
 
-namespace Store.Service.ProviderService;
+namespace Store.Service.EntityService;
 
 public class ProductService(
     IProductRepository productRepository,

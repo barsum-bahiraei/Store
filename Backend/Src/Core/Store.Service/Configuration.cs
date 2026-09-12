@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Store.Domain.Accounts;
-using Store.Service.ProviderService;
+using Store.Service.EntityService;
 
 namespace Store.Service;
 
