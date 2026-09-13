@@ -6,6 +6,7 @@ using Store.Domain.Accounts;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
+using Store.Domain.Invoices;
 using Store.Domain.Products;
 using Store.Domain.Sellers;
 using Store.Persistent.Database.StoreDbContext;
@@ -29,6 +30,7 @@ public static class Configuration
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<ISellerRepository, SellerRepository>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IMinioStorage, MinioStorage>();
 
         services.AddSingleton<IMinioClient>(_ =>

@@ -16,6 +16,7 @@ public static class Configuration
         services.AddScoped<FileService>();
         services.AddScoped<AccountService>();
         services.AddScoped<SellerService>();
+        services.AddScoped<InvoiceService>();
         services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
 
         return services;

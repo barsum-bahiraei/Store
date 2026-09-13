@@ -5,6 +5,7 @@ using Store.Domain.Accounts;
 using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
+using Store.Domain.Invoices;
 using Store.Domain.Products;
 using Store.Domain.Sellers;
 
@@ -27,6 +28,8 @@ public class StoreDbContext : DbContext
     public DbSet<UserRoleEntity> UserRoles { get; set; }
     public DbSet<RoleAccessEntity> RoleAccess { get; set; }
     public DbSet<SellerEntity> Sellers { get; set; }
+    public DbSet<InvoiceEntity> Invoices { get; set; }
+    public DbSet<PreInvoiceEntity> PreInvoices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

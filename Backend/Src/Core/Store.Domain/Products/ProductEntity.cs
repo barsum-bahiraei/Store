@@ -1,4 +1,5 @@
 using Store.Domain.Categories;
+using Store.Domain.Invoices;
 using Store.Domain.Sellers;
 
 namespace Store.Domain.Products;
@@ -14,4 +15,6 @@ public class ProductEntity : BaseEntity
     public CategoryEntity Category { get; set; }
     public SellerEntity Seller { get; set; }
     public ICollection<ProductAttributeEntity> ProductAttributes { get; set; }
+    public ICollection<InvoiceEntity> Invoices { get; set; }
+    public ICollection<PreInvoiceEntity> PreInvoices { get; set; }
 }
