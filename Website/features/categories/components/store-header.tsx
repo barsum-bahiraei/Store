@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
+import { useCart } from "@/features/cart/hooks/use-cart";
 import { useCategories } from "../hooks/use-categories";
 import type { Category } from "../types/category";
 
@@ -43,6 +44,7 @@ function CategorySkeleton() {
 export function StoreHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: user } = useUserProfile();
+  const { totalCount: cartCount, isAuthenticated, isError: isCartError } = useCart();
   const { data: categories = [], isError, isLoading, refetch } = useCategories();
 
   const categoryContent = isLoading ? (
@@ -79,9 +81,9 @@ export function StoreHeader() {
             <span className="material-symbols-rounded" aria-hidden="true">person</span>
             <span className="hidden max-w-20 truncate text-xs font-bold lg:block">{user?.firstName ?? "Sign in"}</span>
           </Link>
-          <Link href="/cart" aria-label="Shopping cart" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+          <Link href={isAuthenticated ? "/account?tab=cart" : "/login"} aria-label="Shopping cart" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">shopping_bag</span>
-            <span className="absolute right-0 top-0 grid size-4 place-items-center rounded-full bg-primary text-[9px] font-black text-primary-foreground">0</span>
+            {cartCount !== undefined && !isCartError && <span aria-live="polite" className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-black text-primary-foreground">{cartCount}</span>}
           </Link>
           <button type="button" aria-label="Toggle navigation" aria-expanded={isMenuOpen} aria-controls="mobile-navigation" onClick={() => setIsMenuOpen((open) => !open)} className="grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring md:hidden">
             <span className="material-symbols-rounded" aria-hidden="true">{isMenuOpen ? "close" : "menu"}</span>

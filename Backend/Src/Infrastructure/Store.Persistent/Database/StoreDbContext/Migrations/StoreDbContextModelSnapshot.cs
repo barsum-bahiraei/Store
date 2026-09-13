@@ -297,6 +297,73 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.ToTable("Files", (string)null);
                 });
 
+            modelBuilder.Entity("Store.Domain.Invoices.InvoiceEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProductCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ProductPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Invoices", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Invoices.PreInvoiceEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProductCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PreInvoices", (string)null);
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -328,6 +395,47 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductsAttributes", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool?>("IsShow")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte?>("Rating")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProductComments", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
@@ -465,6 +573,44 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("Store.Domain.Invoices.InvoiceEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("Invoices")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("Invoices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Store.Domain.Invoices.PreInvoiceEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("PreInvoices")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("PreInvoices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
                 {
                     b.HasOne("Store.Domain.Attribute.AttributeEntity", "Attribute")
@@ -482,6 +628,25 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("Attribute");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("Comments")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("ProductComments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
@@ -523,6 +688,12 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
                 {
+                    b.Navigation("Invoices");
+
+                    b.Navigation("PreInvoices");
+
+                    b.Navigation("ProductComments");
+
                     b.Navigation("Sellers");
 
                     b.Navigation("UserRoles");
@@ -546,6 +717,12 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Invoices");
+
+                    b.Navigation("PreInvoices");
+
                     b.Navigation("ProductAttributes");
                 });
 

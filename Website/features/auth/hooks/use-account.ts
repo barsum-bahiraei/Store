@@ -30,7 +30,7 @@ function subscribeToAuthToken(onStoreChange: () => void) {
   };
 }
 
-function useAuthToken() {
+export function useAuthToken() {
   return useSyncExternalStore(subscribeToAuthToken, getAuthToken, () => null);
 }
 

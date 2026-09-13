@@ -17,7 +17,19 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
 
     public async Task<PreInvoiceEntity?> PreInvoiceGetAsync(int userId, CancellationToken cancellation)
     {
-        var result = await context.PreInvoices.Where(x => x.UserId == userId).FirstOrDefaultAsync(cancellation);
+        var result = await context.PreInvoices
+            .Include(x => x.Product)
+            .Where(x => x.UserId == userId)
+            .FirstOrDefaultAsync(cancellation);
+        return result;
+    }
+
+    public async Task<PreInvoiceEntity?> PreInvoiceGetAsync(int id, int userId, CancellationToken cancellation)
+    {
+        var result = await context.PreInvoices
+            .Include(x => x.Product)
+            .Where(x => x.Id == id && x.UserId == userId)
+            .FirstOrDefaultAsync(cancellation);
         return result;
     }
 
@@ -25,14 +37,22 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     {
         await context.PreInvoices.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        return input;
+        var result = await context.PreInvoices
+            .Include(x => x.Product)
+            .Where(x => x.Id == input.Id && x.UserId == input.UserId)
+            .FirstAsync(cancellation);
+        return result;
     }
 
     public async Task<PreInvoiceEntity> PreInvoiceUpdateAsync(PreInvoiceEntity input, CancellationToken cancellation)
     {
         context.PreInvoices.Update(input);
         await context.SaveChangesAsync(cancellation);
-        return input;
+        var result = await context.PreInvoices
+            .Include(x => x.Product)
+            .Where(x => x.Id == input.Id && x.UserId == input.UserId)
+            .FirstAsync(cancellation);
+        return result;
     }
 
     public async Task PreInvoiceDeleteAsync(PreInvoiceEntity input, CancellationToken cancellation)

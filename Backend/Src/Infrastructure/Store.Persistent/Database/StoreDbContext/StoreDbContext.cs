@@ -19,6 +19,7 @@ public class StoreDbContext : DbContext
 
     public DbSet<ProductEntity> Products { get; set; }
     public DbSet<ProductAttributeEntity> ProductAttributes { get; set; }
+    public DbSet<ProductCommentEntity> ProductComments { get; set; }
     public DbSet<CategoryEntity> Categoryies { get; set; }
     public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
     public DbSet<AttributeEntity> Attributes { get; set; }

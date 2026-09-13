@@ -59,6 +59,50 @@ public class ProductService(
         return Result<List<ProductListOutput>>.Success(result);
     }
 
+    public async Task<Result<List<ProductSearchOutput>>> SearchAsync(ProductSearchInput input,
+        CancellationToken cancellation)
+    {
+        var entities = await productRepository.SearchAsync(input, cancellation);
+        var result = new List<ProductSearchOutput>();
+
+        foreach (var entity in entities)
+        {
+            var imageResult = await fileService.GetAsync(
+                TableNameEnum.Products,
+                TargetNameEnum.ProductId,
+                entity.Id,
+                cancellation);
+
+            ProductImageSearchOutput? image = null;
+
+            if (imageResult.Data != null)
+            {
+                image = new ProductImageSearchOutput
+                {
+                    Id = imageResult.Data.Id,
+                    Url = imageResult.Data.Url,
+                    IsMain = imageResult.Data.IsMain,
+                    Name = imageResult.Data.Name,
+                    FileType = imageResult.Data.FileType
+                };
+            }
+
+            result.Add(new ProductSearchOutput
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Description = entity.Description,
+                Price = entity.Price,
+                Discount = entity.Discount,
+                CategoryId = entity.CategoryId,
+                CategoryTitle = entity.Category.Name,
+                Image = image
+            });
+        }
+
+        return Result<List<ProductSearchOutput>>.Success(result);
+    }
+
     public async Task<Result<ProductGetOutput?>> GetAsync(int id, int userId, CancellationToken cancellation)
     {
         var entity = await productRepository.GetAsync(id, userId, cancellation);

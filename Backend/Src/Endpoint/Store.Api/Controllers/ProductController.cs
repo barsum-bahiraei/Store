@@ -10,6 +10,13 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class ProductController(ProductService productService) : ControllerBase
 {
+    [HttpGet("Search")]
+    public async Task<IActionResult> Search([FromQuery] ProductSearchInput input, CancellationToken cancellation = default)
+    {
+        var result = await productService.SearchAsync(input, cancellation);
+        return Ok(result);
+    }
+
     [HasAccess]
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellation = default)

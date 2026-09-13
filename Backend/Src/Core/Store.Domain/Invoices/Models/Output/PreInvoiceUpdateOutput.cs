@@ -2,23 +2,23 @@ using Store.Domain.Files;
 
 namespace Store.Domain.Invoices.Models.Output;
 
-public class PreInvoiceCreateOutput
+public class PreInvoiceUpdateOutput
 {
     public int Id { get; set; }
     public int ProductCount { get; set; }
-    public PreInvoiceProductCreateOutput Product { get; set; }
+    public PreInvoiceProductUpdateOutput Product { get; set; }
 }
 
-public class PreInvoiceProductCreateOutput
+public class PreInvoiceProductUpdateOutput
 {
     public int Id { get; set; }
     public string Name { get; set; }
     public decimal Price { get; set; }
     public decimal Discount { get; set; }
-    public PreInvoiceProductImageCreateOutput? Image { get; set; }
+    public PreInvoiceProductImageUpdateOutput? Image { get; set; }
 }
 
-public class PreInvoiceProductImageCreateOutput
+public class PreInvoiceProductImageUpdateOutput
 {
     public int Id { get; set; }
     public string Name { get; set; }

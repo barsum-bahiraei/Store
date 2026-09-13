@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { useCart, useCartItemActions } from "@/features/cart/hooks/use-cart";
 import { A11y, Keyboard } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperInstance } from "swiper";
@@ -15,7 +16,10 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
 });
 
 function ProductCard({ product }: { product: FeaturedProduct }) {
-  const [isAdded, setIsAdded] = useState(false);
+  const { data: items, guestItems, isAuthenticated } = useCart();
+  const { change, isPending, error } = useCartItemActions(product.id);
+  const quantity = isAuthenticated ? items?.find((item) => item.product.id === product.id)?.productCount ?? 0
+    : guestItems.find((item) => item.productId === product.id)?.count ?? 0;
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
@@ -27,15 +31,17 @@ function ProductCard({ product }: { product: FeaturedProduct }) {
         {discount && <span className="absolute left-2.5 top-2.5 rounded-lg bg-accent px-2 py-1 text-xs font-black text-accent-foreground">-{discount}%</span>}
         <button
           type="button"
-          disabled={isAdded}
-          onClick={() => setIsAdded(true)}
-          className="absolute inset-x-2.5 bottom-2.5 flex min-h-11 translate-y-2 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-xs font-black text-primary-foreground opacity-0 shadow-md outline-none transition-[opacity,transform,background-color] duration-200 hover:bg-primary-hover focus-visible:translate-y-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 disabled:cursor-default disabled:bg-success max-sm:translate-y-0 max-sm:opacity-100"
+          disabled={isPending}
+          aria-busy={isPending}
+          onClick={() => change("increase")}
+          className="absolute inset-x-2.5 bottom-2.5 flex min-h-11 translate-y-2 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-xs font-black text-primary-foreground opacity-0 shadow-md outline-none transition-[opacity,transform,background-color] duration-200 hover:bg-primary-hover focus-visible:translate-y-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70 max-sm:translate-y-0 max-sm:opacity-100"
         >
-          <span className="material-symbols-rounded text-lg" aria-hidden="true">{isAdded ? "check" : "add_shopping_cart"}</span>
-          <span aria-live="polite">{isAdded ? "Added to cart" : "Add to cart"}</span>
+          <span className="material-symbols-rounded text-lg" aria-hidden="true">add_shopping_cart</span>
+          <span aria-live="polite">{isPending ? "Adding…" : quantity > 0 ? `Add one more (${quantity})` : "Add to cart"}</span>
         </button>
       </div>
       <div className="px-1 pb-2 pt-3">
+        {error && <p role="alert" className="mb-2 text-xs text-error">{error.message}</p>}
         <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{product.category}</p>
         <h3 className="mt-1 line-clamp-2 min-h-10 text-sm font-black leading-5">{product.name}</h3>
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">

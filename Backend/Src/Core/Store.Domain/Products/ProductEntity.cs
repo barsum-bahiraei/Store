@@ -17,4 +17,5 @@ public class ProductEntity : BaseEntity
     public ICollection<ProductAttributeEntity> ProductAttributes { get; set; }
     public ICollection<InvoiceEntity> Invoices { get; set; }
     public ICollection<PreInvoiceEntity> PreInvoices { get; set; }
+    public ICollection<ProductCommentEntity> Comments { get; set; }
 }

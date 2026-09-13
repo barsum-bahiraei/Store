@@ -1,4 +1,5 @@
 using Store.Domain.Invoices;
+using Store.Domain.Products;
 using Store.Domain.Sellers;
 
 namespace Store.Domain.Accounts;
@@ -19,4 +20,5 @@ public class UserEntity : BaseEntity
     public ICollection<SellerEntity> Sellers { get; set; }
     public ICollection<InvoiceEntity> Invoices { get; set; }
     public ICollection<PreInvoiceEntity> PreInvoices { get; set; }
+    public ICollection<ProductCommentEntity> ProductComments { get; set; }
 }
