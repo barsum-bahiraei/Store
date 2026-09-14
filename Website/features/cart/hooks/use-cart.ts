@@ -31,7 +31,7 @@ export function useCart() {
   return { ...query, guestItems, totalCount, isAuthenticated: Boolean(token) };
 }
 
-export function useCartItemActions(productId: number) {
+export function useCartItemActions(productId: number, productName?: string) {
   const token = useAuthToken();
   const queryClient = useQueryClient();
   const options = cartOptions(token, queryClient);
@@ -76,7 +76,7 @@ export function useCartItemActions(productId: number) {
 
   function change(action: CartAction) {
     if (!token && !getAuthToken()) {
-      useGuestCartStore.getState().change(productId, action);
+      useGuestCartStore.getState().change(productId, action, productName);
       return;
     }
     if (queryClient.isMutating({ mutationKey }) > 0) return;

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Page Not Found | Store",
-  description: "The page you were looking for could not be found.",
+  title: "صفحه پیدا نشد | فروشگاه",
+  description: "صفحه‌ای که به دنبال آن بودید پیدا نشد.",
   robots: {
     index: false,
     follow: true,
@@ -25,7 +25,7 @@ export default function NotFound() {
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-6 sm:px-8 lg:px-12">
         <Link
           href="/"
-          aria-label="Store home"
+          aria-label="خانه فروشگاه"
           className="group inline-flex min-h-12 items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
         >
           <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground transition-transform duration-200 group-hover:-rotate-3">
@@ -33,11 +33,11 @@ export default function NotFound() {
               storefront
             </span>
           </span>
-          <span className="text-lg font-black tracking-[-0.04em]">STORE.</span>
+          <span className="text-lg font-black tracking-[-0.04em]">فروشگاه.</span>
         </Link>
 
         <span className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-bold tracking-widest text-muted-foreground">
-          ERROR 404
+          خطای ۴۰۴
         </span>
       </header>
 
@@ -58,26 +58,26 @@ export default function NotFound() {
 
         <div className="relative z-10 mt-12 max-w-2xl sm:mt-16">
           <p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-primary">
-            This item is off the shelf
+            این صفحه در دسترس نیست
           </p>
           <h1 className="text-3xl font-black tracking-[-0.045em] sm:text-5xl">
-            We couldn&apos;t find that page.
+            این صفحه را پیدا نکردیم.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-            The link may be outdated, or the page may have moved. Head back to
-            the store and keep exploring.
+            ممکن است پیوند قدیمی باشد یا صفحه جابه‌جا شده باشد. به فروشگاه
+            برگردید و به جست‌وجو ادامه دهید.
           </p>
 
           <Link
             href="/"
             className="group mt-8 inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-black text-primary-foreground shadow-lg shadow-primary-shadow outline-none transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl hover:shadow-primary-shadow active:translate-y-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
           >
-            Back to the store
+            بازگشت به فروشگاه
             <span
               className="material-symbols-rounded text-xl transition-transform duration-200 group-hover:translate-x-1"
               aria-hidden="true"
             >
-              arrow_forward
+              arrow_back
             </span>
           </Link>
         </div>
@@ -85,7 +85,7 @@ export default function NotFound() {
 
       <footer className="mx-auto flex w-full max-w-7xl items-center gap-4 px-5 pb-6 text-xs text-muted-foreground sm:px-8 lg:px-12">
         <span className="h-px flex-1 bg-border" />
-        <span>Nothing is lost, just this page.</span>
+        <span>چیزی گم نشده، فقط این صفحه پیدا نشد.</span>
         <span className="h-px flex-1 bg-border" />
       </footer>
     </div>

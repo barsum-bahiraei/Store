@@ -1,29 +1,32 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "material-symbols/rounded.css";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const iranSans = localFont({
+  variable: "--font-iran-sans",
+  display: "swap",
+  src: [
+    { path: "../assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Light.woff2", weight: "300" },
+    { path: "../assets/fonts/iran-sans/woff2/IRANSansWebFaNum.woff2", weight: "400" },
+    { path: "../assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Medium.woff2", weight: "500" },
+    { path: "../assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Bold.woff2", weight: "700" },
+    { path: "../assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Black.woff2", weight: "900" },
+  ],
 });
 
 export const metadata: Metadata = {
-  title: "Store",
-  description: "Discover products selected for everyday life.",
+  title: "فروشگاه",
+  description: "محصولات منتخب برای زندگی روزمره را پیدا کنید.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="fa"
+      dir="rtl"
+      className={`${iranSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>

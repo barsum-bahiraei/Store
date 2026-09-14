@@ -18,7 +18,7 @@ export type CartItem = {
 
 export type CreateCartItemInput = {
   productId: number;
-  productCount: 1;
+  productCount: number;
 };
 
 export type UpdateCartItemInput = {

@@ -20,12 +20,12 @@ export function RegisterForm() {
     const password = String(formData.get("password") ?? "");
 
     if (password !== String(formData.get("confirmPassword") ?? "")) {
-      setError("Passwords do not match.");
+      setError("رمزهای عبور یکسان نیستند.");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("رمز عبور باید حداقل ۸ نویسه باشد.");
       return;
     }
 
@@ -39,7 +39,7 @@ export function RegisterForm() {
       });
       router.push("/account");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to create your account.");
+      setError(caughtError instanceof Error ? caughtError.message : "ساخت حساب انجام نشد.");
     }
   }
 
@@ -47,22 +47,22 @@ export function RegisterForm() {
     <>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid gap-5 sm:grid-cols-2">
-          <div><label htmlFor="firstName" className="text-sm font-bold">First name</label><input id="firstName" name="firstName" autoComplete="given-name" required className={inputClassName} /></div>
-          <div><label htmlFor="lastName" className="text-sm font-bold">Last name</label><input id="lastName" name="lastName" autoComplete="family-name" required className={inputClassName} /></div>
+          <div><label htmlFor="firstName" className="text-sm font-bold">نام</label><input id="firstName" name="firstName" autoComplete="given-name" required className={inputClassName} /></div>
+          <div><label htmlFor="lastName" className="text-sm font-bold">نام خانوادگی</label><input id="lastName" name="lastName" autoComplete="family-name" required className={inputClassName} /></div>
         </div>
-        <div><label htmlFor="email" className="text-sm font-bold">Email address</label><input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" className={inputClassName} /></div>
-        <div><label htmlFor="gender" className="text-sm font-bold">Gender</label><select id="gender" name="gender" defaultValue="2" className={inputClassName}><option value="2">Prefer not to say</option><option value="0">Male</option><option value="1">Female</option></select></div>
+        <div><label htmlFor="email" className="text-sm font-bold">ایمیل</label><input id="email" name="email" type="email" autoComplete="email" required placeholder="example@email.com" dir="ltr" className={inputClassName} /></div>
+        <div><label htmlFor="gender" className="text-sm font-bold">جنسیت</label><select id="gender" name="gender" defaultValue="2" className={inputClassName}><option value="2">ترجیح می‌دهم نگویم</option><option value="0">مرد</option><option value="1">زن</option></select></div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <div><label htmlFor="password" className="text-sm font-bold">Password</label><input id="password" name="password" type="password" minLength={8} autoComplete="new-password" required className={inputClassName} /></div>
-          <div><label htmlFor="confirmPassword" className="text-sm font-bold">Confirm password</label><input id="confirmPassword" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className={inputClassName} /></div>
+          <div><label htmlFor="password" className="text-sm font-bold">رمز عبور</label><input id="password" name="password" type="password" minLength={8} autoComplete="new-password" required className={inputClassName} /></div>
+          <div><label htmlFor="confirmPassword" className="text-sm font-bold">تکرار رمز عبور</label><input id="confirmPassword" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className={inputClassName} /></div>
         </div>
         {error && <p role="alert" className="flex items-start gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-medium text-error"><span className="material-symbols-rounded text-lg" aria-hidden="true">error</span>{error}</p>}
         <button type="submit" disabled={registerMutation.isPending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60">
           {registerMutation.isPending && <span className="material-symbols-rounded animate-spin" aria-hidden="true">progress_activity</span>}
-          {registerMutation.isPending ? "Creating account..." : "Create account"}
+          {registerMutation.isPending ? "در حال ساخت حساب…" : "ساخت حساب"}
         </button>
       </form>
-      <p className="mt-7 text-center text-sm text-muted-foreground">Already have an account? <Link href="/login" className="font-black text-primary hover:text-primary-hover">Sign in</Link></p>
+      <p className="mt-7 text-center text-sm text-muted-foreground">حساب دارید؟ <Link href="/login" className="font-black text-primary hover:text-primary-hover">وارد شوید</Link></p>
     </>
   );
 }

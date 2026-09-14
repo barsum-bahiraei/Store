@@ -8,7 +8,7 @@ export async function login(input: LoginInput): Promise<AuthenticatedUser> {
     input,
   );
 
-  return resolveApiResponse(data, "Unable to sign in.");
+  return resolveApiResponse(data, "ورود انجام نشد.");
 }
 
 export async function register(input: RegisterInput): Promise<AuthenticatedUser> {
@@ -17,7 +17,7 @@ export async function register(input: RegisterInput): Promise<AuthenticatedUser>
     input,
   );
 
-  return resolveApiResponse(data, "Unable to create your account.");
+  return resolveApiResponse(data, "ساخت حساب انجام نشد.");
 }
 
 export async function getUserProfile(signal?: AbortSignal): Promise<AccountUser> {
@@ -25,5 +25,5 @@ export async function getUserProfile(signal?: AbortSignal): Promise<AccountUser>
     signal,
   });
 
-  return resolveApiResponse(data, "Unable to load your profile.");
+  return resolveApiResponse(data, "بارگذاری پروفایل انجام نشد.");
 }

@@ -3,10 +3,10 @@ import { AuthShell } from "@/features/auth/components/auth-shell";
 import { LoginForm } from "@/features/auth/components/login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in | Store",
-  description: "Sign in to your Store account.",
+  title: "ورود | فروشگاه",
+  description: "وارد حساب کاربری خود در فروشگاه شوید.",
 };
 
 export default function LoginPage() {
-  return <AuthShell title="Welcome back" description="Sign in to continue to your account."><LoginForm /></AuthShell>;
+  return <AuthShell title="خوش آمدید" description="برای ادامه وارد حساب کاربری خود شوید."><LoginForm /></AuthShell>;
 }

@@ -7,5 +7,5 @@ export async function getCategories(signal?: AbortSignal): Promise<Category[]> {
     signal,
   });
 
-  return resolveApiResponse(data, "Unable to load categories.");
+  return resolveApiResponse(data, "بارگذاری دسته‌بندی‌ها انجام نشد.");
 }

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { AccountProfile } from "@/features/auth/components/account-profile";
 
 export const metadata: Metadata = {
-  title: "My account | Store",
-  description: "View your Store account profile.",
+  title: "حساب من | فروشگاه",
+  description: "اطلاعات حساب کاربری خود را مشاهده کنید.",
   robots: { index: false, follow: false },
 };
 

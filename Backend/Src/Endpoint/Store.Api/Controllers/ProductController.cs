@@ -10,10 +10,27 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class ProductController(ProductService productService) : ControllerBase
 {
-    [HttpGet("Search")]
-    public async Task<IActionResult> Search([FromQuery] ProductSearchInput input, CancellationToken cancellation = default)
+    [HttpPost("Search")]
+    public async Task<IActionResult> Search(ProductSearchInput input, CancellationToken cancellation = default)
     {
         var result = await productService.SearchAsync(input, cancellation);
+        return Ok(result);
+    }
+
+    [HttpGet("Detail/{id}")]
+    public async Task<IActionResult> Detail(int id, CancellationToken cancellation = default)
+    {
+        var result = await productService.DetailAsync(id, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpPost("Comment/{productId}")]
+    public async Task<IActionResult> CommentPost(int productId, ProductCommentCreateInput input,
+        CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.CommentCreateAsync(productId, userId, input, cancellation);
         return Ok(result);
     }
 

@@ -17,7 +17,8 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         return result;
     }
 
-    public async Task<List<ProductEntity>> SearchAsync(ProductSearchInput input, CancellationToken cancellation)
+    public async Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,
+        CancellationToken cancellation)
     {
         var query = context.Products.AsQueryable();
 
@@ -36,10 +37,17 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         if (input.MaxPrice.HasValue)
             query = query.Where(x => x.Price <= input.MaxPrice.Value);
 
+        var totalCount = await query.CountAsync(cancellation);
+        var page = input.Page < 1 ? 1 : input.Page;
+        var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
         var result = await query
             .Include(x => x.Category)
+            .Include(x => x.Comments)
+            .OrderBy(x => x.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellation);
-        return result;
+        return (result, totalCount);
     }
 
     public async Task<ProductEntity?> GetAsync(int id, int userId, CancellationToken cancellation)
@@ -58,6 +66,8 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         var result = await context.Products
             .Include(x => x.Seller)
             .Include(x => x.Category)
+            .Include(x => x.Comments)
+            .ThenInclude(x => x.User)
             .Include(x => x.ProductAttributes)
             .ThenInclude(x => x.Attribute)
             .FirstOrDefaultAsync(x => x.Id == id , cancellation);
@@ -85,5 +95,13 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
     {
         context.Products.Remove(input);
         await context.SaveChangesAsync(cancellation);
+    }
+
+    public async Task<ProductCommentEntity> CommentCreateAsync(ProductCommentEntity input,
+        CancellationToken cancellation)
+    {
+        await context.ProductComments.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return input;
     }
 }

@@ -4,6 +4,14 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://localhost:7185",
+        secure: false,
+      },
+    },
+  },
   resolve: {
     tsconfigPaths: true,
   },

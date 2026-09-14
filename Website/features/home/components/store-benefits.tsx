@@ -1,13 +1,13 @@
 const benefits = [
-  { icon: "local_shipping", title: "Free delivery", detail: "On orders over $75" },
-  { icon: "verified_user", title: "Secure checkout", detail: "Protected payments" },
-  { icon: "assignment_return", title: "Easy returns", detail: "30-day return window" },
-  { icon: "support_agent", title: "Real support", detail: "Here when you need us" },
+  { icon: "local_shipping", title: "ارسال سریع", detail: "تحویل مطمئن سفارش‌ها" },
+  { icon: "verified_user", title: "خرید امن", detail: "پرداخت محافظت‌شده" },
+  { icon: "assignment_return", title: "بازگشت آسان", detail: "فرایند ساده مرجوعی" },
+  { icon: "support_agent", title: "پشتیبانی واقعی", detail: "همراه شما در خرید" },
 ] as const;
 
 export function StoreBenefits() {
   return (
-    <section aria-label="Shopping benefits" className="border-y border-border bg-surface px-5 sm:px-8 lg:px-12">
+    <section aria-label="مزایای خرید" className="border-y border-border bg-surface px-5 sm:px-8 lg:px-12">
       <div className="mx-auto grid max-w-7xl grid-cols-2 lg:grid-cols-4">
         {benefits.map((benefit) => (
           <div key={benefit.title} className="flex items-center gap-3 border-border px-2 py-6 even:border-l sm:px-5 lg:border-l lg:first:border-l-0">

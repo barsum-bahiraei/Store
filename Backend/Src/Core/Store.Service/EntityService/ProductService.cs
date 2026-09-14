@@ -59,14 +59,15 @@ public class ProductService(
         return Result<List<ProductListOutput>>.Success(result);
     }
 
-    public async Task<Result<List<ProductSearchOutput>>> SearchAsync(ProductSearchInput input,
+    public async Task<Result<ProductSearchOutput>> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation)
     {
         var entities = await productRepository.SearchAsync(input, cancellation);
-        var result = new List<ProductSearchOutput>();
+        var items = new List<ProductSearchItemOutput>();
 
-        foreach (var entity in entities)
+        foreach (var entity in entities.Items)
         {
+            var ratings = entity.Comments.Where(x => x.IsShow == true && x.Rating.HasValue).ToList();
             var imageResult = await fileService.GetAsync(
                 TableNameEnum.Products,
                 TargetNameEnum.ProductId,
@@ -87,20 +88,134 @@ public class ProductService(
                 };
             }
 
-            result.Add(new ProductSearchOutput
+            items.Add(new ProductSearchItemOutput
             {
                 Id = entity.Id,
                 Name = entity.Name,
                 Description = entity.Description,
                 Price = entity.Price,
                 Discount = entity.Discount,
+                AverageRating = ratings.Count != 0
+                    ? ratings.Average(x => (decimal)x.Rating!.Value)
+                    : 0,
                 CategoryId = entity.CategoryId,
                 CategoryTitle = entity.Category.Name,
                 Image = image
             });
         }
 
-        return Result<List<ProductSearchOutput>>.Success(result);
+        var result = new ProductSearchOutput
+        {
+            TotalCount = entities.TotalCount,
+            Items = items
+        };
+        return Result<ProductSearchOutput>.Success(result);
+    }
+
+    public async Task<Result<ProductDetailOutput?>> DetailAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await productRepository.GetAsync(id, cancellation);
+
+        if (entity == null)
+            return Result<ProductDetailOutput?>.Failure("Product not found");
+
+        var imagesResult = await fileService.ListAsync(
+            TableNameEnum.Products,
+            TargetNameEnum.ProductId,
+            entity.Id,
+            cancellation);
+
+        var images = new List<ProductImageDetailOutput>();
+
+        if (imagesResult.Data != null)
+        {
+            foreach (var image in imagesResult.Data)
+            {
+                images.Add(new ProductImageDetailOutput
+                {
+                    Id = image.Id,
+                    Url = image.Url,
+                    IsMain = image.IsMain,
+                    Name = image.Name,
+                    FileType = image.FileType
+                });
+            }
+        }
+
+        var result = new ProductDetailOutput
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+            Description = entity.Description,
+            Price = entity.Price,
+            Discount = entity.Discount,
+            CategoryId = entity.CategoryId,
+            CategoryTitle = entity.Category.Name,
+            Images = images,
+            Seller = new ProductSellerDetailOutput
+            {
+                Id = entity.Seller.Id,
+                Name = entity.Seller.Name
+            },
+            Attributes = entity.ProductAttributes.Select(x => new ProductAttributeDetailOutput
+            {
+                Id = x.Id,
+                AttributeId = x.AttributeId,
+                Value = x.Value,
+                AttributeTitle = x.Attribute.Name,
+                AttributeType = x.Attribute.Type,
+                AttributeUnit = x.Attribute.Unit
+            }).ToList(),
+            Comments = entity.Comments
+                .Where(x => x.IsShow == true)
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new ProductCommentDetailOutput
+                {
+                    Id = x.Id,
+                    Text = x.Text,
+                    Rating = x.Rating,
+                    CreatedAt = x.CreatedAt,
+                    User = new ProductCommentUserDetailOutput
+                    {
+                        Id = x.User.Id,
+                        FirstName = x.User.FirstName,
+                        LastName = x.User.LastName
+                    }
+                }).ToList()
+        };
+
+        return Result<ProductDetailOutput?>.Success(result);
+    }
+
+    public async Task<Result<ProductCommentCreateOutput>> CommentCreateAsync(int productId, int userId,
+        ProductCommentCreateInput input, CancellationToken cancellation)
+    {
+        if (input.Rating is < 1 or > 5)
+            return Result<ProductCommentCreateOutput>.Failure("Rating must be between 1 and 5");
+
+        if (await productRepository.GetAsync(productId, cancellation) == null)
+            return Result<ProductCommentCreateOutput>.Failure("Product not found");
+
+        var entity = new ProductCommentEntity
+        {
+            Text = input.Text,
+            Rating = input.Rating,
+            IsShow = true,
+            UserId = userId,
+            ProductId = productId
+        };
+
+        var created = await productRepository.CommentCreateAsync(entity, cancellation);
+        return Result<ProductCommentCreateOutput>.Success(new ProductCommentCreateOutput
+        {
+            Id = created.Id,
+            Text = created.Text,
+            Rating = created.Rating,
+            IsShow = created.IsShow,
+            UserId = created.UserId,
+            ProductId = created.ProductId,
+            CreatedAt = created.CreatedAt
+        });
     }
 
     public async Task<Result<ProductGetOutput?>> GetAsync(int id, int userId, CancellationToken cancellation)

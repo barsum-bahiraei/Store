@@ -13,22 +13,22 @@ export async function getCart(signal?: AbortSignal): Promise<CartItem[]> {
     ...invoiceConfig,
     signal,
   });
-  return resolveApiResponse(data, "Unable to load your cart.");
+  return resolveApiResponse(data, "بارگذاری سبد خرید انجام نشد.");
 }
 
 export async function createCartItem(input: CreateCartItemInput): Promise<CartItem> {
   const { data } = await apiClient.post<ApiResponse<CartItem>>(endpoint, input, invoiceConfig);
-  return resolveApiResponse(data, "Unable to add this product.");
+  return resolveApiResponse(data, "افزودن محصول انجام نشد.");
 }
 
 export async function updateCartItem(id: number, input: UpdateCartItemInput): Promise<CartItem> {
   const { data } = await apiClient.put<ApiResponse<CartItem>>(`${endpoint}/${id}`, input, invoiceConfig);
-  return resolveApiResponse(data, "Unable to update this product.");
+  return resolveApiResponse(data, "به‌روزرسانی محصول انجام نشد.");
 }
 
 export async function deleteCartItem(id: number): Promise<void> {
   const { data } = await apiClient.delete<ApiResponse<boolean>>(`${endpoint}/${id}`, invoiceConfig);
-  if (!resolveApiResponse(data, "Unable to remove this product.")) {
-    throw new Error("Unable to remove this product.");
+  if (!resolveApiResponse(data, "حذف محصول انجام نشد.")) {
+    throw new Error("حذف محصول انجام نشد.");
   }
 }

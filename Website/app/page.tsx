@@ -5,8 +5,8 @@ import { HeroSlider } from "@/features/home/components/hero-slider";
 import { StoreBenefits } from "@/features/home/components/store-benefits";
 
 export const metadata: Metadata = {
-  title: "Store | Thoughtful goods for everyday life",
-  description: "Discover curated everyday essentials, fresh arrivals, and considered design for you and your home.",
+  title: "فروشگاه | انتخاب‌های هوشمند برای زندگی روزمره",
+  description: "تازه‌ترین محصولات و کالاهای کاربردی روزمره را در فروشگاه پیدا کنید.",
 };
 
 export default function Home() {

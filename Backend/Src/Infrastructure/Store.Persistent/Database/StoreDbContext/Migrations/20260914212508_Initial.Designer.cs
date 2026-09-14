@@ -12,7 +12,7 @@ using Store.Persistent.Database.StoreDbContext;
 namespace Store.Persistent.Database.StoreDbContext.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    [Migration("20260913132258_Initial")]
+    [Migration("20260914212508_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
