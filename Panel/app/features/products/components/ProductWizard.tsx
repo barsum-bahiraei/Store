@@ -153,7 +153,22 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const selectImages = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/"));
+    const selectedFiles = Array.from(event.target.files ?? []);
+    const files = selectedFiles.filter(
+      (file) => file.type.startsWith("image/") || /\.(avif|gif|jpe?g|png|svg|webp)$/i.test(file.name)
+    );
+
+    if (files.length === 0) {
+      setError("Please select a JPG, PNG, WebP, GIF, AVIF, or SVG image.");
+      event.target.value = "";
+      return;
+    }
+
+    setError(
+      files.length === selectedFiles.length
+        ? null
+        : "Some unsupported files were ignored."
+    );
     const next = files.map((file) => ({
       id: crypto.randomUUID(),
       file,
@@ -311,7 +326,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               <label className="mt-6 flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/50 focus-within:ring-2 focus-within:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:hover:border-primary-600 dark:hover:bg-primary-950/20">
                 <span className="flex size-12 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400"><span className="material-symbols-outlined">add_photo_alternate</span></span>
                 <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">Choose product images</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">Select one or multiple image files</span>
-                <input type="file" accept="image/*" multiple onChange={selectImages} className="sr-only" />
+                <input type="file" accept=".avif,.gif,.jpeg,.jpg,.png,.svg,.webp,image/*" multiple onChange={selectImages} className="sr-only" />
               </label>
               {existingImages.length > 0 && (
                 <div className="mt-6">

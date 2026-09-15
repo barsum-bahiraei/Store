@@ -13,6 +13,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Where(x => x.Seller.UserId == userId)
             .Include(x => x.Category)
             .Include(x => x.Seller)
+            .OrderBy(x => x.Id)
             .ToListAsync(cancellation);
         return result;
     }
