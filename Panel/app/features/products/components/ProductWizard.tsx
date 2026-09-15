@@ -6,6 +6,7 @@ import type { CategoryListOutput } from "~/features/categories/models/output/cat
 import { flattenCategories } from "~/features/categories/utils/category-tree";
 import { sellerApi } from "~/features/sellers/api/seller-api";
 import type { SellerListOutput } from "~/features/sellers/models/seller";
+import { createClientId } from "~/shared/utils/create-client-id";
 import type {
   ProductAttributeDefinition,
   ProductImage,
@@ -170,7 +171,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         : "Some unsupported files were ignored."
     );
     const next = files.map((file) => ({
-      id: crypto.randomUUID(),
+      id: createClientId(),
       file,
       previewUrl: URL.createObjectURL(file),
     }));

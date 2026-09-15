@@ -1,4 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { createClientId } from "~/shared/utils/create-client-id";
 import { SellerStatus, type SellerImage, type SellerListOutput } from "../models/seller";
 import { useSellerStore } from "../store/seller-store";
 import { resolveSellerImageUrl } from "../utils/resolve-seller-image-url";
@@ -90,7 +91,7 @@ export default function SellersPage() {
     if (selectedImage) {
       const imageSaved = await saveSellerImage({
         file: selectedImage.file,
-        name: `${sellerId}-${crypto.randomUUID()}-${selectedImage.file.name.replace(/\.[^/.]+$/, "")}`,
+        name: `${sellerId}-${createClientId()}-${selectedImage.file.name.replace(/\.[^/.]+$/, "")}`,
         sellerId,
         imageId: existingImage?.id,
         fileType: selectedImage.file.type === "image/svg+xml" ? 3 : 0,
