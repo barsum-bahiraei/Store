@@ -1,0 +1,21 @@
+name: Publish backend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "Backend/**"
+      - "deploy/**"
+      - ".github/workflows/backend.yml"
+      - ".github/workflows/_publish.yml"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: ./.github/workflows/_publish.yml
+    with:
+      service: backend
+      context: Backend
+      image: store-backend
+      image-tag-variable: BACKEND_IMAGE_TAG
+    secrets: inherit

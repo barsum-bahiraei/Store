@@ -1,0 +1,24 @@
+name: Publish panel
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "Panel/**"
+      - "deploy/**"
+      - ".github/workflows/panel.yml"
+      - ".github/workflows/_publish.yml"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: ./.github/workflows/_publish.yml
+    with:
+      service: panel
+      context: Panel
+      image: store-panel
+      image-tag-variable: PANEL_IMAGE_TAG
+      build-args: |
+        VITE_API_BASE_URL=${{ vars.PANEL_API_BASE_URL }}
+        VITE_MINIO_BASE_URL=${{ vars.PANEL_MINIO_BASE_URL }}
+    secrets: inherit

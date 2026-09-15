@@ -1,0 +1,107 @@
+name: Publish service
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      context:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+      image-tag-variable:
+        required: true
+        type: string
+      build-args:
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}:${{ github.sha }}
+          build-args: ${{ inputs.build-args }}
+          cache-from: type=gha,scope=${{ inputs.service }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.service }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: store-production-deploy
+      cancel-in-progress: false
+    env:
+      SERVER_HOST: ${{ vars.SERVER_HOST }}
+      SERVER_PORT: ${{ vars.SERVER_PORT }}
+      SERVER_USER: ${{ vars.SERVER_USER }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      SERVER_KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+      PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        run: |
+          test -n "$SERVER_HOST"
+          test -n "$SERVER_PORT"
+          test -n "$SERVER_USER"
+          test -n "$DEPLOY_PATH"
+          test -n "$SERVER_SSH_KEY"
+          test -n "$SERVER_KNOWN_HOSTS"
+          test -n "$PRODUCTION_ENV"
+          test -n "$GHCR_USERNAME"
+          test -n "$GHCR_TOKEN"
+
+      - name: Configure SSH
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$SERVER_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SERVER_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Upload deployment configuration
+        run: |
+          printf '%s\n' "$PRODUCTION_ENV" > .env.production
+          chmod 600 .env.production
+          ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" "mkdir -p '$DEPLOY_PATH'"
+          scp -P "$SERVER_PORT" deploy/docker-compose.yml .env.production "$SERVER_USER@$SERVER_HOST:$DEPLOY_PATH/"
+          ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" "mv '$DEPLOY_PATH/.env.production' '$DEPLOY_PATH/.env' && chmod 600 '$DEPLOY_PATH/.env'"
+
+      - name: Authenticate server to GHCR
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
+
+      - name: Deploy service
+        env:
+          SERVICE: ${{ inputs.service }}
+          IMAGE_TAG_VARIABLE: ${{ inputs.image-tag-variable }}
+        run: |
+          ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" "cd '$DEPLOY_PATH' && export '$IMAGE_TAG_VARIABLE=$GITHUB_SHA' && docker compose pull '$SERVICE' && docker compose up -d '$SERVICE' && docker image prune -f"

@@ -1,10 +1,12 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Store.Api.Authorization;
 using Store.Domain;
 using Store.Persistent;
+using Store.Persistent.Database.StoreDbContext;
 using Store.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +65,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks();
 builder.Services
     .ConfigurationStoreService()
     .ConfigurationStorePersistent(builder.Configuration)
@@ -70,7 +73,11 @@ builder.Services
 builder.Services.AddScoped<ControllerAccessProvider>();
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 // use cors
 app.UseCors("Frontend");
@@ -79,6 +86,7 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 
 // Configure the HTTP request pipeline.
