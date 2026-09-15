@@ -13,10 +13,18 @@ public class ProductDetailOutput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public List<ProductCategoryDetailOutput> Categories { get; set; }
     public ProductSellerDetailOutput Seller { get; set; }
     public List<ProductImageDetailOutput> Images { get; set; }
     public List<ProductAttributeDetailOutput> Attributes { get; set; }
     public List<ProductCommentDetailOutput> Comments { get; set; }
+}
+
+public class ProductCategoryDetailOutput
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public int? ParentId { get; set; }
 }
 
 public class ProductAttributeDetailOutput

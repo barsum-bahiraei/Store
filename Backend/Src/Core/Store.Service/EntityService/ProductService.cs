@@ -1,3 +1,4 @@
+using Store.Domain.Categories;
 using Store.Domain.Files;
 using Store.Domain.Products;
 using Store.Domain.Products.Models.Input;
@@ -9,6 +10,7 @@ namespace Store.Service.EntityService;
 public class ProductService(
     IProductRepository productRepository,
     ISellerRepository sellerRepository,
+    ICategoryRepository categoryRepository,
     FileService fileService)
 {
     public async Task<Result<List<ProductListOutput>>> ListAsync(int userId, CancellationToken cancellation)
@@ -119,6 +121,23 @@ public class ProductService(
         if (entity == null)
             return Result<ProductDetailOutput?>.Failure("Product not found");
 
+        var categoryEntities = await categoryRepository.ListAsync(cancellation);
+        var categories = new List<ProductCategoryDetailOutput>();
+        CategoryEntity? category = entity.Category;
+        while (category != null)
+        {
+            categories.Add(new ProductCategoryDetailOutput
+            {
+                Id = category.Id,
+                Name = category.Name,
+                ParentId = category.ParentId
+            });
+            category = category.ParentId.HasValue
+                ? categoryEntities.FirstOrDefault(x => x.Id == category.ParentId.Value)
+                : null;
+        }
+        categories.Reverse();
+
         var imagesResult = await fileService.ListAsync(
             TableNameEnum.Products,
             TargetNameEnum.ProductId,
@@ -151,6 +170,7 @@ public class ProductService(
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
+            Categories = categories,
             Images = images,
             Seller = new ProductSellerDetailOutput
             {

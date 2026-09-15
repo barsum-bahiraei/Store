@@ -33,7 +33,14 @@ export type ProductSearchResult = {
   items: ProductSearchItem[];
 };
 
+export type ProductCategory = {
+  id: number;
+  name: string;
+  parentId: number | null;
+};
+
 export type ProductDetail = Omit<ProductSearchItem, "averageRating" | "image"> & {
+  categories: ProductCategory[];
   seller: { id: number; name: string };
   images: ProductImage[];
   attributes: Array<{

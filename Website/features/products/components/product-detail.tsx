@@ -34,6 +34,22 @@ export function ProductDetailContent({ productId }: { productId: number }) {
 
   return (
     <>
+      <nav aria-label="مسیر دسته‌بندی" className="mb-6 overflow-x-auto">
+        <ol className="flex min-w-max items-center gap-1 text-sm text-muted-foreground">
+          {product.categories.map((category, index) => (
+            <li key={category.id} className="flex items-center gap-1">
+              {index > 0 && <span className="material-symbols-rounded text-base" aria-hidden="true">chevron_left</span>}
+              <Link
+                href={`/search?category=${category.id}`}
+                className="inline-flex min-h-11 items-center rounded-lg px-2 font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {category.name}
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <section aria-label="تصاویر محصول">
           <div className="overflow-hidden rounded-xl border border-border bg-muted">
@@ -76,11 +92,11 @@ export function ProductDetailContent({ productId }: { productId: number }) {
               modules={[FreeMode, Keyboard]}
               onSwiper={setThumbsSwiper}
               spaceBetween={8}
-              slidesPerView={4}
+              slidesPerView="auto"
               freeMode={{ enabled: true, sticky: true }}
               keyboard={{ enabled: true }}
               watchSlidesProgress
-              className="mt-3 [&_.swiper-slide]:!h-auto [&_.swiper-slide]:!w-auto [&_.swiper-slide]:!opacity-50 [&_.swiper-slide-thumb-active]:!opacity-100"
+              className="mt-3 [&_.swiper-slide]:!h-20 [&_.swiper-slide]:!w-20 [&_.swiper-slide]:!opacity-60 [&_.swiper-slide-thumb-active]:!opacity-100 [&_.swiper-slide-thumb-active_button]:border-primary"
             >
               {images.map((image, index) => (
                 <SwiperSlide key={image.id}>
@@ -88,7 +104,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                     type="button"
                     onClick={() => mainSwiper?.slideTo(index)}
                     aria-label={`مشاهده تصویر ${index + 1}`}
-                    className="relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-muted outline-none transition-all duration-200 hover:border-primary focus-visible:ring-2 focus-visible:ring-ring"
+                    className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted outline-none transition-colors duration-200 hover:border-primary focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Image src={image.resolvedUrl!} alt="" fill unoptimized sizes="15vw" className="object-cover" />
                   </button>
@@ -99,8 +115,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
         </section>
 
         <section aria-labelledby="product-title" className="self-center">
-          <Link href={`/search?category=${product.categoryId}`} className="text-xs font-black uppercase tracking-[0.2em] text-primary hover:text-primary-hover">{product.categoryTitle}</Link>
-          <h1 id="product-title" className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{product.name}</h1>
+          <h1 id="product-title" className="text-3xl font-black tracking-tight sm:text-4xl">{product.name}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1 text-sm font-bold"><span className="material-symbols-rounded text-warning" aria-hidden="true">star</span>{averageRating.toFixed(1)}</span>
             <span className="text-sm text-muted-foreground">{product.comments.length} نظر</span>
