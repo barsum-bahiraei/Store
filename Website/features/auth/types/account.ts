@@ -9,8 +9,21 @@ export type AccountUser = {
   birthDate: string | null;
   gender: Gender;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   isEmailVerified: boolean;
 };
+
+export type UpdateUserProfileInput = {
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  gender: Gender;
+  nationalCode: string | null;
+  birthDate: string | null;
+};
+
+export type UpdatedUserProfile = UpdateUserProfileInput;
 
 export type AuthenticatedUser = AccountUser & {
   token: string;

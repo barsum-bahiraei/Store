@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { resolveApiResponse, type ApiResponse } from "@/lib/api-response";
-import type { AccountUser, AuthenticatedUser, LoginInput, RegisterInput } from "../types/account";
+import type { AccountUser, AuthenticatedUser, LoginInput, RegisterInput, UpdatedUserProfile, UpdateUserProfileInput } from "../types/account";
 
 export async function login(input: LoginInput): Promise<AuthenticatedUser> {
   const { data } = await apiClient.post<ApiResponse<AuthenticatedUser>>(
@@ -26,4 +26,9 @@ export async function getUserProfile(signal?: AbortSignal): Promise<AccountUser>
   });
 
   return resolveApiResponse(data, "بارگذاری پروفایل انجام نشد.");
+}
+
+export async function updateUserProfile(input: UpdateUserProfileInput): Promise<UpdatedUserProfile> {
+  const { data } = await apiClient.put<ApiResponse<UpdatedUserProfile>>("/Account/UserProfile", input);
+  return resolveApiResponse(data, "ویرایش پروفایل انجام نشد.");
 }

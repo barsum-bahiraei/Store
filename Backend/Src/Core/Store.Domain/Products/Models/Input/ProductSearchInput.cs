@@ -9,4 +9,6 @@ public class ProductSearchInput
     public bool HasDiscount { get; set; }
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
+    public bool IsPriceDec { get; set; }
+    public bool IsIdDec { get; set; }
 }

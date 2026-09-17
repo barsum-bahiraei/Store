@@ -39,6 +39,9 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
                 Id = entity.Id,
                 Name = entity.Name,
                 Description = entity.Description,
+                Address = entity.Address,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
                 Status = entity.Status,
                 Image = image
             });
@@ -82,6 +85,9 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
             Id = entity.Id,
             Name = entity.Name,
             Description = entity.Description,
+            Address = entity.Address,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
             Status = entity.Status,
             Images = images
         };
@@ -95,6 +101,9 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
         {
             Name = input.Name,
             Description = input.Description,
+            Address = input.Address,
+            Latitude = input.Latitude.Value,
+            Longitude = input.Longitude.Value,
             Status = SellerStatusEnum.Active,
             UserId = userId
         };
@@ -106,6 +115,9 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
             Id = created.Id,
             Name = created.Name,
             Description = created.Description,
+            Address = created.Address,
+            Latitude = created.Latitude,
+            Longitude = created.Longitude,
             Status = created.Status
         });
     }
@@ -119,6 +131,9 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
 
         entity.Name = input.Name;
         entity.Description = input.Description;
+        entity.Address = input.Address;
+        entity.Latitude = input.Latitude;
+        entity.Longitude = input.Longitude;
         entity.Status = input.Status;
 
         var updated = await sellerRepository.UpdateAsync(entity, cancellation);
@@ -128,6 +143,9 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
             Id = updated.Id,
             Name = updated.Name,
             Description = updated.Description,
+            Address = updated.Address,
+            Latitude = updated.Latitude,
+            Longitude = updated.Longitude,
             Status = updated.Status
         });
     }

@@ -22,3 +22,205 @@ html,
 body {
   @apply bg-white dark:bg-gray-950;
 }
+
+/* CKEditor 5 dark mode overrides */
+.dark .ck {
+  --ck-color-base-background: #030712;
+  --ck-color-base-foreground: #111827;
+  --ck-color-base-border: #374151;
+  --ck-color-base-text: #f9fafb;
+  --ck-color-base-active-background: #1e40af;
+  --ck-color-base-active-border: #2563eb;
+  --ck-color-base-button-background: #1f2937;
+  --ck-color-base-button-hover-background: #374151;
+  --ck-color-base-button-on-background: #2563eb;
+  --ck-color-base-input-background: #030712;
+  --ck-color-base-input-border: #374151;
+  --ck-color-base-input-text: #f9fafb;
+  --ck-color-base-placeholder: #6b7280;
+  --ck-color-dropdown-panel-background: #111827;
+  --ck-color-toolbar-background: #111827;
+  --ck-color-toolbar-border: #374151;
+  --ck-color-shadow-drop: rgba(0, 0, 0, 0.4);
+  --ck-color-shadow-inner: rgba(0, 0, 0, 0.2);
+  --ck-color-focus-border: #2563eb;
+  --ck-color-editable-background: #030712;
+
+  color-scheme: dark;
+}
+
+.dark .ck-editor__editable {
+  background: #030712 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+.dark .ck-editor__editable a {
+  color: #60a5fa;
+}
+
+.dark .ck-editor__editable h2,
+.dark .ck-editor__editable h3,
+.dark .ck-editor__editable h4 {
+  color: #f9fafb;
+}
+
+.dark .ck-editor__editable blockquote {
+  border-left-color: #2563eb;
+  color: #d1d5db;
+}
+
+.dark .ck-editor__editable table {
+  border-color: #374151;
+}
+
+.dark .ck-editor__editable table td,
+.dark .ck-editor__editable table th {
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .ck-editor__editable .todo-list .todo-list__label > input {
+  accent-color: #2563eb;
+}
+
+.dark .ck-editor__editable pre {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .ck-editor__editable code {
+  background: #1f2937;
+  color: #f87171;
+}
+
+.dark .ck .ck-toolbar {
+  background: #111827 !important;
+  border-color: #374151 !important;
+}
+
+.dark .ck .ck-toolbar .ck-toolbar__separator {
+  background: #374151;
+}
+
+.dark .ck .ck-button,
+.dark .ck .ck-dropdown {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-button:hover {
+  background: #374151 !important;
+  color: #f9fafb;
+}
+
+.dark .ck .ck-button.ck-on {
+  background: #2563eb !important;
+  color: #ffffff;
+}
+
+.dark .ck .ck-button.ck-off {
+  background: transparent;
+  color: #d1d5db;
+}
+
+.dark .ck .ck-input {
+  background: #030712;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.dark .ck .ck-label {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-dropdown__panel {
+  background: #111827;
+  border-color: #374151;
+}
+
+.dark .ck .ck-list {
+  background: #111827;
+}
+
+.dark .ck .ck-list__item {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-list__item:hover {
+  background: #374151 !important;
+}
+
+.dark .ck .ck-list__item .ck-list__item-label {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-color-grid {
+  background: #111827;
+}
+
+.dark .ck .ck-color-grid__tile {
+  border-color: #374151;
+}
+
+.dark .ck .ck-color-grid__tile:hover {
+  border-color: #6b7280;
+}
+
+.dark .ck .ck-color-grid__tile.ck-color-grid__tile_active {
+  border-color: #2563eb;
+}
+
+.dark .ck .ck-dialog {
+  background: #111827;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .ck .ck-dialog .ck-label {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-dialog .ck-input {
+  background: #030712;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.dark .ck .ck-heading-dropdown {
+  background: #111827;
+}
+
+.dark .ck .ck-heading-dropdown .ck-list__item .ck-list__item-label {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-heading-dropdown .ck-list__item:hover {
+  background: #374151 !important;
+}
+
+.dark .ck .ck-sticky-panel__content {
+  border-color: #374151;
+}
+
+.dark .ck .ck-balloon-panel {
+  background: #111827;
+  border-color: #374151;
+}
+
+.dark .ck .ck-balloon-panel .ck-input {
+  background: #030712;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.dark .ck .ck-balloon-panel .ck-label {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-balloon-panel .ck-button {
+  color: #d1d5db;
+}
+
+.dark .ck .ck-balloon-panel .ck-button:hover {
+  background: #374151;
+}

@@ -23,8 +23,17 @@ function pageHref(filters: ProductSearchInput, page: number) {
   if (filters.hasDiscount) params.set("discount", "true");
   if (filters.minPrice && filters.minPrice > 0) params.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice && filters.maxPrice > 0) params.set("maxPrice", String(filters.maxPrice));
+  const sort = sortValue(filters);
+  if (sort !== "default") params.set("sort", sort);
   if (page > 1) params.set("page", String(page));
   return `/search?${params.toString()}`;
+}
+
+function sortValue(filters: ProductSearchInput) {
+  if (filters.isPriceDec) return "priceDesc";
+  if (!filters.isPriceDec && (filters.minPrice !== undefined || filters.maxPrice !== undefined)) return "priceAsc";
+  if (filters.isIdDec) return "newest";
+  return "default";
 }
 
 export function ProductSearch({ filters }: { filters: ProductSearchInput }) {
@@ -42,6 +51,7 @@ export function ProductSearch({ filters }: { filters: ProductSearchInput }) {
           <div><label htmlFor="filter-category" className="text-sm font-bold">دسته‌بندی</label><select id="filter-category" name="category" defaultValue={filters.categoryId ?? ""} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"><option value="">همه دسته‌بندی‌ها</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div>
           <div className="grid grid-cols-2 gap-3"><div><label htmlFor="min-price" className="text-sm font-bold">حداقل قیمت</label><input id="min-price" name="minPrice" type="number" min="0" step="0.01" defaultValue={filters.minPrice} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div><div><label htmlFor="max-price" className="text-sm font-bold">حداکثر قیمت</label><input id="max-price" name="maxPrice" type="number" min="0" step="0.01" defaultValue={filters.maxPrice} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div></div>
           <label className="flex min-h-11 items-center gap-3 text-sm font-bold"><input name="discount" value="true" type="checkbox" defaultChecked={filters.hasDiscount} className="size-5 accent-primary" />فقط محصولات تخفیف‌دار</label>
+          <div><label htmlFor="sort-order" className="text-sm font-bold">مرتب‌سازی</label><select id="sort-order" name="sort" defaultValue={sortValue(filters)} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"><option value="default">پیش‌فرض</option><option value="newest">جدیدترین</option><option value="priceAsc">ارزان‌ترین</option><option value="priceDesc">گران‌ترین</option></select></div>
           <div className="grid gap-2"><button type="submit" className="min-h-11 rounded-lg bg-primary px-4 text-sm font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring">اعمال فیلترها</button><Link href="/search" className="grid min-h-11 place-items-center rounded-lg text-sm font-bold text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">پاک کردن فیلترها</Link></div>
         </form>
       </aside>

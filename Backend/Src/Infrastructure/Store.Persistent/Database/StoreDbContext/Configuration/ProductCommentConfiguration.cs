@@ -11,7 +11,7 @@ public class ProductCommentConfiguration : IEntityTypeConfiguration<ProductComme
         builder.ToTable("ProductComments");
         builder.Property(x => x.IsShow).HasDefaultValue(true);
         builder.HasOne(x => x.Product)
-            .WithMany(x => x.Comments)
+            .WithMany(x => x.ProductComments)
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.User)

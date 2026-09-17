@@ -13,4 +13,8 @@ public interface IProductRepository
     Task<ProductEntity> UpdateAsync(ProductEntity input, CancellationToken cancellation);
     Task DeleteAsync(ProductEntity input, CancellationToken cancellation);
     Task<ProductCommentEntity> CommentCreateAsync(ProductCommentEntity input, CancellationToken cancellation);
+    Task<List<ProductBookmarkEntity>> BookmarkListAsync(int userId, CancellationToken cancellation);
+    Task<ProductBookmarkEntity?> BookmarkGetAsync(int productId, int userId, CancellationToken cancellation);
+    Task<ProductBookmarkEntity> BookmarkCreateAsync(ProductBookmarkEntity input, CancellationToken cancellation);
+    Task BookmarkDeleteAsync(ProductBookmarkEntity input, CancellationToken cancellation);
 }

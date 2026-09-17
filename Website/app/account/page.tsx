@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { AccountProfile } from "@/features/auth/components/account-profile";
+import { StoreHeader } from "@/features/categories/components/store-header";
+import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
   title: "حساب من | فروشگاه",
@@ -8,6 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountPage({ searchParams }: PageProps<"/account">) {
-  const { tab } = await searchParams;
-  return <AccountProfile tab={tab === "cart" || tab === "orders" ? tab : "profile"} />;
+  const { tab, returnTo } = await searchParams;
+  return (
+    <>
+      <StoreHeader />
+      <AccountProfile tab={tab === "cart" || tab === "orders" || tab === "bookmarks" ? tab : "profile"} returnTo={returnTo === "/checkout" ? returnTo : undefined} />
+      <StoreFooter />
+    </>
+  );
 }

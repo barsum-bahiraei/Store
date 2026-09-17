@@ -9,7 +9,7 @@ export type ProductImage = {
 export type ProductSearchItem = {
   id: number;
   name: string;
-  description: string | null;
+  shortDescription: string | null;
   price: number;
   discount: number;
   averageRating: number;
@@ -26,6 +26,8 @@ export type ProductSearchInput = {
   hasDiscount: boolean;
   minPrice?: number;
   maxPrice?: number;
+  isPriceDec?: boolean;
+  isIdDec?: boolean;
 };
 
 export type ProductSearchResult = {
@@ -40,6 +42,7 @@ export type ProductCategory = {
 };
 
 export type ProductDetail = Omit<ProductSearchItem, "averageRating" | "image"> & {
+  longDescription: string | null;
   categories: ProductCategory[];
   seller: { id: number; name: string };
   images: ProductImage[];

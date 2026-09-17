@@ -7,6 +7,8 @@ import { flattenCategories } from "~/features/categories/utils/category-tree";
 import { sellerApi } from "~/features/sellers/api/seller-api";
 import type { SellerListOutput } from "~/features/sellers/models/seller";
 import { createClientId } from "~/shared/utils/create-client-id";
+import { unescapeHtmlEntities } from "~/shared/utils/unescape-html-entities";
+import { RichTextEditor } from "~/components/common/rich-text-editor";
 import type {
   ProductAttributeDefinition,
   ProductImage,
@@ -52,7 +54,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [sellerId, setSellerId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [longDescription, setLongDescription] = useState("");
   const [price, setPrice] = useState("");
   const [discount, setDiscount] = useState("0");
   const [attributeValues, setAttributeValues] = useState<Record<number, string>>({});
@@ -76,7 +79,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           setCategoryId(details.categoryId);
           setSellerId(details.seller.id);
           setTitle(details.name);
-          setDescription(details.description ?? "");
+          setShortDescription(details.shortDescription ?? "");
+          setLongDescription(unescapeHtmlEntities(details.longDescription) ?? "");
           setPrice(String(details.price));
           setDiscount(String(details.discount));
           setAttributes(details.attributes ?? []);
@@ -131,7 +135,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     try {
       const input = {
         name: title.trim(),
-        description: description.trim() || null,
+        shortDescription: shortDescription.trim() || null,
+        longDescription: longDescription.trim() || null,
         price: Number(price),
         discount: Number(discount || 0),
         categoryId,
@@ -300,7 +305,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Title <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="e.g. Wireless headphones" required autoFocus /></label>
                 <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Price <span className="text-red-500">*</span></span><input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className={inputClasses} placeholder="0.00" required /></label>
                 <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Discount</span><input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0.00" /></label>
-                <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} className={`${inputClasses} min-h-28 resize-y`} placeholder="Describe the product and its key benefits" /></label>
+                <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Short description</span><textarea value={shortDescription} onChange={(event) => setShortDescription(event.target.value)} className={`${inputClasses} min-h-20 resize-y`} placeholder="Brief summary of the product" /></label>
+                <div className="sm:col-span-2">
+                  <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Long description</span>
+                  <RichTextEditor
+                    data={longDescription}
+                    onChange={setLongDescription}
+                    placeholder="Detailed product description (supports HTML formatting)"
+                  />
+                </div>
               </div>
               {attributes.length > 0 && (
                 <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">

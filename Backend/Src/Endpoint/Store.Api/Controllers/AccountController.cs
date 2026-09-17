@@ -51,6 +51,16 @@ public class AccountController(AccountService accountService, ControllerAccessPr
         return Ok(result);
     }
 
+    [Authorize]
+    [HttpPut("UserProfile")]
+    public async Task<IActionResult> UserProfilePut(UserProfileUpdateInput input,
+        CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await accountService.UserProfileUpdateAsync(userId, input, cancellation);
+        return Ok(result);
+    }
+
     [HasAccess]
     [HttpGet("Role")]
     public async Task<IActionResult> RoleGet(CancellationToken cancellation = default)

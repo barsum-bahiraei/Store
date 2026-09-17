@@ -31,6 +31,7 @@ public class StoreDbContext : DbContext
     public DbSet<SellerEntity> Sellers { get; set; }
     public DbSet<InvoiceEntity> Invoices { get; set; }
     public DbSet<PreInvoiceEntity> PreInvoices { get; set; }
+    public DbSet<ProductBookmarkEntity> ProductBookmarks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

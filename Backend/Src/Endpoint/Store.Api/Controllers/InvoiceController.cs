@@ -7,11 +7,20 @@ using Store.Service.EntityService;
 namespace Store.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class InvoiceController(InvoiceService invoiceService) : ControllerBase
 {
     [HasAccess]
-    [HttpGet("Pre")]
+    [HttpGet]
+    public async Task<IActionResult> InvoiceGet(CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await invoiceService.ListAsync(userId, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpGet("Order")]
     public async Task<IActionResult> PreInvoiceGet(CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
@@ -20,7 +29,7 @@ public class InvoiceController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HasAccess]
-    [HttpPost("Pre")]
+    [HttpPost("Order")]
     public async Task<IActionResult> PreInvoicePost(PreInvoiceCreateInput input, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
@@ -29,7 +38,7 @@ public class InvoiceController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HasAccess]
-    [HttpPut("Pre/{id}")]
+    [HttpPut("Order/{id}")]
     public async Task<IActionResult> PreInvoicePut(int id, PreInvoiceUpdateInput input, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
@@ -38,7 +47,7 @@ public class InvoiceController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HasAccess]
-    [HttpDelete("Pre/{id}")]
+    [HttpDelete("Order/{id}")]
     public async Task<IActionResult> PreInvoiceDelete(int id, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);

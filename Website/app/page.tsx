@@ -3,6 +3,7 @@ import { StoreHeader } from "@/features/categories/components/store-header";
 import { FeaturedProducts } from "@/features/home/components/featured-products";
 import { HeroSlider } from "@/features/home/components/hero-slider";
 import { StoreBenefits } from "@/features/home/components/store-benefits";
+import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
   title: "فروشگاه | انتخاب‌های هوشمند برای زندگی روزمره",
@@ -11,13 +12,14 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <StoreHeader />
-      <main>
+      <main className="flex-1">
         <HeroSlider />
         <StoreBenefits />
         <FeaturedProducts />
       </main>
+      <StoreFooter />
     </div>
   );
 }

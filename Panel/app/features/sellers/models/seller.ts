@@ -16,11 +16,17 @@ export interface SellerImage {
 export interface SellerCreateInput {
   name: string;
   description: string;
+  address: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface SellerUpdateInput {
   name: string;
   description: string | null;
+  address: string;
+  latitude: number;
+  longitude: number;
   status: SellerStatus;
 }
 
@@ -42,6 +48,9 @@ export interface SellerListOutput {
   id: number;
   name: string;
   description: string | null;
+  address: string;
+  latitude: number;
+  longitude: number;
   status: SellerStatus;
   image: SellerImage | null;
 }

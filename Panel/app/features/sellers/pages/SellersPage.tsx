@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { createClientId } from "~/shared/utils/create-client-id";
+import { SellerLocationMap } from "../components/SellerLocationMap";
 import { SellerStatus, type SellerImage, type SellerListOutput } from "../models/seller";
 import { useSellerStore } from "../store/seller-store";
 import { resolveSellerImageUrl } from "../utils/resolve-seller-image-url";
@@ -21,10 +22,19 @@ export default function SellersPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [status, setStatus] = useState(SellerStatus.Active);
   const [existingImage, setExistingImage] = useState<SellerImage | null>(null);
   const [selectedImage, setSelectedImage] = useState<{ file: File; previewUrl: string } | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const latitudeNumber = latitude === "" ? null : Number(latitude);
+  const longitudeNumber = longitude === "" ? null : Number(longitude);
+  const validLatitude = latitudeNumber !== null && Number.isFinite(latitudeNumber) && latitudeNumber >= -90 && latitudeNumber <= 90;
+  const validLongitude = longitudeNumber !== null && Number.isFinite(longitudeNumber) && longitudeNumber >= -180 && longitudeNumber <= 180;
 
   useEffect(() => {
     void fetchSellers();
@@ -41,9 +51,13 @@ export default function SellersPage() {
     setEditingId(null);
     setName("");
     setDescription("");
+    setAddress("");
+    setLatitude("");
+    setLongitude("");
     setStatus(SellerStatus.Active);
     setExistingImage(null);
     setSelectedImage(null);
+    setFormError(null);
   };
 
   const startEditing = async (seller: SellerListOutput) => {
@@ -51,11 +65,18 @@ export default function SellersPage() {
     setEditingId(seller.id);
     setExistingImage(null);
     setSelectedImage(null);
+    setAddress("");
+    setLatitude("");
+    setLongitude("");
+    setFormError(null);
     setFormLoading(true);
     try {
       const details = await getSeller(seller.id);
       setName(details.name);
       setDescription(details.description ?? "");
+      setAddress(details.address ?? "");
+      setLatitude(String(details.latitude));
+      setLongitude(String(details.longitude));
       setStatus(details.status);
       setExistingImage(details.images.find((image) => image.isMain) ?? details.images[0] ?? null);
     } finally {
@@ -73,16 +94,30 @@ export default function SellersPage() {
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) return;
+    setFormError(null);
+    if (!name.trim() || !address.trim()) return;
+    if (!validLatitude || !validLongitude || latitudeNumber === null || longitudeNumber === null) {
+      setFormError("Select a valid location on the map or enter valid latitude and longitude values.");
+      return;
+    }
     let sellerId = editingId;
     if (sellerId === null) {
-      const created = await createSeller({ name: name.trim(), description: description.trim() });
+      const created = await createSeller({
+        name: name.trim(),
+        description: description.trim(),
+        address: address.trim(),
+        latitude: latitudeNumber,
+        longitude: longitudeNumber,
+      });
       if (!created) return;
       sellerId = created.id;
     } else {
       const updated = await updateSeller(sellerId, {
         name: name.trim(),
         description: description.trim() || null,
+        address: address.trim(),
+        latitude: latitudeNumber,
+        longitude: longitudeNumber,
         status,
       });
       if (!updated) return;
@@ -134,6 +169,26 @@ export default function SellersPage() {
             <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
             {editingId !== null && <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</span><select value={status} onChange={(event) => setStatus(Number(event.target.value))} className={inputClasses}>{statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>}
             <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} className={`${inputClasses} min-h-24 py-3`} /></label>
+            <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Address</span><textarea value={address} onChange={(event) => setAddress(event.target.value)} className={`${inputClasses} min-h-20 py-3`} required disabled={formLoading} /></label>
+            <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</span><input type="number" min="-90" max="90" step="any" value={latitude} onChange={(event) => setLatitude(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
+            <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</span><input type="number" min="-180" max="180" step="any" value={longitude} onChange={(event) => setLongitude(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
+            <div className="sm:col-span-2">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Location</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Click the map to set the coordinates</span>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
+                <SellerLocationMap
+                  latitude={validLatitude ? latitudeNumber : null}
+                  longitude={validLongitude ? longitudeNumber : null}
+                  onChange={(nextLatitude, nextLongitude) => {
+                    setLatitude(nextLatitude.toFixed(6));
+                    setLongitude(nextLongitude.toFixed(6));
+                    setFormError(null);
+                  }}
+                />
+              </div>
+            </div>
             <div className="sm:col-span-2">
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Seller image</span>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -152,7 +207,8 @@ export default function SellersPage() {
               </div>
             </div>
           </div>
-          <button disabled={submitting || formLoading || !name.trim()} className="mt-4 min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">{submitting ? "Saving..." : "Save seller"}</button>
+          {formError && <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">{formError}</p>}
+          <button disabled={submitting || formLoading || !name.trim() || !address.trim() || !validLatitude || !validLongitude} className="mt-4 min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">{submitting ? "Saving..." : "Save seller"}</button>
         </form>
       )}
 
@@ -169,6 +225,7 @@ export default function SellersPage() {
                 <div className="flex"><button onClick={() => void startEditing(seller)} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-800" aria-label={`Edit ${seller.name}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void remove(seller)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label={`Delete ${seller.name}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
               </div>
               <p className="mt-4 line-clamp-3 min-h-15 text-sm leading-5 text-gray-500 dark:text-gray-400">{seller.description || "No description"}</p>
+              <p className="mt-3 flex items-start gap-2 border-t border-gray-100 pt-3 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400"><span className="material-symbols-outlined mt-0.5 text-base text-primary-500">location_on</span><span className="line-clamp-2">{seller.address || "No address"}</span></p>
             </article>
           ))}
         </div>

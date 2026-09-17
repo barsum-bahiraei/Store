@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { StoreHeader } from "@/features/categories/components/store-header";
+import { StoreFooter } from "@/features/layout/components/store-footer";
 import { ProductSearch } from "@/features/products/components/product-search";
 import type { ProductSearchInput } from "@/features/products/types/product";
 
@@ -30,7 +31,12 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     ...(categoryId && Number.isSafeInteger(categoryId) ? { categoryId } : {}),
     ...(minPrice !== undefined ? { minPrice } : {}),
     ...(maxPrice !== undefined ? { maxPrice } : {}),
+    ...(params.priceDec === "true" ? { isPriceDec: true } : {}),
+    ...(params.idDec === "true" ? { isIdDec: true } : {}),
+    ...(params.sort === "priceDesc" ? { isPriceDec: true } : {}),
+    ...(params.sort === "newest" ? { isIdDec: true } : {}),
+    ...(params.sort === "priceAsc" ? { isPriceDec: false, isIdDec: false } : {}),
   };
 
-  return <div className="min-h-dvh bg-background text-foreground"><StoreHeader /><main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12"><div className="mb-8"><p className="text-xs font-black tracking-[0.15em] text-primary">فهرست محصولات</p><h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">محصول مورد علاقه خود را پیدا کنید</h1></div><ProductSearch filters={filters} /></main></div>;
+  return <div className="flex min-h-dvh flex-col bg-background text-foreground"><StoreHeader /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-8 lg:px-12"><div className="mb-8"><p className="text-xs font-black tracking-[0.15em] text-primary">فهرست محصولات</p><h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">محصول مورد علاقه خود را پیدا کنید</h1></div><ProductSearch filters={filters} /></main><StoreFooter /></div>;
 }

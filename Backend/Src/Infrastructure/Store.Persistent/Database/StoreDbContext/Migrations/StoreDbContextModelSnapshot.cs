@@ -121,6 +121,12 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("NationalCode")
                         .HasColumnType("text");
 
@@ -308,6 +314,12 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("DeliveryMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProductCount")
                         .HasColumnType("integer");
 
@@ -397,6 +409,36 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.ToTable("ProductsAttributes", (string)null);
                 });
 
+            modelBuilder.Entity("Store.Domain.Products.ProductBookmarkEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ProductId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ProductBookmarks", (string)null);
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -452,11 +494,11 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
                     b.Property<decimal>("Discount")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("LongDescription")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -467,6 +509,9 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<int>("SellerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ShortDescription")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -488,11 +533,21 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -630,10 +685,29 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Store.Domain.Products.ProductBookmarkEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("ProductBookmarks")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("ProductBookmarks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
                 {
                     b.HasOne("Store.Domain.Products.ProductEntity", "Product")
-                        .WithMany("Comments")
+                        .WithMany("ProductComments")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -692,6 +766,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Navigation("PreInvoices");
 
+                    b.Navigation("ProductBookmarks");
+
                     b.Navigation("ProductComments");
 
                     b.Navigation("Sellers");
@@ -717,13 +793,15 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
-                    b.Navigation("Comments");
-
                     b.Navigation("Invoices");
 
                     b.Navigation("PreInvoices");
 
                     b.Navigation("ProductAttributes");
+
+                    b.Navigation("ProductBookmarks");
+
+                    b.Navigation("ProductComments");
                 });
 
             modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>

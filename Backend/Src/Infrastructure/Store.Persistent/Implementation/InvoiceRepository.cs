@@ -63,7 +63,10 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
 
     public async Task<List<InvoiceEntity>> ListAsync(int userId, CancellationToken cancellation)
     {
-        var result = await context.Invoices.Where(x => x.UserId == userId).ToListAsync(cancellation);
+        var result = await context.Invoices
+            .Include(x => x.User)
+            .Where(x => x.UserId == userId)
+            .ToListAsync(cancellation);
         return result;
     }
 }

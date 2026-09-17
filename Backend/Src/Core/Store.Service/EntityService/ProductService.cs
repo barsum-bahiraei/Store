@@ -44,7 +44,7 @@ public class ProductService(
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                Description = entity.Description,
+                ShortDescription = entity.ShortDescription,
                 Price = entity.Price,
                 Discount = entity.Discount,
                 CategoryId = entity.CategoryId,
@@ -69,7 +69,7 @@ public class ProductService(
 
         foreach (var entity in entities.Items)
         {
-            var ratings = entity.Comments.Where(x => x.IsShow == true && x.Rating.HasValue).ToList();
+            var ratings = entity.ProductComments.Where(x => x.IsShow == true && x.Rating.HasValue).ToList();
             var imageResult = await fileService.GetAsync(
                 TableNameEnum.Products,
                 TargetNameEnum.ProductId,
@@ -94,7 +94,7 @@ public class ProductService(
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                Description = entity.Description,
+                ShortDescription = entity.ShortDescription,
                 Price = entity.Price,
                 Discount = entity.Discount,
                 AverageRating = ratings.Count != 0
@@ -165,7 +165,8 @@ public class ProductService(
         {
             Id = entity.Id,
             Name = entity.Name,
-            Description = entity.Description,
+            ShortDescription = entity.ShortDescription,
+            LongDescription = entity.LongDescription,
             Price = entity.Price,
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
@@ -186,7 +187,7 @@ public class ProductService(
                 AttributeType = x.Attribute.Type,
                 AttributeUnit = x.Attribute.Unit
             }).ToList(),
-            Comments = entity.Comments
+            Comments = entity.ProductComments
                 .Where(x => x.IsShow == true)
                 .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new ProductCommentDetailOutput
@@ -272,7 +273,8 @@ public class ProductService(
         {
             Id = entity.Id,
             Name = entity.Name,
-            Description = entity.Description,
+            ShortDescription = entity.ShortDescription,
+            LongDescription = entity.LongDescription,
             Price = entity.Price,
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
@@ -305,7 +307,8 @@ public class ProductService(
         var entity = new ProductEntity
         {
             Name = input.Name,
-            Description = input.Description,
+            ShortDescription = input.ShortDescription,
+            LongDescription = input.LongDescription,
             Price = input.Price,
             Discount = input.Discount,
             CategoryId = input.CategoryId,
@@ -323,7 +326,8 @@ public class ProductService(
         {
             Id = created.Id,
             Name = created.Name,
-            Description = created.Description,
+            ShortDescription = created.ShortDescription,
+            LongDescription = created.LongDescription,
             Price = created.Price,
             Discount = created.Discount,
             CategoryId = created.CategoryId,
@@ -348,7 +352,8 @@ public class ProductService(
             return Result<ProductUpdateOutput>.Failure("Seller not found");
 
         entity.Name = input.Name;
-        entity.Description = input.Description;
+        entity.ShortDescription = input.ShortDescription;
+        entity.LongDescription = input.LongDescription;
         entity.Price = input.Price;
         entity.Discount = input.Discount;
         entity.CategoryId = input.CategoryId;
@@ -368,7 +373,8 @@ public class ProductService(
         {
             Id = updated.Id,
             Name = updated.Name,
-            Description = updated.Description,
+            ShortDescription = updated.ShortDescription,
+            LongDescription = updated.LongDescription,
             Price = updated.Price,
             Discount = updated.Discount,
             CategoryId = updated.CategoryId,
@@ -392,6 +398,85 @@ public class ProductService(
 
         await productRepository.DeleteAsync(entity, cancellation);
 
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<List<ProductBookmarkListOutput>>> BookmarkListAsync(int userId, CancellationToken cancellation)
+    {
+        var entities = await productRepository.BookmarkListAsync(userId, cancellation);
+        var result = new List<ProductBookmarkListOutput>();
+
+        foreach (var entity in entities)
+        {
+            var imageResult = await fileService.GetAsync(
+                TableNameEnum.Products,
+                TargetNameEnum.ProductId,
+                entity.ProductId,
+                cancellation);
+
+            ProductBookmarkImageOutput? image = null;
+
+            if (imageResult.Data != null)
+            {
+                image = new ProductBookmarkImageOutput
+                {
+                    Id = imageResult.Data.Id,
+                    Url = imageResult.Data.Url,
+                    IsMain = imageResult.Data.IsMain,
+                    Name = imageResult.Data.Name,
+                    FileType = imageResult.Data.FileType
+                };
+            }
+
+            result.Add(new ProductBookmarkListOutput
+            {
+                Id = entity.Id,
+                ProductId = entity.ProductId,
+                UserId = entity.UserId,
+                CreatedAt = entity.CreatedAt,
+                Product = new ProductBookmarkProductOutput
+                {
+                    Id = entity.Product.Id,
+                    Name = entity.Product.Name,
+                    ShortDescription = entity.Product.ShortDescription,
+                    Price = entity.Product.Price,
+                    Discount = entity.Product.Discount,
+                    CategoryId = entity.Product.CategoryId,
+                    CategoryTitle = entity.Product.Category.Name,
+                    Image = image
+                }
+            });
+        }
+
+        return Result<List<ProductBookmarkListOutput>>.Success(result);
+    }
+
+    public async Task<Result<bool>> BookmarkCreateAsync(int productId, int userId, CancellationToken cancellation)
+    {
+        if (await productRepository.GetAsync(productId, cancellation) == null)
+            return Result<bool>.Failure("Product not found");
+
+        var existing = await productRepository.BookmarkGetAsync(productId, userId, cancellation);
+        if (existing != null)
+            return Result<bool>.Failure("Already bookmarked");
+
+        var entity = new ProductBookmarkEntity
+        {
+            ProductId = productId,
+            UserId = userId
+        };
+
+        await productRepository.BookmarkCreateAsync(entity, cancellation);
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<bool>> BookmarkDeleteAsync(int productId, int userId, CancellationToken cancellation)
+    {
+        var entity = await productRepository.BookmarkGetAsync(productId, userId, cancellation);
+        if (entity == null)
+            return Result<bool>.Failure("Bookmark not found");
+
+        await productRepository.BookmarkDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
     }
 }

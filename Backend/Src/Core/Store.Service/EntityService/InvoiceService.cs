@@ -157,6 +157,9 @@ public class InvoiceService(
                 TotalPrice = x.Sum(z => z.ProductPrice),
                 TotalCount = x.Count(),
                 CreatedAt = x.First().CreatedAt,
+                Address = x.First().User.Address!,
+                PaymentMethod = x.First().PaymentMethod,
+                DeliveryMethod = x.First().DeliveryMethod,
             }).ToList();
         return Result<List<InvoiceListOutput>>.Success(result);
     }

@@ -22,7 +22,7 @@ export function CartContent() {
   }
 
   if (items.length === 0) {
-    return <div className="space-y-4 rounded-xl border border-border bg-surface p-6"><h2 className="text-xl font-bold">سبد خرید خالی است</h2><p className="text-muted-foreground">محصولات ما را مرور کنید و مورد علاقه‌های خود را اضافه کنید.</p><Link href="/search" className={linkClass}>ادامه خرید</Link></div>;
+    return <div className="space-y-4 rounded-xl border border-border bg-surface p-6"><h2 className="text-xl font-bold">سبد خرید خالی است</h2><p className="text-muted-foreground">محصولات ما را مرور کنید و مورد علاقه‌های خود را اضافه کنید.</p></div>;
   }
 
   return (
@@ -37,7 +37,7 @@ export function CartContent() {
           </li>
         ))}
       </ul>
-      <Link href="/search" className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-bold text-primary outline-none hover:text-primary-hover focus-visible:ring-2 focus-visible:ring-ring">ادامه خرید</Link>
+      {isAuthenticated && <div className="flex justify-end"><Link href="/checkout" className={`${linkClass} gap-2`}><span className="material-symbols-rounded text-xl" aria-hidden="true">shopping_cart_checkout</span>تکمیل خرید</Link></div>}
     </section>
   );
 }

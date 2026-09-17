@@ -27,6 +27,8 @@ public class AccountService(
             Email = x.Email,
             BirthDate = x.BirthDate,
             Address = x.Address,
+            Latitude = x.Latitude,
+            Longitude = x.Longitude,
             Gender = x.Gender,
             PhoneNumber = x.PhoneNumber,
             NationalCode = x.NationalCode,
@@ -53,6 +55,8 @@ public class AccountService(
             Email = entity.Email,
             BirthDate = entity.BirthDate,
             Address = entity.Address,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
             Gender = entity.Gender,
             PhoneNumber = entity.PhoneNumber,
             NationalCode = entity.NationalCode,
@@ -90,12 +94,40 @@ public class AccountService(
             Email = entity.Email,
             BirthDate = entity.BirthDate,
             Address = entity.Address,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
             Gender = entity.Gender,
             PhoneNumber = entity.PhoneNumber,
             NationalCode = entity.NationalCode,
             IsEmailVerified = entity.IsEmailVerified,
         };
         return Result<UserProfileGetOutput>.Success(result);
+    }
+
+    public async Task<Result<UserProfileUpdateOutput>> UserProfileUpdateAsync(int id, UserProfileUpdateInput input,
+        CancellationToken cancellation)
+    {
+        var entity = await accountRepository.UserGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<UserProfileUpdateOutput>.Failure("User not found");
+
+        entity.Address = input.Address;
+        entity.Latitude = input.Latitude;
+        entity.Longitude = input.Longitude;
+        entity.Gender = input.Gender;
+        entity.NationalCode = input.NationalCode;
+        entity.BirthDate = input.BirthDate;
+
+        var updated = await accountRepository.UserUpdateAsync(entity, cancellation);
+        return Result<UserProfileUpdateOutput>.Success(new UserProfileUpdateOutput
+        {
+            Address = updated.Address,
+            Latitude = updated.Latitude,
+            Longitude = updated.Longitude,
+            Gender = updated.Gender,
+            NationalCode = updated.NationalCode,
+            BirthDate = updated.BirthDate
+        });
     }
 
     public async Task<Result<UserRegisterOutput>> UserRegisterAsync(UserRegisterInput input,
@@ -130,6 +162,8 @@ public class AccountService(
             Email = created.Email,
             Gender = created.Gender,
             Address = created.Address,
+            Latitude = created.Latitude,
+            Longitude = created.Longitude,
             BirthDate = created.BirthDate,
             NationalCode = created.NationalCode,
             PhoneNumber = created.PhoneNumber,
@@ -166,6 +200,8 @@ public class AccountService(
             Email = entity.Email,
             Gender = entity.Gender,
             Address = entity.Address,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
             BirthDate = entity.BirthDate,
             NationalCode = entity.NationalCode,
             PhoneNumber = entity.PhoneNumber,

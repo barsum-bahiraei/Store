@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import "leaflet/dist/leaflet.css";
 import "material-symbols/rounded.css";
 import "./globals.css";
 import { Providers } from "./providers";

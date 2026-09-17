@@ -79,4 +79,31 @@ public class ProductController(ProductService productService) : ControllerBase
         var result = await productService.DeleteAsync(id, userId, cancellation);
         return Ok(result);
     }
+
+    [HasAccess]
+    [HttpGet("Bookmark")]
+    public async Task<IActionResult> BookmarkGet(CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.BookmarkListAsync(userId, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpPost("Bookmark/{productId}")]
+    public async Task<IActionResult> BookmarkPost(int productId, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.BookmarkCreateAsync(productId, userId, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpDelete("Bookmark/{productId}")]
+    public async Task<IActionResult> BookmarkDelete(int productId, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.BookmarkDeleteAsync(productId, userId, cancellation);
+        return Ok(result);
+    }
 }

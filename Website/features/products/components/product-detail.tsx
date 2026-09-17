@@ -121,7 +121,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             <span className="text-sm text-muted-foreground">{product.comments.length} نظر</span>
             <span className="text-sm text-muted-foreground">فروشنده: {product.seller.name}</span>
           </div>
-          {product.description && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.description}</p>}
+          {product.shortDescription && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.shortDescription}</p>}
           <div className="mt-7 flex flex-wrap items-baseline gap-3">
             <span className="text-3xl font-black text-primary">{formatToman(salePrice)}</span>
             {product.discount > 0 && (
@@ -156,6 +156,13 @@ export function ProductDetailContent({ productId }: { productId: number }) {
               </div>
             ))}
           </dl>
+        </section>
+      )}
+
+      {product.longDescription && (
+        <section aria-labelledby="description-title" className="mt-10 border-t border-border pt-8">
+          <h2 id="description-title" className="text-2xl font-black">توضیحات محصول</h2>
+          <div className="mt-5 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.longDescription }} />
         </section>
       )}
 

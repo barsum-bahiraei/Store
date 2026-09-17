@@ -74,7 +74,7 @@ export default function ProductsPage() {
                      <button onClick={() => void deleteProduct(product.id)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30 dark:hover:text-red-400" aria-label={`Delete ${product.name}`}><span className="material-symbols-outlined text-[20px]">delete</span></button>
                   </div>
                 </div>
-                <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-gray-500 dark:text-gray-400">{product.description || "No description"}</p>
+                <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-gray-500 dark:text-gray-400">{product.shortDescription || "No description"}</p>
                 <div className="mt-4 flex items-baseline justify-between border-t border-gray-100 pt-4 dark:border-gray-800"><span className="text-lg font-bold text-gray-950 dark:text-white">{formatPrice(product.price)}</span>{product.discount > 0 && <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">{formatPrice(product.discount)} discount</span>}</div>
               </div>
             </article>

@@ -23,7 +23,8 @@ export interface ProductAttributeGetOutput
 
 export interface ProductCreateInput {
   name: string;
-  description: string | null;
+  shortDescription: string | null;
+  longDescription: string | null;
   price: number;
   discount: number;
   categoryId: number;
@@ -47,7 +48,7 @@ export interface ProductUpdateOutput extends Omit<ProductUpdateInput, "attribute
 export interface ProductListOutput {
   id: number;
   name: string;
-  description: string | null;
+  shortDescription: string | null;
   price: number;
   discount: number;
   categoryId: number;
@@ -70,6 +71,7 @@ export interface ProductImage {
 }
 
 export interface ProductGetOutput extends Omit<ProductListOutput, "image"> {
+  longDescription: string | null;
   attributes: ProductAttributeGetOutput[];
   images: ProductImage[];
 }

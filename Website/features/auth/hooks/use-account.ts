@@ -9,7 +9,7 @@ import {
   getAuthToken,
   setAuthToken,
 } from "@/lib/auth-token";
-import { getUserProfile, login, register } from "../services/account-service";
+import { getUserProfile, login, register, updateUserProfile } from "../services/account-service";
 import type { AccountUser, AuthenticatedUser, LoginInput, RegisterInput } from "../types/account";
 
 export const accountKeys = {
@@ -62,6 +62,17 @@ export function useUserProfile() {
     queryFn: ({ signal }) => getUserProfile(signal),
     enabled: Boolean(token),
     retry: false,
+  });
+}
+
+export function useUpdateUserProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateUserProfile,
+    onSuccess: (profile) => {
+      queryClient.setQueryData<AccountUser>(accountKeys.profile, (current) => current ? { ...current, ...profile } : current);
+    },
   });
 }
 
