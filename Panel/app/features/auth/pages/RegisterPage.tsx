@@ -22,17 +22,17 @@ export default function RegisterPage() {
     setError("");
 
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !confirmPassword) {
-      setError("Please fill in all fields.");
+      setError("لطفاً تمام فیلدها را پر کنید.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("رمزهای عبور مطابقت ندارند.");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("رمز عبور باید حداقل ۸ کاراکتر باشد.");
       return;
     }
 
@@ -47,7 +47,7 @@ export default function RegisterPage() {
       });
       navigate("/attributes");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to create account.");
+      setError(caughtError instanceof Error ? caughtError.message : "امکان ایجاد حساب وجود ندارد.");
     } finally {
       setSubmitting(false);
     }
@@ -57,8 +57,8 @@ export default function RegisterPage() {
     <div className="flex min-h-screen">
       <button
         onClick={toggleTheme}
-        className="fixed right-4 top-4 z-10 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
-        aria-label="Toggle theme"
+        className="fixed left-4 top-4 z-10 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
+        aria-label="تغییر پوسته"
       >
         <span className="material-symbols-outlined">
           {theme === "dark" ? "light_mode" : "dark_mode"}
@@ -81,41 +81,41 @@ export default function RegisterPage() {
             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
               <span className="material-symbols-outlined text-xl text-white">dashboard</span>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create account</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">ایجاد حساب</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Get started with your account
+              فرآیند ثبت‌نام خود را تکمیل کنید
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">First name</label>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">نام</label>
                 <input id="firstName" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last name</label>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">نام خانوادگی</label>
                 <input id="lastName" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">آدرس ایمیل</label>
               <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
             </div>
 
             <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300">جنسیت</label>
               <select id="gender" value={gender} onChange={(e) => setGender(Number(e.target.value))} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                <option value={2}>Prefer not to say</option>
-                <option value={0}>Male</option>
-                <option value={1}>Female</option>
+                <option value={2}>ترجیح می‌دهم نگویم</option>
+                <option value={0}>مرد</option>
+                <option value={1}>زن</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
+                رمز عبور
               </label>
               <input
                 id="password"
@@ -123,14 +123,14 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder="رمز عبور بسازید"
                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
               />
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Confirm password
+                تکرار رمز عبور
               </label>
               <input
                 id="confirmPassword"
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
+                placeholder="رمز عبور را تکرار کنید"
                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
               />
             </div>
@@ -150,14 +150,14 @@ export default function RegisterPage() {
               disabled={submitting}
               className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-gray-950"
             >
-              {submitting ? "Creating account..." : "Create account"}
+              {submitting ? "در حال ایجاد حساب..." : "ایجاد حساب"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Already have an account?{" "}
+            قبلاً حساب دارید؟{" "}
             <Link to="/" className="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">
-              Sign in
+              وارد شوید
             </Link>
           </p>
         </div>

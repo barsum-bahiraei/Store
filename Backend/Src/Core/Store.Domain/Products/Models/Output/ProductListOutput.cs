@@ -11,6 +11,7 @@ public class ProductListOutput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public bool IsAvailable { get; set; }
     public ProductSellerListOutput Seller { get; set; }
     public ProductImageListOutput? Image { get; set; }
 }

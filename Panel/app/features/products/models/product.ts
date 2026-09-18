@@ -34,6 +34,7 @@ export interface ProductCreateInput {
   productBrandId: number;
   productVariantIds: number[];
   attributes: ProductAttributeInput[];
+  isAvailable: boolean;
 }
 
 export interface ProductCreateOutput
@@ -63,6 +64,7 @@ export interface ProductListOutput {
   categoryTitle: string;
   seller: ProductSeller;
   image: ProductImage | null;
+  isAvailable: boolean;
 }
 
 export interface ProductSeller {
@@ -84,6 +86,15 @@ export interface ProductGetOutput extends Omit<ProductListOutput, "image"> {
   variants: ProductVariant[];
   attributes: ProductAttributeGetOutput[];
   images: ProductImage[];
+}
+
+export interface ProductListParams {
+  name?: string;
+  categoryId?: number;
+  sellerId?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  isAvailable?: boolean;
 }
 
 export interface ProductImageUploadInput {

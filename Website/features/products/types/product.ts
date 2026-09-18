@@ -16,6 +16,7 @@ export type ProductSearchItem = {
   categoryId: number;
   categoryTitle: string;
   image: ProductImage | null;
+  isAvailable: boolean;
 };
 
 export type ProductSearchInput = {
@@ -25,6 +26,7 @@ export type ProductSearchInput = {
   categoryId?: number;
   productBrandId?: number;
   hasDiscount: boolean;
+  isAvailable?: boolean;
   minPrice?: number;
   maxPrice?: number;
   isPriceDec?: boolean;

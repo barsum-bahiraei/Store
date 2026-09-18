@@ -11,6 +11,7 @@ public class ProductCreateOutput
     public int SellerId { get; set; }
     public int CategoryId { get; set; }
     public int? ProductBrandId { get; set; }
+    public bool IsAvailable { get; set; }
     public List<ProductAttributeOutput> Attributes { get; set; }
     public List<ProductVariantCreateOutput> Variants { get; set; }
 }

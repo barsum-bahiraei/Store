@@ -28,13 +28,13 @@ export default function DashboardLayout() {
             <button
               onClick={() => setSidebarOpen(true)}
               className="flex size-11 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
-              aria-label="Open navigation"
+              aria-label="باز کردن منو"
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Store Panel</p>
-              <p className="hidden text-xs text-gray-500 dark:text-gray-400 sm:block">Management workspace</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">پنل فروشگاه</p>
+              <p className="hidden text-xs text-gray-500 dark:text-gray-400 sm:block">فضای مدیریت</p>
             </div>
           </div>
 
@@ -42,16 +42,16 @@ export default function DashboardLayout() {
             to="/profile"
             className="flex min-h-11 items-center gap-3 rounded-xl px-2 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-gray-800"
           >
-            <div className="hidden text-right sm:block">
+            <div className="hidden text-left sm:block">
               <p className="max-w-48 truncate text-sm font-medium text-gray-900 dark:text-white">
-                {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "My account"}
+                {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "حساب من"}
               </p>
               <p className="max-w-48 truncate text-xs text-gray-500 dark:text-gray-400">{currentUser?.email}</p>
             </div>
             <div className="flex size-9 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
               {currentUser ? `${currentUser.firstName[0] ?? ""}${currentUser.lastName[0] ?? ""}`.toUpperCase() : <span className="material-symbols-outlined text-xl">person</span>}
             </div>
-            <span className="material-symbols-outlined hidden text-lg text-gray-400 sm:block">chevron_right</span>
+            <span className="material-symbols-outlined hidden text-lg text-gray-400 sm:block">chevron_left</span>
           </Link>
         </header>
         <main className="flex-1 overflow-auto bg-gray-50 p-4 sm:p-6 dark:bg-gray-950">

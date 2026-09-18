@@ -14,9 +14,9 @@ public class AccountController(AccountService accountService, ControllerAccessPr
 {
     [HasAccess]
     [HttpGet("User")]
-    public async Task<IActionResult> UserGet(CancellationToken cancellation = default)
+    public async Task<IActionResult> UserGet([FromQuery] UserListInput input, CancellationToken cancellation = default)
     {
-        var result = await accountService.UserListAsync(cancellation);
+        var result = await accountService.UserListAsync(input, cancellation);
         return Ok(result);
     }
 

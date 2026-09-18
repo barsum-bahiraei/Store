@@ -14,6 +14,7 @@ public class ProductDetailOutput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public bool IsAvailable { get; set; }
     public List<ProductCategoryDetailOutput> Categories { get; set; }
     public ProductBrandDetailOutput? Brand { get; set; }
     public ProductSellerDetailOutput Seller { get; set; }
@@ -34,6 +35,7 @@ public class ProductSimilarDetailOutput
     public decimal AverageRating { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public bool IsAvailable { get; set; }
     public ProductImageDetailOutput? Image { get; set; }
 }
 

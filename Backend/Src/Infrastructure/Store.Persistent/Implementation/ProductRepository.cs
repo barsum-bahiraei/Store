@@ -7,13 +7,34 @@ namespace Store.Persistent.Implementation;
 
 public class ProductRepository(StoreDbContext context) : IProductRepository
 {
-    public async Task<List<ProductEntity>> ListAsync(int userId, CancellationToken cancellation)
+    public async Task<List<ProductEntity>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation)
     {
-        var result = await context.Products
+        var query = context.Products
             .Where(x => x.Seller.UserId == userId)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(input.Name))
+            query = query.Where(x => x.Name.Contains(input.Name.Trim()));
+
+        if (input.CategoryId.HasValue)
+            query = query.Where(x => x.CategoryId == input.CategoryId.Value);
+
+        if (input.SellerId.HasValue)
+            query = query.Where(x => x.SellerId == input.SellerId.Value);
+
+        if (input.MinPrice.HasValue)
+            query = query.Where(x => x.Price >= input.MinPrice.Value);
+
+        if (input.MaxPrice.HasValue)
+            query = query.Where(x => x.Price <= input.MaxPrice.Value);
+
+        if (input.IsAvailable.HasValue)
+            query = query.Where(x => x.IsAvailable == input.IsAvailable.Value);
+
+        var result = await query
             .Include(x => x.Category)
             .Include(x => x.Seller)
-            .OrderBy(x => x.Id)
+            .OrderByDescending(x => x.Id)
             .ToListAsync(cancellation);
         return result;
     }
@@ -40,6 +61,9 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
 
         if (input.MaxPrice.HasValue)
             query = query.Where(x => x.Price <= input.MaxPrice.Value);
+
+        if (input.IsAvailable.HasValue)
+            query = query.Where(x => x.IsAvailable == input.IsAvailable.Value);
 
         var totalCount = await query.CountAsync(cancellation);
         var page = input.Page < 1 ? 1 : input.Page;

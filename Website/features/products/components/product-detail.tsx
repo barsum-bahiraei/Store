@@ -117,6 +117,10 @@ export function ProductDetailContent({ productId }: { productId: number }) {
         <section aria-labelledby="product-title" className="self-center">
           <h1 id="product-title" className="text-3xl font-black tracking-tight sm:text-4xl">{product.name}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-black ${product.isAvailable ? "bg-success/10 text-success" : "bg-error/10 text-error"}`}>
+              <span className="material-symbols-rounded text-sm" aria-hidden="true">{product.isAvailable ? "check_circle" : "cancel"}</span>
+              {product.isAvailable ? "موجود" : "ناموجود"}
+            </span>
             <span className="inline-flex items-center gap-1 text-sm font-bold"><span className="material-symbols-rounded text-warning" aria-hidden="true">star</span>{averageRating.toFixed(1)}</span>
             <span className="text-sm text-muted-foreground">{product.comments.length} نظر</span>
             <span className="text-sm text-muted-foreground">فروشنده: {product.seller.name}</span>
@@ -163,17 +167,26 @@ export function ProductDetailContent({ productId }: { productId: number }) {
               </>
             )}
           </div>
-          <div className="mt-7 flex items-center gap-3">
-            <button type="button" onClick={() => change("decrease")} disabled={isAdding || quantity === 0} aria-label="کاهش تعداد" className="grid size-12 place-items-center rounded-xl border border-border bg-surface text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-40">
-              <span className="material-symbols-rounded" aria-hidden="true">remove</span>
-            </button>
-            <span className="min-w-[3rem] text-center text-lg font-black tabular-nums" aria-live="polite">{quantity}</span>
-            <button type="button" onClick={() => change("increase")} disabled={isAdding} aria-label="افزودن به سبد" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60">
-              <span className="material-symbols-rounded" aria-hidden="true">add_shopping_cart</span>
-              {isAdding ? "در حال افزودن…" : quantity > 0 ? "افزودن به سبد" : "افزودن به سبد"}
-            </button>
-          </div>
-          {cartError && <p role="alert" className="mt-2 text-sm text-error">{cartError.message}</p>}
+          {product.isAvailable ? (
+            <>
+              <div className="mt-7 flex items-center gap-3">
+                <button type="button" onClick={() => change("decrease")} disabled={isAdding || quantity === 0} aria-label="کاهش تعداد" className="grid size-12 place-items-center rounded-xl border border-border bg-surface text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-40">
+                  <span className="material-symbols-rounded" aria-hidden="true">remove</span>
+                </button>
+                <span className="min-w-[3rem] text-center text-lg font-black tabular-nums" aria-live="polite">{quantity}</span>
+                <button type="button" onClick={() => change("increase")} disabled={isAdding} aria-label="افزودن به سبد" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60">
+                  <span className="material-symbols-rounded" aria-hidden="true">add_shopping_cart</span>
+                  {isAdding ? "در حال افزودن…" : quantity > 0 ? "افزودن به سبد" : "افزودن به سبد"}
+                </button>
+              </div>
+              {cartError && <p role="alert" className="mt-2 text-sm text-error">{cartError.message}</p>}
+            </>
+          ) : (
+            <div className="mt-7 flex items-center gap-3 rounded-xl border border-border bg-muted p-4">
+              <span className="material-symbols-rounded text-2xl text-muted-foreground" aria-hidden="true">inventory_2</span>
+              <span className="text-sm font-bold text-muted-foreground">این محصول در حال حاضر موجود نیست.</span>
+            </div>
+          )}
         </section>
       </div>
 

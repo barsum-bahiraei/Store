@@ -12,6 +12,7 @@ public class ProductUpdateOutput
     public string CategoryTitle { get; set; }
     public int SellerId { get; set; }
     public int? ProductBrandId { get; set; }
+    public bool IsAvailable { get; set; }
     public List<ProductAttributeUpdateOutput> Attributes { get; set; }
     public List<ProductVariantUpdateOutput> Variants { get; set; }
 }

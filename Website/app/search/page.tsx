@@ -28,6 +28,8 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     page,
     pageSize: 12,
     hasDiscount: params.discount === "true",
+    ...(params.available === "true" ? { isAvailable: true } : {}),
+    ...(params.available === "false" ? { isAvailable: false } : {}),
     ...(q?.trim() ? { name: q.trim().slice(0, 100) } : {}),
     ...(categoryId && Number.isSafeInteger(categoryId) ? { categoryId } : {}),
     ...(productBrandId && Number.isSafeInteger(productBrandId) ? { productBrandId } : {}),

@@ -15,11 +15,23 @@ export interface ControllerActions {
   actionsName: string[];
 }
 
+export interface UserListParams {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  gender?: number;
+}
+
 export interface UserSummary {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber: string;
+  birthDate: string;
+  gender: number;
   isEmailVerified: boolean;
 }
 

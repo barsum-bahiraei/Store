@@ -535,6 +535,11 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<decimal>("Discount")
                         .HasColumnType("numeric");
 
+                    b.Property<bool>("IsAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("LongDescription")
                         .HasColumnType("text");
 

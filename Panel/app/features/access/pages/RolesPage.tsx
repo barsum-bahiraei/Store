@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { accessApi } from "../api/access-api";
 import type { ControllerActions, Role, RoleAccess } from "../models/access";
 
 const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white";
 
 function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "An unexpected error occurred.";
+  return error instanceof Error ? error.message : "خطای غیرمنتظره‌ای رخ داد.";
 }
 
 export default function RolesPage() {
@@ -20,6 +21,7 @@ export default function RolesPage() {
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmData, setConfirmData] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -106,19 +108,26 @@ export default function RolesPage() {
 
   const deleteRole = async () => {
     const role = roles.find((item) => item.id === selectedRoleId);
-    if (!role || !window.confirm(`Delete the “${role.name}” role?`)) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await accessApi.deleteRole(role.id);
-      const remaining = roles.filter((item) => item.id !== role.id);
-      setRoles(remaining);
-      setSelectedRoleId(remaining[0]?.id ?? null);
-    } catch (caughtError) {
-      setError(errorMessage(caughtError));
-    } finally {
-      setSaving(false);
-    }
+    if (!role) return;
+    setConfirmData({
+      title: "حذف نقش",
+      message: `آیا از حذف نقش «${role.name}» اطمینان دارید؟`,
+      onConfirm: async () => {
+        setConfirmData(null);
+        setSaving(true);
+        setError(null);
+        try {
+          await accessApi.deleteRole(role.id);
+          const remaining = roles.filter((item) => item.id !== role.id);
+          setRoles(remaining);
+          setSelectedRoleId(remaining[0]?.id ?? null);
+        } catch (caughtError) {
+          setError(errorMessage(caughtError));
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   };
 
   const toggleAccess = async (controllerName: string, actionName: string) => {
@@ -153,23 +162,23 @@ export default function RolesPage() {
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Roles & permissions</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">نقش‌ها و دسترسی‌ها</h1>
           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">{roles.length}</span>
         </div>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose a role, then enable the actions it can perform.</p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">یک نقش انتخاب کنید، سپس عملیات مجاز آن را فعال کنید.</p>
       </div>
 
       {error && (
         <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
           <span>{error}</span>
-          <button onClick={() => void load()} className="font-semibold">Retry</button>
+          <button onClick={() => void load()} className="font-semibold">تلاش مجدد</button>
         </div>
       )}
 
       <div className="md:hidden">
-        <label htmlFor="mobileRole" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Selected role</label>
+        <label htmlFor="mobileRole" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">نقش انتخاب شده</label>
         <select id="mobileRole" value={selectedRoleId ?? ""} onChange={(event) => setSelectedRoleId(event.target.value ? Number(event.target.value) : null)} disabled={loading} className={inputClasses}>
-          {roles.length === 0 && <option value="">No roles available</option>}
+          {roles.length === 0 && <option value="">هیچ نقشی موجود نیست</option>}
           {roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
         </select>
       </div>
@@ -177,27 +186,27 @@ export default function RolesPage() {
       <div className="grid items-start gap-5 md:grid-cols-[16rem_minmax(0,1fr)]">
         <aside className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white md:block dark:border-gray-800 dark:bg-gray-900">
           <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Available roles</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">نقش‌های موجود</p>
           </div>
           {loading ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-500">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-gray-500">در حال بارگذاری...</div>
           ) : roles.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-500">No roles yet</div>
+            <div className="px-4 py-8 text-center text-sm text-gray-500">هنوز نقشی وجود ندارد</div>
           ) : (
-            <nav className="space-y-1 p-2" aria-label="Roles">
+            <nav className="space-y-1 p-2" aria-label="نقش‌ها">
               {roles.map((role) => (
-                <button key={role.id} onClick={() => setSelectedRoleId(role.id)} className={`flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm font-medium transition-colors ${selectedRoleId === role.id ? "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300" : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
+                <button key={role.id} onClick={() => setSelectedRoleId(role.id)} className={`flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-right text-sm font-medium transition-colors ${selectedRoleId === role.id ? "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300" : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
                   <span className="truncate">{role.name}</span>
-                  {selectedRoleId === role.id && <span className="material-symbols-outlined text-lg">chevron_right</span>}
+                  {selectedRoleId === role.id && <span className="material-symbols-outlined text-lg">chevron_left</span>}
                 </button>
               ))}
             </nav>
           )}
           <form onSubmit={(event) => { event.preventDefault(); void createRole(); }} className="border-t border-gray-200 p-3 dark:border-gray-800">
-            <label htmlFor="newRoleName" className="sr-only">New role name</label>
+            <label htmlFor="newRoleName" className="sr-only">نام نقش جدید</label>
             <div className="flex gap-2">
-              <input id="newRoleName" value={newRoleName} onChange={(event) => setNewRoleName(event.target.value)} placeholder="New role" className={inputClasses} />
-              <button disabled={saving || !newRoleName.trim()} className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50" aria-label="Add role"><span className="material-symbols-outlined text-xl">add</span></button>
+              <input id="newRoleName" value={newRoleName} onChange={(event) => setNewRoleName(event.target.value)} placeholder="نقش جدید" className={inputClasses} />
+              <button disabled={saving || !newRoleName.trim()} className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50" aria-label="افزودن نقش"><span className="material-symbols-outlined text-xl">add</span></button>
             </div>
           </form>
         </aside>
@@ -207,34 +216,34 @@ export default function RolesPage() {
             {editing && selectedRole ? (
               <form onSubmit={(event) => { event.preventDefault(); void updateRole(); }} className="flex w-full max-w-sm gap-2">
                 <input autoFocus value={editingName} onChange={(event) => setEditingName(event.target.value)} className={inputClasses} />
-                <button disabled={saving || !editingName.trim()} className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white disabled:opacity-50" aria-label="Save role"><span className="material-symbols-outlined text-xl">check</span></button>
-                <button type="button" onClick={() => setEditing(false)} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Cancel editing"><span className="material-symbols-outlined text-xl">close</span></button>
+                <button disabled={saving || !editingName.trim()} className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white disabled:opacity-50" aria-label="ذخیره نقش"><span className="material-symbols-outlined text-xl">check</span></button>
+                <button type="button" onClick={() => setEditing(false)} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="لغو ویرایش"><span className="material-symbols-outlined text-xl">close</span></button>
               </form>
             ) : (
               <div>
-                <h2 className="font-semibold text-gray-900 dark:text-white">{selectedRole?.name ?? "Select a role"}</h2>
-                {selectedRole && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{accesses.length} of {totalPermissions} permissions enabled</p>}
+                <h2 className="font-semibold text-gray-900 dark:text-white">{selectedRole?.name ?? "یک نقش انتخاب کنید"}</h2>
+                {selectedRole && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{accesses.length} از {totalPermissions} دسترسی فعال</p>}
               </div>
             )}
             {selectedRole && !editing && (
               <div className="flex gap-1">
-                <button onClick={() => { setEditingName(selectedRole.name); setEditing(true); }} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"><span className="material-symbols-outlined text-lg">edit</span>Edit</button>
-                <button onClick={() => void deleteRole()} disabled={saving} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30"><span className="material-symbols-outlined text-lg">delete</span>Delete</button>
+                <button onClick={() => { setEditingName(selectedRole.name); setEditing(true); }} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"><span className="material-symbols-outlined text-lg">edit</span>ویرایش</button>
+                <button onClick={() => void deleteRole()} disabled={saving} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30"><span className="material-symbols-outlined text-lg">delete</span>حذف</button>
               </div>
             )}
           </div>
 
           {!selectedRole ? (
-            <div className="px-6 py-16 text-center text-sm text-gray-500">Create or select a role to manage permissions.</div>
+            <div className="px-6 py-16 text-center text-sm text-gray-500">نقشی ایجاد یا انتخاب کنید تا دسترسی‌ها مدیریت شوند.</div>
           ) : loadingAccess ? (
-            <div className="flex items-center justify-center gap-2 px-6 py-16 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>Loading permissions...</div>
+            <div className="flex items-center justify-center gap-2 px-6 py-16 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>در حال بارگذاری دسترسی‌ها...</div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-800">
               {actions.map((controller) => (
                 <section key={controller.controllerName} className="grid gap-3 px-4 py-4 lg:grid-cols-[10rem_minmax(0,1fr)] lg:px-5">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{controller.controllerName}</h3>
-                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{controller.actionsName.length} actions</p>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{controller.actionsName.length} عملیات</p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     {controller.actionsName.map((action) => {
@@ -255,10 +264,18 @@ export default function RolesPage() {
       </div>
 
       <form onSubmit={(event) => { event.preventDefault(); void createRole(); }} className="flex gap-2 md:hidden">
-        <label htmlFor="mobileNewRole" className="sr-only">New role name</label>
-        <input id="mobileNewRole" value={newRoleName} onChange={(event) => setNewRoleName(event.target.value)} placeholder="New role name" className={inputClasses} />
-        <button disabled={saving || !newRoleName.trim()} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white disabled:opacity-50"><span className="material-symbols-outlined text-xl">add</span>Add</button>
+        <label htmlFor="mobileNewRole" className="sr-only">نام نقش جدید</label>
+        <input id="mobileNewRole" value={newRoleName} onChange={(event) => setNewRoleName(event.target.value)} placeholder="نام نقش جدید" className={inputClasses} />
+        <button disabled={saving || !newRoleName.trim()} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white disabled:opacity-50"><span className="material-symbols-outlined text-xl">add</span>افزودن</button>
       </form>
+
+      <ConfirmDialog
+        open={confirmData !== null}
+        title={confirmData?.title ?? ""}
+        message={confirmData?.message ?? ""}
+        onConfirm={() => confirmData?.onConfirm()}
+        onCancel={() => setConfirmData(null)}
+      />
     </div>
   );
 }

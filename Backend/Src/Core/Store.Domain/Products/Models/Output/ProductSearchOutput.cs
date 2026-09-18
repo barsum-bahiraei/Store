@@ -18,6 +18,7 @@ public class ProductSearchItemOutput
     public decimal AverageRating { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public bool IsAvailable { get; set; }
     public ProductImageSearchOutput? Image { get; set; }
 }
 

@@ -22,22 +22,22 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: "Products",
+    label: "محصولات",
     icon: "inventory_2",
     children: [
-      { to: "/products", label: "All products", icon: "inventory_2" },
-      { to: "/brands", label: "Brands", icon: "branding_watermark" },
-      { to: "/variants", label: "Colors", icon: "palette" },
+      { to: "/products", label: "همه محصولات", icon: "inventory_2" },
+      { to: "/brands", label: "برندها", icon: "branding_watermark" },
+      { to: "/variants", label: "رنگ‌ها", icon: "palette" },
     ],
   },
 ];
 
 const navItems: NavItem[] = [
-  { to: "/sellers", label: "Sellers", icon: "storefront" },
-  { to: "/attributes", label: "Attributes", icon: "list_alt" },
-  { to: "/categories", label: "Categories", icon: "folder" },
-  { to: "/roles", label: "Roles", icon: "admin_panel_settings" },
-  { to: "/users", label: "Users", icon: "group" },
+  { to: "/sellers", label: "فروشندگان", icon: "storefront" },
+  { to: "/attributes", label: "ویژگی‌ها", icon: "list_alt" },
+  { to: "/categories", label: "دسته‌بندی‌ها", icon: "folder" },
+  { to: "/roles", label: "نقش‌ها", icon: "admin_panel_settings" },
+  { to: "/users", label: "کاربران", icon: "group" },
 ];
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
@@ -80,14 +80,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 dark:border-gray-800 dark:bg-gray-900 ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 right-0 z-40 flex w-64 flex-col border-l border-gray-200 bg-white transition-transform duration-300 dark:border-gray-800 dark:bg-gray-900 ${
+          isMobileOpen ? "translate-x-0" : "translate-x-full"
         } lg:static lg:z-auto lg:translate-x-0 lg:transition-none`}
       >
         <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-2xl text-primary-600">dashboard</span>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">Panel</span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">پنل</span>
           </div>
           <button
             onClick={onMobileClose}
@@ -115,7 +115,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                   }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">{group.icon}</span>
-                  <span className="flex-1 text-left">{group.label}</span>
+                  <span className="flex-1 text-right">{group.label}</span>
                   <span
                     className={`material-symbols-outlined text-[18px] transition-transform ${
                       isExpanded ? "rotate-180" : ""
@@ -125,7 +125,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                   </span>
                 </button>
                 {isExpanded && (
-                  <div className="ml-4 mt-0.5 space-y-0.5 border-l border-gray-200 pl-3 dark:border-gray-700">
+                  <div className="mr-4 mt-0.5 space-y-0.5 border-r border-gray-200 pr-3 dark:border-gray-700">
                     {group.children.map((child) => {
                       const isActive = location.pathname === child.to;
                       return (
@@ -170,7 +170,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             <span className="material-symbols-outlined text-[20px]">
               {theme === "dark" ? "light_mode" : "dark_mode"}
             </span>
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            {theme === "dark" ? "حالت روشن" : "حالت تاریک"}
           </button>
 
           <button
@@ -178,7 +178,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           >
             <span className="material-symbols-outlined text-[20px]">logout</span>
-            Logout
+            خروج
           </button>
         </div>
       </aside>

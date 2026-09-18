@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { useAttributeStore } from "~/features/attributes/store/attribute-store";
 import type { CategoryListOutput } from "../models/output/category-list-output";
 import { useCategoryStore } from "../store/category-store";
@@ -38,6 +39,7 @@ export default function CategoriesPage() {
   const [childTitle, setChildTitle] = useState("");
   const [selectedAttributeId, setSelectedAttributeId] = useState<number | null>(null);
   const requestedAttributes = useRef(new Set<number>());
+  const [confirmData, setConfirmData] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
 
   useEffect(() => {
     void fetchCategories();
@@ -127,8 +129,14 @@ export default function CategoriesPage() {
 
   const handleDelete = async () => {
     if (!selectedCategory || (selectedCategory.children?.length ?? 0) > 0) return;
-    if (!window.confirm(`Delete the “${selectedCategory.name}” category?`)) return;
-    if (await deleteCategory(selectedCategory.id)) setSelectedId(null);
+    setConfirmData({
+      title: "حذف دسته‌بندی",
+      message: `آیا از حذف دسته‌بندی «${selectedCategory.name}» اطمینان دارید؟`,
+      onConfirm: async () => {
+        setConfirmData(null);
+        if (selectedCategory && await deleteCategory(selectedCategory.id)) setSelectedId(null);
+      },
+    });
   };
 
   const handleAddAttribute = async () => {
@@ -144,7 +152,7 @@ export default function CategoriesPage() {
   };
 
   const renderTree = (items: CategoryListOutput[], depth = 0) => (
-    <ul className={depth > 0 ? "ml-5 border-l border-gray-200 pl-2 dark:border-gray-700" : "space-y-1"}>
+    <ul className={depth > 0 ? "mr-5 border-r border-gray-200 pr-2 dark:border-gray-700" : "space-y-1"}>
       {items.map((category) => {
         const children = category.children ?? [];
         const hasChildren = children.length > 0;
@@ -153,13 +161,13 @@ export default function CategoriesPage() {
         return (
           <li key={category.id}>
             <div className={`flex min-h-11 items-center rounded-lg transition-colors ${selected ? "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300" : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
-              <button type="button" onClick={() => hasChildren && toggleBranch(category.id)} disabled={!hasChildren} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-400 disabled:opacity-25" aria-label={expanded ? `Collapse ${category.name}` : `Expand ${category.name}`}>
-                <span className="material-symbols-outlined text-xl">{hasChildren ? (expanded ? "keyboard_arrow_down" : "keyboard_arrow_right") : "remove"}</span>
+              <button type="button" onClick={() => hasChildren && toggleBranch(category.id)} disabled={!hasChildren} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-400 disabled:opacity-25" aria-label={expanded ? `بستن ${category.name}` : `باز کردن ${category.name}`}>
+                <span className="material-symbols-outlined text-xl">{hasChildren ? (expanded ? "keyboard_arrow_down" : "keyboard_arrow_left") : "remove"}</span>
               </button>
-              <button type="button" onClick={() => selectCategory(category.id)} className="flex min-w-0 flex-1 items-center gap-2 self-stretch pr-3 text-left">
+              <button type="button" onClick={() => selectCategory(category.id)} className="flex min-w-0 flex-1 items-center gap-2 self-stretch pl-3 text-right">
                 <span className="material-symbols-outlined text-xl">{hasChildren ? "folder" : "folder_open"}</span>
                 <span className="truncate text-sm font-medium">{category.name}</span>
-                {hasChildren && <span className="ml-auto text-xs opacity-60">{children.length}</span>}
+                {hasChildren && <span className="mr-auto text-xs opacity-60">{children.length}</span>}
               </button>
             </div>
             {hasChildren && expanded && renderTree(children, depth + 1)}
@@ -178,84 +186,101 @@ export default function CategoriesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Categories</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">دسته‌بندی‌ها</h1>
             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">{flatCategories.length}</span>
           </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Build the catalog hierarchy and assign specifications.</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ساختار فهرست محصولات و اختصاص مشخصات.</p>
         </div>
         <button onClick={() => setShowRootForm((current) => !current)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white hover:bg-primary-700">
           <span className="material-symbols-outlined text-xl">{showRootForm ? "close" : "create_new_folder"}</span>
-          {showRootForm ? "Close" : "New root category"}
+          {showRootForm ? "بستن" : "دسته‌بندی ریشه جدید"}
         </button>
       </div>
 
       {error && (
         <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-          <span>{error}</span><button onClick={() => void fetchCategories()} className="font-semibold">Retry</button>
+          <span>{error}</span><button onClick={() => void fetchCategories()} className="font-semibold">تلاش مجدد</button>
         </div>
       )}
 
       {showRootForm && (
         <form onSubmit={(event) => { event.preventDefault(); void handleAddRoot(); }} className="flex flex-col gap-2 rounded-xl border border-primary-200 bg-primary-50/50 p-4 sm:flex-row dark:border-primary-900 dark:bg-primary-950/20">
-          <div className="min-w-0 flex-1"><label htmlFor="rootTitle" className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Root category name</label><input id="rootTitle" autoFocus value={rootTitle} onChange={(event) => setRootTitle(event.target.value)} placeholder="e.g. Electronics" className={inputClasses} /></div>
-          <button disabled={loading || !rootTitle.trim()} className="min-h-11 self-end rounded-lg bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">Create category</button>
+          <div className="min-w-0 flex-1"><label htmlFor="rootTitle" className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">نام دسته‌بندی ریشه</label><input id="rootTitle" autoFocus value={rootTitle} onChange={(event) => setRootTitle(event.target.value)} placeholder="مثلاً الکترونیک" className={inputClasses} /></div>
+          <button disabled={loading || !rootTitle.trim()} className="min-h-11 self-end rounded-lg bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">ایجاد دسته‌بندی</button>
         </form>
       )}
 
       <div className="grid items-start gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
         <aside className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800"><h2 className="text-sm font-semibold text-gray-900 dark:text-white">Category tree</h2><p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Select a category to manage it</p></div>
+          <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800"><h2 className="text-sm font-semibold text-gray-900 dark:text-white">درخت دسته‌بندی</h2><p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">یک دسته‌بندی را برای مدیریت انتخاب کنید</p></div>
           <div className="max-h-[65vh] overflow-y-auto p-2">
-            {loading && categories.length === 0 ? <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>Loading...</div> : categories.length === 0 ? <div className="px-4 py-12 text-center text-sm text-gray-500">No categories yet</div> : renderTree(categories)}
+            {loading && categories.length === 0 ? <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>در حال بارگذاری...</div> : categories.length === 0 ? <div className="px-4 py-12 text-center text-sm text-gray-500">هنوز دسته‌بندی‌ای وجود ندارد</div> : renderTree(categories)}
           </div>
         </aside>
 
         <main className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           {!selectedCategory ? (
-            <div className="px-6 py-20 text-center"><span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600">account_tree</span><h2 className="mt-3 font-medium text-gray-900 dark:text-white">Select a category</h2><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose a node from the tree to view its settings.</p></div>
+            <div className="px-6 py-20 text-center"><span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600">account_tree</span><h2 className="mt-3 font-medium text-gray-900 dark:text-white">یک دسته‌بندی انتخاب کنید</h2><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">از درخت یک گره برای مشاهده تنظیمات آن انتخاب کنید.</p></div>
           ) : (
             <>
               <div className="flex flex-col gap-3 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
                  <div className="min-w-0"><p className="truncate text-xs text-gray-500 dark:text-gray-400">{selectedPath}</p><h2 className="mt-1 truncate text-lg font-semibold text-gray-900 dark:text-white">{selectedCategory.name}</h2></div>
-                <div className="flex gap-1"><button onClick={startEditing} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"><span className="material-symbols-outlined text-lg">edit</span>Edit</button><button onClick={() => void handleDelete()} disabled={loading || hasChildren} title={hasChildren ? "Move or delete child categories first" : "Delete category"} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-red-950/30"><span className="material-symbols-outlined text-lg">delete</span>Delete</button></div>
+                <div className="flex gap-1"><button onClick={startEditing} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"><span className="material-symbols-outlined text-lg">edit</span>ویرایش</button><button onClick={() => void handleDelete()} disabled={loading || hasChildren} title={hasChildren ? "ابتدا زیرمجموعه‌ها را جابجا یا حذف کنید" : "حذف دسته‌بندی"} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-red-950/30"><span className="material-symbols-outlined text-lg">delete</span>حذف</button></div>
               </div>
 
               {editing && (
                 <form onSubmit={(event) => { event.preventDefault(); void handleUpdate(); }} className="grid gap-3 border-b border-gray-200 bg-primary-50/40 p-4 sm:grid-cols-2 dark:border-gray-800 dark:bg-primary-950/10">
-                  <label><span className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Category name</span><input autoFocus value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className={inputClasses} /></label>
-                  <label><span className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Parent category</span><select value={editParentId ?? ""} onChange={(event) => setEditParentId(event.target.value ? Number(event.target.value) : null)} className={inputClasses}><option value="">No parent (root)</option>{flatCategories.filter(({ category }) => !invalidParentIds.has(category.id)).map(({ category, path }) => <option key={category.id} value={category.id}>{path}</option>)}</select></label>
-                  <div className="flex gap-2 sm:col-span-2"><button disabled={loading || !editTitle.trim()} className="min-h-11 rounded-lg bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">Save changes</button><button type="button" onClick={() => setEditing(false)} className="min-h-11 rounded-lg px-4 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Cancel</button></div>
+                  <label><span className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">نام دسته‌بندی</span><input autoFocus value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className={inputClasses} /></label>
+                  <label><span className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">دسته‌بندی والد</span><select value={editParentId ?? ""} onChange={(event) => setEditParentId(event.target.value ? Number(event.target.value) : null)} className={inputClasses}><option value="">بدون والد (ریشه)</option>{flatCategories.filter(({ category }) => !invalidParentIds.has(category.id)).map(({ category, path }) => <option key={category.id} value={category.id}>{path}</option>)}</select></label>
+                  <div className="flex gap-2 sm:col-span-2"><button disabled={loading || !editTitle.trim()} className="min-h-11 rounded-lg bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">ذخیره تغییرات</button><button type="button" onClick={() => setEditing(false)} className="min-h-11 rounded-lg px-4 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">لغو</button></div>
                 </form>
               )}
 
               <div className="grid divide-y divide-gray-200 dark:divide-gray-800 xl:grid-cols-2 xl:divide-x xl:divide-y-0 dark:xl:divide-gray-800">
                 <section className="p-5">
-                  <div className="flex items-center gap-2"><span className="material-symbols-outlined text-xl text-primary-600">create_new_folder</span><h3 className="font-semibold text-gray-900 dark:text-white">Add subcategory</h3></div>
-                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Create a child directly under {selectedCategory.name}.</p>
-                  <form onSubmit={(event) => { event.preventDefault(); void handleAddChild(); }} className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><input value={childTitle} onChange={(event) => setChildTitle(event.target.value)} placeholder="Subcategory name" className={inputClasses} /><button disabled={loading || !childTitle.trim()} className="min-h-11 shrink-0 rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white disabled:opacity-50">Add child</button></form>
+                  <div className="flex items-center gap-2"><span className="material-symbols-outlined text-xl text-primary-600">create_new_folder</span><h3 className="font-semibold text-gray-900 dark:text-white">افزودن زیرمجموعه</h3></div>
+                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ایجاد زیرمجموعه مستقیم زیر {selectedCategory.name}.</p>
+                  <form onSubmit={(event) => { event.preventDefault(); void handleAddChild(); }} className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><input value={childTitle} onChange={(event) => setChildTitle(event.target.value)} placeholder="نام زیرمجموعه" className={inputClasses} /><button disabled={loading || !childTitle.trim()} className="min-h-11 shrink-0 rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white disabled:opacity-50">افزودن</button></form>
                 </section>
 
                 <section className="p-5">
-                  <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="material-symbols-outlined text-xl text-primary-600">tune</span><h3 className="font-semibold text-gray-900 dark:text-white">Attributes</h3></div><span className="text-xs text-gray-500">{connectedAttributes.length} assigned</span></div>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Specifications available to products in this category.</p>
+                  <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="material-symbols-outlined text-xl text-primary-600">tune</span><h3 className="font-semibold text-gray-900 dark:text-white">ویژگی‌ها</h3></div><span className="text-xs text-gray-500">{connectedAttributes.length} اختصاص یافته</span></div>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">مشخصات در دسترس برای محصولات این دسته‌بندی.</p>
 
                   {attributesError ? (
-                    <div className="mt-4 flex items-center justify-between gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{attributesError}</span><button onClick={retryAttributes} className="font-semibold">Retry</button></div>
+                    <div className="mt-4 flex items-center justify-between gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{attributesError}</span><button onClick={retryAttributes} className="font-semibold">تلاش مجدد</button></div>
                   ) : attributesLoading && categoryAttributes[selectedCategory.id] === undefined ? (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>Loading attributes...</div>
+                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>در حال بارگذاری ویژگی‌ها...</div>
                   ) : connectedAttributes.length === 0 ? (
-                    <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-4 py-5 text-center text-sm text-gray-500 dark:border-gray-700">No attributes assigned yet.</div>
+                    <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-4 py-5 text-center text-sm text-gray-500 dark:border-gray-700">هنوز ویژگی‌ای اختصاص نیافته.</div>
                   ) : (
-                    <ul className="mt-4 flex flex-wrap gap-2">{connectedAttributes.map((item) => <li key={item.id} className="inline-flex min-h-9 items-center gap-1 rounded-full bg-gray-100 py-1 pl-3 pr-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">{item.attributeTitle ?? `Attribute ${item.attributeId}`}<button onClick={() => void removeCategoryAttribute(selectedCategory.id, item.id)} disabled={attributesLoading} className="flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/40" aria-label={`Remove ${item.attributeTitle ?? "attribute"}`}><span className="material-symbols-outlined text-base">close</span></button></li>)}</ul>
+                    <ul className="mt-4 flex flex-wrap gap-2">{connectedAttributes.map((item) => <li key={item.id} className="inline-flex min-h-9 items-center gap-1 rounded-full bg-gray-100 py-1 pl-3 pr-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">{item.attributeTitle ?? `ویژگی ${item.attributeId}`}<button onClick={() => {
+                      setConfirmData({
+                        title: "حذف ویژگی از دسته‌بندی",
+                        message: `آیا از حذف ویژگی «${item.attributeTitle ?? `ویژگی ${item.attributeId}`}» از این دسته‌بندی اطمینان دارید؟`,
+                        onConfirm: async () => {
+                          setConfirmData(null);
+                          await removeCategoryAttribute(selectedCategory.id, item.id);
+                        },
+                      });
+                    }} disabled={attributesLoading} className="flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/40" aria-label={`حذف ${item.attributeTitle ?? "ویژگی"}`}><span className="material-symbols-outlined text-base">close</span></button></li>)}</ul>
                   )}
 
-                   <div className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><select value={selectedAttributeId ?? ""} onChange={(event) => setSelectedAttributeId(event.target.value ? Number(event.target.value) : null)} disabled={attributesLoading || availableAttributes.length === 0} className={inputClasses}><option value="">{availableAttributes.length === 0 ? "All attributes assigned" : "Select an attribute"}</option>{availableAttributes.map((attribute) => <option key={attribute.id} value={attribute.id}>{attribute.name}</option>)}</select><button onClick={() => void handleAddAttribute()} disabled={attributesLoading || selectedAttributeId === null} className="min-h-11 shrink-0 rounded-lg border border-primary-600 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:text-primary-300 dark:hover:bg-primary-950/30">Assign</button></div>
+                   <div className="mt-4 flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row"><select value={selectedAttributeId ?? ""} onChange={(event) => setSelectedAttributeId(event.target.value ? Number(event.target.value) : null)} disabled={attributesLoading || availableAttributes.length === 0} className={inputClasses}><option value="">{availableAttributes.length === 0 ? "همه ویژگی‌ها اختصاص یافته" : "انتخاب ویژگی"}</option>{availableAttributes.map((attribute) => <option key={attribute.id} value={attribute.id}>{attribute.name}</option>)}</select><button onClick={() => void handleAddAttribute()} disabled={attributesLoading || selectedAttributeId === null} className="min-h-11 shrink-0 rounded-lg border border-primary-600 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:text-primary-300 dark:hover:bg-primary-950/30">اختصاص</button></div>
                 </section>
               </div>
             </>
           )}
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmData !== null}
+        title={confirmData?.title ?? ""}
+        message={confirmData?.message ?? ""}
+        onConfirm={() => confirmData?.onConfirm()}
+        onCancel={() => setConfirmData(null)}
+      />
     </div>
   );
 }

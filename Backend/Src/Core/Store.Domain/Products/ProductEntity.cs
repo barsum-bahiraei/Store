@@ -14,6 +14,7 @@ public class ProductEntity : BaseEntity
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
     public int? ProductBrandId { get; set; }
+    public bool IsAvailable { get; set; }
     public CategoryEntity Category { get; set; }
     public SellerEntity Seller { get; set; }
     public ProductBrandEntity? ProductBrand { get; set; }

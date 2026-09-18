@@ -2,9 +2,62 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@font-face {
+  font-family: "IRANSans";
+  src: url("./assets/fonts/iran-sans/woff2/IRANSansWebFaNum.woff2") format("woff2"),
+       url("./assets/fonts/iran-sans/woff/IRANSansWebFaNum.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src: url("./assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Light.woff2") format("woff2"),
+       url("./assets/fonts/iran-sans/woff/IRANSansWebFaNum_Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src: url("./assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Medium.woff2") format("woff2"),
+       url("./assets/fonts/iran-sans/woff/IRANSansWebFaNum_Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src: url("./assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Bold.woff2") format("woff2"),
+       url("./assets/fonts/iran-sans/woff/IRANSansWebFaNum_Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src: url("./assets/fonts/iran-sans/woff2/IRANSansWebFaNum_Black.woff2") format("woff2"),
+       url("./assets/fonts/iran-sans/woff/IRANSansWebFaNum_Black.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src: url("./assets/fonts/iran-sans/woff2/IRANSansWebFaNum_UltraLight.woff2") format("woff2"),
+       url("./assets/fonts/iran-sans/woff/IRANSansWebFaNum_UltraLight.woff") format("woff");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: "IRANSans", "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-200: #bfdbfe;

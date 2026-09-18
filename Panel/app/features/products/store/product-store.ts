@@ -6,6 +6,7 @@ import type {
   ProductGetOutput,
   ProductImageUploadInput,
   ProductListOutput,
+  ProductListParams,
   ProductUpdateInput,
 } from "../models/product";
 
@@ -18,7 +19,7 @@ interface ProductStore {
   loading: boolean;
   submitting: boolean;
   error: string | null;
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (params?: ProductListParams) => Promise<void>;
   createProduct: (input: ProductCreateInput) => Promise<ProductCreateOutput>;
   getProduct: (id: number) => Promise<ProductGetOutput>;
   updateProduct: (id: number, input: ProductUpdateInput) => Promise<void>;
@@ -33,10 +34,10 @@ export const useProductStore = create<ProductStore>((set) => ({
   submitting: false,
   error: null,
 
-  fetchProducts: async () => {
+  fetchProducts: async (params) => {
     set({ loading: true, error: null });
     try {
-      const products = await productApi.list();
+      const products = await productApi.list(params);
       set({ products, loading: false });
     } catch (error) {
       set({ error: getErrorMessage(error), loading: false });

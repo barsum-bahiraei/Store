@@ -12,4 +12,5 @@ public class ProductSearchInput
     public decimal? MaxPrice { get; set; }
     public bool IsPriceDec { get; set; }
     public bool IsIdDec { get; set; }
+    public bool? IsAvailable { get; set; }
 }

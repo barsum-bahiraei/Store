@@ -1,8 +1,10 @@
+using Store.Domain.Accounts.Models.Input;
+
 namespace Store.Domain.Accounts;
 
 public interface IAccountRepository
 {
-    Task<List<UserEntity>> UserListAsync(CancellationToken cancellation);
+    Task<List<UserEntity>> UserListAsync(UserListInput input, CancellationToken cancellation);
     Task<UserEntity?> UserGetAsync(string email, CancellationToken cancellation);
     Task<UserEntity?> UserGetAsync(int id, CancellationToken cancellation);
     Task<UserEntity> UserCreateAsync(UserEntity input, CancellationToken cancellation);

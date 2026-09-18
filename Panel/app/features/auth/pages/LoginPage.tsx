@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError("");
 
     if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields.");
+      setError("لطفاً تمام فیلدها را پر کنید.");
       return;
     }
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
       await login({ email: email.trim(), password });
       navigate("/attributes");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to sign in.");
+      setError(caughtError instanceof Error ? caughtError.message : "امکان ورود وجود ندارد.");
     } finally {
       setSubmitting(false);
     }
@@ -37,8 +37,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       <button
         onClick={toggleTheme}
-        className="fixed right-4 top-4 z-10 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
-        aria-label="Toggle theme"
+        className="fixed left-4 top-4 z-10 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
+        aria-label="تغییر پوسته"
       >
         <span className="material-symbols-outlined">
           {theme === "dark" ? "light_mode" : "dark_mode"}
@@ -61,16 +61,16 @@ export default function LoginPage() {
             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
               <span className="material-symbols-outlined text-xl text-white">dashboard</span>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Welcome back</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">خوش آمدید</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Sign in to your account
+              به حساب خود وارد شوید
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email address
+                آدرس ایمیل
               </label>
               <input
                 id="email"
@@ -85,7 +85,7 @@ export default function LoginPage() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
+                رمز عبور
               </label>
               <input
                 id="password"
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="رمز عبور خود را وارد کنید"
                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
               />
             </div>
@@ -105,14 +105,14 @@ export default function LoginPage() {
               disabled={submitting}
               className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-gray-950"
             >
-              {submitting ? "Signing in..." : "Sign in"}
+              {submitting ? "در حال ورود..." : "ورود"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Don&apos;t have an account?{" "}
+            حساب کاربری ندارید؟{" "}
             <Link to="/register" className="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">
-              Sign up
+              ثبت‌نام کنید
             </Link>
           </p>
         </div>

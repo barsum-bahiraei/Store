@@ -13,9 +13,9 @@ public class ProductService(
     ICategoryRepository categoryRepository,
     FileService fileService)
 {
-    public async Task<Result<List<ProductListOutput>>> ListAsync(int userId, CancellationToken cancellation)
+    public async Task<Result<List<ProductListOutput>>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation)
     {
-        var entities = await productRepository.ListAsync(userId, cancellation);
+        var entities = await productRepository.ListAsync(userId, input, cancellation);
         var result = new List<ProductListOutput>();
 
         foreach (var entity in entities)
@@ -49,6 +49,7 @@ public class ProductService(
                 Discount = entity.Discount,
                 CategoryId = entity.CategoryId,
                 CategoryTitle = entity.Category.Name,
+                IsAvailable = entity.IsAvailable,
                 Image = image,
                 Seller = new ProductSellerListOutput
                 {
@@ -102,6 +103,7 @@ public class ProductService(
                     : 0,
                 CategoryId = entity.CategoryId,
                 CategoryTitle = entity.Category.Name,
+                IsAvailable = entity.IsAvailable,
                 Image = image
             });
         }
@@ -215,6 +217,7 @@ public class ProductService(
                     : 0,
                 CategoryId = similarEntity.CategoryId,
                 CategoryTitle = similarEntity.Category.Name,
+                IsAvailable = similarEntity.IsAvailable,
                 Image = imageResult.Data == null
                     ? null
                     : new ProductImageDetailOutput
@@ -238,6 +241,7 @@ public class ProductService(
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
+            IsAvailable = entity.IsAvailable,
             Categories = categories,
             Brand = brand,
             Images = images,
@@ -381,6 +385,7 @@ public class ProductService(
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
             Brand = brand,
+            IsAvailable = entity.IsAvailable,
             Images = images,
             Seller = new ProductSellerGetOutput
             {
@@ -430,6 +435,7 @@ public class ProductService(
             CategoryId = input.CategoryId,
             SellerId = input.SellerId,
             ProductBrandId = input.ProductBrandId,
+            IsAvailable = input.IsAvailable,
             ProductAttributes = input.Attributes.Select(x => new ProductAttributeEntity
             {
                 AttributeId = x.AttributeId,
@@ -451,6 +457,7 @@ public class ProductService(
             CategoryId = created.CategoryId,
             SellerId = created.SellerId,
             ProductBrandId = created.ProductBrandId,
+            IsAvailable = created.IsAvailable,
             Attributes = created.ProductAttributes.Select(x => new ProductAttributeOutput
             {
                 Id = x.Id,
@@ -492,6 +499,7 @@ public class ProductService(
         entity.CategoryId = input.CategoryId;
         entity.SellerId = input.SellerId;
         entity.ProductBrandId = input.ProductBrandId;
+        entity.IsAvailable = input.IsAvailable;
 
         foreach (var item in input.Attributes)
         {
@@ -519,6 +527,7 @@ public class ProductService(
             CategoryTitle = updated.Category.Name,
             SellerId = updated.SellerId,
             ProductBrandId = updated.ProductBrandId,
+            IsAvailable = updated.IsAvailable,
             Attributes = updated.ProductAttributes.Select(x => new ProductAttributeUpdateOutput
             {
                 Id = x.Id,

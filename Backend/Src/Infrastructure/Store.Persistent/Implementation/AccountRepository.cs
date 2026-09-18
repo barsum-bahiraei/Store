@@ -1,14 +1,35 @@
 using Microsoft.EntityFrameworkCore;
 using Store.Domain.Accounts;
+using Store.Domain.Accounts.Models.Input;
 using Store.Persistent.Database.StoreDbContext;
 
 namespace Store.Persistent.Implementation;
 
 public class AccountRepository(StoreDbContext context) : IAccountRepository
 {
-    public async Task<List<UserEntity>> UserListAsync(CancellationToken cancellation)
+    public async Task<List<UserEntity>> UserListAsync(UserListInput input, CancellationToken cancellation)
     {
-        var result = await context.Users.ToListAsync(cancellation);
+        var query = context.Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(input.FirstName))
+            query = query.Where(x => x.FirstName.Contains(input.FirstName.Trim()));
+
+        if (!string.IsNullOrWhiteSpace(input.LastName))
+            query = query.Where(x => x.LastName.Contains(input.LastName.Trim()));
+
+        if (!string.IsNullOrWhiteSpace(input.Email))
+            query = query.Where(x => x.Email.Contains(input.Email.Trim()));
+
+        if (!string.IsNullOrWhiteSpace(input.PhoneNumber))
+            query = query.Where(x => x.PhoneNumber != null && x.PhoneNumber.Contains(input.PhoneNumber.Trim()));
+
+        if (!string.IsNullOrWhiteSpace(input.BirthDate))
+            query = query.Where(x => x.BirthDate != null && x.BirthDate.Contains(input.BirthDate.Trim()));
+
+        if (input.Gender.HasValue)
+            query = query.Where(x => x.Gender == input.Gender.Value);
+
+        var result = await query.OrderBy(x => x.Id).ToListAsync(cancellation);
         return result;
     }
 

@@ -16,20 +16,20 @@ export enum AttributeUnit {
 }
 
 export const ATTRIBUTE_UNIT_OPTIONS: { value: AttributeUnit; label: string }[] = [
-  { value: AttributeUnit.Geram, label: "Gram" },
-  { value: AttributeUnit.Kilo, label: "Kilogram" },
-  { value: AttributeUnit.Meter, label: "Meter" },
-  { value: AttributeUnit.None, label: "None" },
-  { value: AttributeUnit.Milligram, label: "Milligram" },
-  { value: AttributeUnit.Millimeter, label: "Millimeter" },
-  { value: AttributeUnit.Centimeter, label: "Centimeter" },
-  { value: AttributeUnit.Milliliter, label: "Milliliter" },
-  { value: AttributeUnit.Liter, label: "Liter" },
-  { value: AttributeUnit.Piece, label: "Piece" },
-  { value: AttributeUnit.Pair, label: "Pair" },
-  { value: AttributeUnit.Pack, label: "Pack" },
-  { value: AttributeUnit.Box, label: "Box" },
-  { value: AttributeUnit.Set, label: "Set" },
+  { value: AttributeUnit.Geram, label: "گرم" },
+  { value: AttributeUnit.Kilo, label: "کیلوگرم" },
+  { value: AttributeUnit.Meter, label: "متر" },
+  { value: AttributeUnit.None, label: "بدون واحد" },
+  { value: AttributeUnit.Milligram, label: "میلی‌گرم" },
+  { value: AttributeUnit.Millimeter, label: "میلی‌متر" },
+  { value: AttributeUnit.Centimeter, label: "سانتی‌متر" },
+  { value: AttributeUnit.Milliliter, label: "میلی‌لیتر" },
+  { value: AttributeUnit.Liter, label: "لیتر" },
+  { value: AttributeUnit.Piece, label: "عدد" },
+  { value: AttributeUnit.Pair, label: "جفت" },
+  { value: AttributeUnit.Pack, label: "بسته" },
+  { value: AttributeUnit.Box, label: "جعبه" },
+  { value: AttributeUnit.Set, label: "ست" },
 ];
 
 export function getAttributeUnitLabel(unit: AttributeUnit): string {

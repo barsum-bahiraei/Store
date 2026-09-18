@@ -16,9 +16,9 @@ public class AccountService(
     IPasswordHasher<UserEntity> passwordHasher
 )
 {
-    public async Task<Result<List<UserListOutput>>> UserListAsync(CancellationToken cancellation)
+    public async Task<Result<List<UserListOutput>>> UserListAsync(UserListInput input, CancellationToken cancellation)
     {
-        var entities = await accountRepository.UserListAsync(cancellation);
+        var entities = await accountRepository.UserListAsync(input, cancellation);
         var result = entities.Select(x => new UserListOutput
         {
             Id = x.Id,

@@ -9,14 +9,14 @@ export default function NotFoundPage() {
         </span>
         <h1 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-white">404</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          The page you are looking for could not be found.
+          صفحه‌ای که دنبال آن هستید یافت نشد.
         </p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
         >
           <span className="material-symbols-outlined text-[18px]">home</span>
-          Go to Sign In
+          بازگشت به صفحه ورود
         </Link>
       </div>
     </main>

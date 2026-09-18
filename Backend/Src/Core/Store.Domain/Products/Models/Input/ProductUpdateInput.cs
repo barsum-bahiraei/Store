@@ -10,6 +10,7 @@ public class ProductUpdateInput
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
     public int ProductBrandId { get; set; }
+    public bool IsAvailable { get; set; } = true;
     public List<ProductAttributeUpdateInput> Attributes { get; set; }
     public List<int> ProductVariantIds { get; set; }
 }

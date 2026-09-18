@@ -3,7 +3,6 @@ import { AttributeType } from "~/features/attributes/models/enums/attribute-type
 import { AttributeUnit, getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
 import { categoryApi } from "~/features/categories/api/category-api";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
-import { flattenCategories } from "~/features/categories/utils/category-tree";
 import { brandApi } from "~/features/brands/api/brand-api";
 import type { Brand } from "~/features/brands/models/brand";
 import { sellerApi } from "~/features/sellers/api/seller-api";
@@ -20,6 +19,7 @@ import type {
 } from "../models/product";
 import { useProductStore } from "../store/product-store";
 import { resolveProductImageUrl } from "../utils/resolve-product-image-url";
+import { SellerPickerModal } from "./SellerPickerModal";
 
 interface ProductWizardProps {
   product?: ProductListOutput;
@@ -34,9 +34,9 @@ interface SelectedImage {
 }
 
 const steps = [
-  { title: "Category", icon: "category" },
-  { title: "Details", icon: "tune" },
-  { title: "Images", icon: "photo_library" },
+  { title: "دسته‌بندی", icon: "category" },
+  { title: "جزئیات", icon: "tune" },
+  { title: "تصاویر", icon: "photo_library" },
 ];
 
 const inputClasses =
@@ -54,14 +54,14 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
     : getAttributeUnitLabel(attribute.attributeUnit);
 
   if (attribute.attributeType === AttributeType.Bool) {
-    return <select value={value} onChange={(event) => onChange(event.target.value)} className={inputClasses}><option value="">Select</option><option value="true">Yes</option><option value="false">No</option></select>;
+    return <select value={value} onChange={(event) => onChange(event.target.value)} className={inputClasses}><option value="">انتخاب کنید</option><option value="true">بله</option><option value="false">خیر</option></select>;
   }
 
   if (attribute.attributeType === AttributeType.LongText || attribute.attributeType === AttributeType.MultiSelect) {
     return (
       <div>
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} min-h-24 resize-y`} placeholder={attribute.attributeType === AttributeType.MultiSelect ? "Separate multiple values with commas" : "Enter a detailed value"} />
-        {unit && <span className="mt-1 block text-xs text-gray-400">Unit: {unit}</span>}
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} min-h-24 resize-y`} placeholder={attribute.attributeType === AttributeType.MultiSelect ? " مقادیر را با کاما جدا کنید" : "مقدار را وارد کنید"} />
+        {unit && <span className="mt-1 block text-xs text-gray-400">واحد: {unit}</span>}
       </div>
     );
   }
@@ -81,9 +81,9 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
       case AttributeType.Email:
         return { type: "email", inputMode: "email" as const, placeholder: "name@example.com" };
       case AttributeType.Phone:
-        return { type: "tel", inputMode: "tel" as const, placeholder: "+1 555 000 0000" };
+        return { type: "tel", inputMode: "tel" as const, placeholder: "+98 912 000 0000" };
       case AttributeType.Select:
-        return { type: "text", placeholder: "Enter the selected value" };
+        return { type: "text", placeholder: "مقدار انتخابی را وارد کنید" };
       default:
         return { type: "text" };
     }
@@ -91,14 +91,14 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
 
   return (
     <div className="relative">
-      <input {...inputProps} value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} ${unit ? "pr-24" : ""}`} />
-      {unit && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{unit}</span>}
+      <input {...inputProps} value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} ${unit ? "pl-24" : ""}`} />
+      {unit && <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xs text-gray-400">{unit}</span>}
     </div>
   );
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error && error.message ? error.message : "An unexpected error occurred.";
+  return error instanceof Error && error.message ? error.message : "خطای غیرمنتظره‌ای رخ داد.";
 }
 
 export function ProductWizard({ product, onClose, onComplete }: ProductWizardProps) {
@@ -116,6 +116,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [sellerId, setSellerId] = useState<number | null>(null);
   const [productBrandId, setProductBrandId] = useState<number | null>(null);
   const [productVariantIds, setProductVariantIds] = useState<number[]>([]);
+  const [isAvailable, setIsAvailable] = useState(true);
   const [title, setTitle] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
@@ -131,6 +132,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number>>(new Set());
+  const [sellerModalOpen, setSellerModalOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -151,6 +154,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           setSellerId(details.seller.id);
           setProductBrandId(details.brand?.id ?? null);
           setProductVariantIds((details.variants ?? []).map((variant) => variant.id));
+          setIsAvailable(details.isAvailable);
           setTitle(details.name);
           setShortDescription(details.shortDescription ?? "");
           setLongDescription(unescapeHtmlEntities(details.longDescription) ?? "");
@@ -221,6 +225,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         sellerId,
         productBrandId,
         productVariantIds,
+        isAvailable,
         attributes: attributes.map((attribute) => ({
           attributeId: attribute.attributeId,
           value: attributeValues[attribute.attributeId]?.trim() ?? "",
@@ -245,7 +250,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     );
 
     if (files.length === 0) {
-      setError("Please select a JPG, PNG, WebP, GIF, AVIF, or SVG image.");
+      setError("لطفاً تصویر با فرمت JPG، PNG، WebP، GIF، AVIF یا SVG انتخاب کنید.");
       event.target.value = "";
       return;
     }
@@ -253,7 +258,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     setError(
       files.length === selectedFiles.length
         ? null
-        : "Some unsupported files were ignored."
+        : "برخی فایل‌های پشتیبانی نشده نادیده گرفته شدند."
     );
     const next = files.map((file) => ({
       id: createClientId(),
@@ -319,6 +324,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     );
   };
 
+  const toggleCategoryExpand = (id: number) => {
+    setExpandedCategoryIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const canSubmitDetails =
     title.trim().length > 0 &&
     sellerId !== null &&
@@ -329,23 +343,50 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   );
   const canSaveImages = hasRetainedMainImage || (images.length > 0 && mainImageId !== null);
-  const categoryOptions = flattenCategories(categories);
+
+  const selectedSeller = sellers.find((s) => s.id === sellerId);
+
+  const renderCategoryTree = (items: CategoryListOutput[], depth = 0) => (
+    <ul className={depth > 0 ? "mr-5 border-r border-gray-200 pr-2 dark:border-gray-700" : "space-y-1"}>
+      {items.map((category) => {
+        const children = category.children ?? [];
+        const hasChildren = children.length > 0;
+        const expanded = expandedCategoryIds.has(category.id);
+        const selected = categoryId === category.id;
+        return (
+          <li key={category.id}>
+            <div className={`flex min-h-10 items-center rounded-lg transition-colors ${selected ? "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300" : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
+              <button type="button" onClick={() => hasChildren && toggleCategoryExpand(category.id)} disabled={!hasChildren} className="flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 disabled:opacity-25">
+                <span className="material-symbols-outlined text-lg">{hasChildren ? (expanded ? "keyboard_arrow_down" : "keyboard_arrow_left") : "remove"}</span>
+              </button>
+              <button type="button" onClick={() => setCategoryId(category.id)} className="flex min-w-0 flex-1 items-center gap-2 self-stretch pl-3 text-right">
+                <span className="material-symbols-outlined text-lg">{hasChildren ? "folder" : "folder_open"}</span>
+                <span className="truncate text-sm font-medium">{category.name}</span>
+              </button>
+              {selected && <span className="material-symbols-outlined ml-2 text-lg text-primary-600 dark:text-primary-400">check_circle</span>}
+            </div>
+            {hasChildren && expanded && renderCategoryTree(children, depth + 1)}
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
       <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-3xl">
         <header className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7 sm:py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{isEditing ? "Edit product" : "New product"}</p>
-             <h2 id="wizard-title" className="mt-1 text-xl font-semibold text-gray-950 dark:text-white">{isEditing ? `Update ${product?.name ?? "product"}` : "Build your product listing"}</h2>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{isEditing ? "ویرایش محصول" : "محصول جدید"}</p>
+             <h2 id="wizard-title" className="mt-1 text-xl font-semibold text-gray-950 dark:text-white">{isEditing ? `ویرایش ${product?.name ?? "محصول"}` : "ایجاد فهرست محصول"}</h2>
           </div>
-          <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-white" aria-label="Close wizard">
+          <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-white" aria-label="بستن جادوگر">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7">
-          <ol className="grid grid-cols-3 gap-2" aria-label="Product creation progress">
+          <ol className="grid grid-cols-3 gap-2" aria-label="پیشرفت ایجاد محصول">
             {steps.map((item, index) => (
               <li key={item.title} className="flex min-w-0 items-center gap-2">
                 <span className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors ${index <= step ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"}`} aria-current={index === step ? "step" : undefined}>
@@ -367,20 +408,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
           {step === 0 && (
             <section>
-              <h3 className="text-lg font-semibold text-gray-950 dark:text-white">Choose a category</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">The category determines which specifications this product needs.</p>
+              <h3 className="text-lg font-semibold text-gray-950 dark:text-white">انتخاب دسته‌بندی</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">دسته‌بندی مشخص می‌کند این محصول به چه مشخصاتی نیاز دارد.</p>
               {loading ? (
-                <div className="mt-8 flex items-center justify-center gap-2 py-12 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>Loading categories...</div>
-              ) : categoryOptions.length === 0 ? (
-                <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-10 text-center dark:border-gray-700"><span className="material-symbols-outlined text-4xl text-gray-400">category</span><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Create a category before adding products.</p></div>
+                <div className="mt-8 flex items-center justify-center gap-2 py-12 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>در حال بارگذاری دسته‌بندی‌ها...</div>
+              ) : categories.length === 0 ? (
+                <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-10 text-center dark:border-gray-700"><span className="material-symbols-outlined text-4xl text-gray-400">category</span><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">قبل از افزودن محصول، یک دسته‌بندی ایجاد کنید.</p></div>
               ) : (
-                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {categoryOptions.map(({ category, path }) => (
-                    <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`flex min-h-24 items-center gap-3 rounded-2xl border p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${categoryId === category.id ? "border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950/40 dark:text-primary-200" : "border-gray-200 bg-white text-gray-800 hover:border-primary-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-primary-700 dark:hover:bg-gray-800"}`}>
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"><span className="material-symbols-outlined">inventory_2</span></span>
-                      <span className="min-w-0 text-sm font-medium">{path}</span>
-                    </button>
-                  ))}
+                <div className="mt-6 max-h-[50vh] overflow-y-auto rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                  {renderCategoryTree(categories)}
                 </div>
               )}
             </section>
@@ -388,27 +424,34 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
           {step === 1 && (
             <form id="product-details-form" onSubmit={saveDetails}>
-              <h3 className="text-lg font-semibold text-gray-950 dark:text-white">Product details</h3>
-               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Add pricing, brand, available colors, and category-specific specifications.</p>
+              <h3 className="text-lg font-semibold text-gray-950 dark:text-white">جزئیات محصول</h3>
+               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">قیمت، برند، رنگ‌های موجود و مشخصات دسته‌بندی را اضافه کنید.</p>
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Seller <span className="text-red-500">*</span></span><select value={sellerId ?? ""} onChange={(event) => setSellerId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">Select a seller</option>{sellers.map((seller) => <option key={seller.id} value={seller.id}>{seller.name}</option>)}</select>{sellers.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Create a seller before saving a product.</p>}</label>
-                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Brand <span className="text-red-500">*</span></span><select value={productBrandId ?? ""} onChange={(event) => setProductBrandId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">Select a brand</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select>{brands.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Create a brand before saving a product.</p>}</label>
-                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Title <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="e.g. Wireless headphones" required autoFocus /></label>
-                <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Price <span className="text-red-500">*</span></span><input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className={inputClasses} placeholder="0.00" required /></label>
-                <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Discount</span><input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0.00" /></label>
-                <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Short description</span><textarea value={shortDescription} onChange={(event) => setShortDescription(event.target.value)} className={`${inputClasses} min-h-20 resize-y`} placeholder="Brief summary of the product" /></label>
+                  <label className="sm:col-span-2">
+                    <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">فروشنده <span className="text-red-500">*</span></span>
+                    <button type="button" onClick={() => setSellerModalOpen(true)} className={`${inputClasses} flex items-center justify-between text-right`}>
+                      <span>{selectedSeller?.name ?? "انتخاب فروشنده"}</span>
+                      <span className="material-symbols-outlined text-xl text-gray-400">storefront</span>
+                    </button>
+                    {sellers.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">قبل از ذخیره محصول، یک فروشنده ایجاد کنید.</p>}
+                  </label>
+                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">برند <span className="text-red-500">*</span></span><select value={productBrandId ?? ""} onChange={(event) => setProductBrandId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">انتخاب برند</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select>{brands.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">قبل از ذخیره محصول، یک برند ایجاد کنید.</p>}</label>
+                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">عنوان <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="مثلاً هدفون بی‌سیم" required autoFocus /></label>
+                <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">قیمت <span className="text-red-500">*</span></span><input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className={inputClasses} placeholder="0.00" required /></label>
+                <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تخفیف</span><input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0.00" /></label>
+                <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">توضیحات کوتاه</span><textarea value={shortDescription} onChange={(event) => setShortDescription(event.target.value)} className={`${inputClasses} min-h-20 resize-y`} placeholder="خلاصه کوتاه محصول" /></label>
                  <div className="sm:col-span-2">
-                  <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Long description</span>
+                  <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">توضیحات کامل</span>
                   <RichTextEditor
                     data={longDescription}
                     onChange={setLongDescription}
-                    placeholder="Detailed product description (supports HTML formatting)"
+                    placeholder="توضیحات تفصیلی محصول (پشتیبانی از فرمت HTML)"
                    />
                  </div>
                  <fieldset className="sm:col-span-2">
-                   <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">Available colors</legend>
+                   <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">رنگ‌های موجود</legend>
                    {variants.length === 0 ? (
-                     <p className="mt-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">No colors have been created yet. You can save this product without a color.</p>
+                     <p className="mt-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">هنوز رنگی ایجاد نشده است. می‌توانید این محصول را بدون رنگ ذخیره کنید.</p>
                    ) : (
                      <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                        {variants.map((variant) => {
@@ -423,14 +466,18 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                        })}
                      </div>
                    )}
-                 </fieldset>
-               </div>
+                  </fieldset>
+                  <label className="sm:col-span-2 flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked={isAvailable} onChange={(event) => setIsAvailable(event.target.checked)} className="size-4 accent-primary-600" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">موجود برای فروش</span>
+                  </label>
+                </div>
               {attributes.length > 0 && (
                 <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
-                  <div className="flex items-center gap-2"><span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span><h4 className="font-semibold text-gray-900 dark:text-white">Specifications</h4></div>
+                  <div className="flex items-center gap-2"><span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span><h4 className="font-semibold text-gray-900 dark:text-white">مشخصات</h4></div>
                   <div className="mt-4 grid gap-5 sm:grid-cols-2">
                      {attributes.map((attribute) => (
-                       <label key={attribute.attributeId}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle ?? `Attribute ${attribute.attributeId}`}</span>
+                       <label key={attribute.attributeId}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle ?? `ویژگی ${attribute.attributeId}`}</span>
                          <AttributeValueField attribute={attribute} value={attributeValues[attribute.attributeId] ?? ""} onChange={(value) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: value }))} />
                        </label>
                     ))}
@@ -442,23 +489,23 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
           {step === 2 && (
             <section>
-              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "Product details updated" : "Product created"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "Keep or remove current images, and add new ones if needed." : "Now add its gallery and choose one main image."}</p></div></div>
+              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "جزئیات محصول به‌روزرسانی شد" : "محصول ایجاد شد"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "تصاویر فعلی را نگه دارید یا حذف کنید و در صورت نیاز تصاویر جدید اضافه کنید." : "حالا گالری آن را اضافه کنید و یک تصویر اصلی انتخاب کنید."}</p></div></div>
               <label className="mt-6 flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/50 focus-within:ring-2 focus-within:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:hover:border-primary-600 dark:hover:bg-primary-950/20">
                 <span className="flex size-12 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400"><span className="material-symbols-outlined">add_photo_alternate</span></span>
-                <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">Choose product images</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">Select one or multiple image files</span>
+                <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">یک یا چند فایل تصویری انتخاب کنید</span>
                 <input type="file" accept=".avif,.gif,.jpeg,.jpg,.png,.svg,.webp,image/*" multiple onChange={selectImages} className="sr-only" />
               </label>
               {existingImages.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Current images</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">تصاویر فعلی</h4>
                   <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {existingImages.map((image) => {
                       const isDeleted = deletedImageIds.includes(image.id);
                       return (
                         <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${image.isMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
                            <img src={resolveProductImageUrl(image) ?? undefined} alt={image.name} className="aspect-square w-full object-cover" />
-                           <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute right-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `Keep ${image.name}` : `Delete ${image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
-                          <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">{isDeleted ? "Will be deleted" : image.isMain ? "Main image" : "Current image"}</span>
+                            <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `نگه‌داشتن ${image.name}` : `حذف ${image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
+                          <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">{isDeleted ? "حذف خواهد شد" : image.isMain ? "تصویر اصلی" : "تصویر فعلی"}</span>
                         </div>
                       );
                     })}
@@ -470,11 +517,11 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                   {images.map((image) => (
                     <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!hasRetainedMainImage && mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
                       <img src={image.previewUrl} alt={image.file.name} className="aspect-square w-full object-cover" />
-                      <button type="button" onClick={() => removeImage(image.id)} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`Remove ${image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
+                      <button type="button" onClick={() => removeImage(image.id)} className="absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`حذف ${image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
                       {hasRetainedMainImage ? (
-                        <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">New image</span>
+                        <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">تصویر جدید</span>
                       ) : (
-                        <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => setMainImageId(image.id)} className="size-4 accent-primary-600" />Main image</label>
+                        <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => setMainImageId(image.id)} className="size-4 accent-primary-600" />تصویر اصلی</label>
                       )}
                     </div>
                   ))}
@@ -485,14 +532,16 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         </div>
 
         <footer className="mt-auto flex items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-900 sm:px-7">
-          <button type="button" onClick={step === 0 || step === 2 ? onClose : () => setStep(0)} className="min-h-11 rounded-xl px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800">{step === 0 || step === 2 ? "Cancel" : "Back"}</button>
+          <button type="button" onClick={step === 0 || step === 2 ? onClose : () => setStep(0)} className="min-h-11 rounded-xl px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800">{step === 0 || step === 2 ? "لغو" : "بازگشت"}</button>
           <div className="flex items-center gap-2">
-            {step === 0 && <button type="button" onClick={() => void loadAttributes()} disabled={categoryId === null || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">Continue<span className="material-symbols-outlined text-[19px]">arrow_forward</span></button>}
-            {step === 1 && <button type="submit" form="product-details-form" disabled={!canSubmitDetails || submitting || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{(submitting || loading) && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{submitting ? "Saving..." : loading ? "Loading..." : isEditing ? "Save & manage images" : "Create product"}</button>}
-            {step === 2 && <button type="button" onClick={() => void finish()} disabled={!canSaveImages || uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "Saving images..." : isEditing ? "Save image changes" : "Upload & finish"}</button>}
+            {step === 0 && <button type="button" onClick={() => void loadAttributes()} disabled={categoryId === null || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">ادامه<span className="material-symbols-outlined text-[19px]">arrow_back</span></button>}
+            {step === 1 && <button type="submit" form="product-details-form" disabled={!canSubmitDetails || submitting || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{(submitting || loading) && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{submitting ? "در حال ذخیره..." : loading ? "در حال بارگذاری..." : isEditing ? "ذخیره و مدیریت تصاویر" : "ایجاد محصول"}</button>}
+            {step === 2 && <button type="button" onClick={() => void finish()} disabled={!canSaveImages || uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "در حال ذخیره تصاویر..." : isEditing ? "ذخیره تغییرات تصویر" : "بارگذاری و اتمام"}</button>}
           </div>
         </footer>
       </div>
+
+      <SellerPickerModal open={sellerModalOpen} selectedId={sellerId} onSelect={setSellerId} onClose={() => setSellerModalOpen(false)} />
     </div>
   );
 }

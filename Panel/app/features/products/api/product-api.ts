@@ -8,25 +8,25 @@ import type {
   ProductImageOutput,
   ProductImageUploadInput,
   ProductListOutput,
+  ProductListParams,
   ProductUpdateInput,
   ProductUpdateOutput,
 } from "../models/product";
 
 const productRequests = new Map<number, Promise<ProductGetOutput>>();
 const productCache = new Map<number, ProductGetOutput>();
-let productListRequest: Promise<ProductListOutput[]> | null = null;
 
 export const productApi = {
-  async list(): Promise<ProductListOutput[]> {
-    if (!productListRequest) {
-      productListRequest = httpClient
-        .get<ApiResult<ProductListOutput[]>>("/api/Product")
-        .then(({ data }) => resolveResult(data, "Failed to load products"))
-        .finally(() => {
-          productListRequest = null;
-        });
-    }
-    return productListRequest;
+  async list(params?: ProductListParams): Promise<ProductListOutput[]> {
+    const query: Record<string, string> = {};
+    if (params?.name) query.name = params.name;
+    if (params?.categoryId) query.categoryId = String(params.categoryId);
+    if (params?.sellerId) query.sellerId = String(params.sellerId);
+    if (params?.minPrice != null) query.minPrice = String(params.minPrice);
+    if (params?.maxPrice != null) query.maxPrice = String(params.maxPrice);
+    if (params?.isAvailable != null) query.isAvailable = String(params.isAvailable);
+    const { data } = await httpClient.get<ApiResult<ProductListOutput[]>>("/api/Product", { params: query });
+    return resolveResult(data, "Failed to load products");
   },
 
   async create(input: ProductCreateInput): Promise<ProductCreateOutput> {

@@ -13,6 +13,7 @@ export function ProductCard({ product }: { product: ProductSearchItem }) {
       <Link href={`/products/${product.id}`} className="relative block aspect-square overflow-hidden bg-muted outline-none">
         {imageUrl ? <Image src={imageUrl} alt={product.image?.name || product.name} fill unoptimized sizes="(max-width: 639px) 80vw, (max-width: 1023px) 40vw, 22vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" /> : <span className="grid h-full place-items-center text-muted-foreground"><span className="material-symbols-rounded text-5xl" aria-hidden="true">image_not_supported</span><span className="sr-only">تصویری موجود نیست</span></span>}
         {product.discount > 0 && <span className="absolute right-3 top-3 rounded-lg bg-accent px-2 py-1 text-xs font-black text-accent-foreground">تخفیف {formatToman(product.discount)}</span>}
+        {!product.isAvailable && <span className="absolute left-3 top-3 rounded-lg bg-error/10 px-2 py-1 text-xs font-black text-error">ناموجود</span>}
         <BookmarkButton productId={product.id} productName={product.name} />
       </Link>
       <div className="flex flex-1 flex-col p-4">

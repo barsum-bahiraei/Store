@@ -4,7 +4,7 @@ namespace Store.Domain.Products;
 
 public interface IProductRepository
 {
-    Task<List<ProductEntity>> ListAsync(int userId, CancellationToken cancellation);
+    Task<List<ProductEntity>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation);
     Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation);
     Task<ProductEntity?> GetAsync(int id, CancellationToken cancellation);

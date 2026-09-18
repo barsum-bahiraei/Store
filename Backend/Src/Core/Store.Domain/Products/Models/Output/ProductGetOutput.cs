@@ -15,6 +15,7 @@ public class ProductGetOutput
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
     public ProductBrandGetOutput? Brand { get; set; }
+    public bool IsAvailable { get; set; }
     public ProductSellerGetOutput Seller { get; set; }
     public List<ProductImageGetOutput>? Images { get; set; }
     public List<ProductAttributeGetOutput> Attributes { get; set; }

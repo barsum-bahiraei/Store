@@ -36,10 +36,10 @@ public class ProductController(ProductService productService) : ControllerBase
 
     [HasAccess]
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken cancellation = default)
+    public async Task<IActionResult> Get([FromQuery] ProductListInput input, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-        var result = await productService.ListAsync(userId, cancellation);
+        var result = await productService.ListAsync(userId, input, cancellation);
         return Ok(result);
     }
 
