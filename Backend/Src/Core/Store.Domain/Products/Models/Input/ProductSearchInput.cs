@@ -6,6 +6,7 @@ public class ProductSearchInput
     public int PageSize { get; set; } = 10;
     public string? Name { get; set; }
     public int? CategoryId { get; set; }
+    public int? ProductBrandId { get; set; }
     public bool HasDiscount { get; set; }
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }

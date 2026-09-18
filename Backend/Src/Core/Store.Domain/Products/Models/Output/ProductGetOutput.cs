@@ -14,9 +14,11 @@ public class ProductGetOutput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
+    public ProductBrandGetOutput? Brand { get; set; }
     public ProductSellerGetOutput Seller { get; set; }
     public List<ProductImageGetOutput>? Images { get; set; }
     public List<ProductAttributeGetOutput> Attributes { get; set; }
+    public List<ProductVariantGetOutput> Variants { get; set; }
 }
 
 public class ProductAttributeGetOutput

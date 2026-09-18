@@ -14,11 +14,19 @@ import type {
 
 const productRequests = new Map<number, Promise<ProductGetOutput>>();
 const productCache = new Map<number, ProductGetOutput>();
+let productListRequest: Promise<ProductListOutput[]> | null = null;
 
 export const productApi = {
   async list(): Promise<ProductListOutput[]> {
-    const { data } = await httpClient.get<ApiResult<ProductListOutput[]>>("/api/Product");
-    return resolveResult(data, "Failed to load products");
+    if (!productListRequest) {
+      productListRequest = httpClient
+        .get<ApiResult<ProductListOutput[]>>("/api/Product")
+        .then(({ data }) => resolveResult(data, "Failed to load products"))
+        .finally(() => {
+          productListRequest = null;
+        });
+    }
+    return productListRequest;
   },
 
   async create(input: ProductCreateInput): Promise<ProductCreateOutput> {

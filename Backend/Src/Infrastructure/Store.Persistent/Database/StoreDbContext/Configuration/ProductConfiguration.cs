@@ -16,5 +16,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
             .WithMany(x => x.Products)
             .HasForeignKey(x => x.SellerId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.ProductBrand)
+            .WithMany(x => x.Products)
+            .HasForeignKey(x => x.ProductBrandId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

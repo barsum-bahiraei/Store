@@ -10,7 +10,9 @@ public class ProductCreateOutput
     public decimal Discount { get; set; }
     public int SellerId { get; set; }
     public int CategoryId { get; set; }
+    public int? ProductBrandId { get; set; }
     public List<ProductAttributeOutput> Attributes { get; set; }
+    public List<ProductVariantCreateOutput> Variants { get; set; }
 }
 
 public class ProductAttributeOutput

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "~/features/auth/api/auth-api";
-import type { AccountUser, LoginInput, RegisterInput } from "~/features/auth/models/account";
+import type { AccountUser, LoginInput, RegisterInput, UserProfileUpdateInput } from "~/features/auth/models/account";
 import { AUTH_TOKEN_KEY } from "~/shared/http/http-client";
 
 interface AuthContextValue {
@@ -9,6 +9,7 @@ interface AuthContextValue {
   currentUser: AccountUser | null;
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  updateProfile: (input: UserProfileUpdateInput) => Promise<void>;
   logout: () => void;
 }
 
@@ -56,9 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setHasToken(false);
   };
 
+  const updateProfile = async (input: UserProfileUpdateInput) => {
+    const updated = await authApi.updateProfile(input);
+    setCurrentUser((current) =>
+      current ? { ...current, ...updated } : current
+    );
+  };
+
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: hasToken, isReady, currentUser, login, register, logout }}
+      value={{ isAuthenticated: hasToken, isReady, currentUser, login, register, updateProfile, logout }}
     >
       {children}
     </AuthContext.Provider>

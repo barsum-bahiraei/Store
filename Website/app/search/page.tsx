@@ -6,7 +6,7 @@ import type { ProductSearchInput } from "@/features/products/types/product";
 
 export const metadata: Metadata = {
   title: "جست‌وجوی محصولات | فروشگاه",
-  description: "جست‌وجو و فیلتر محصولات فروشگاه بر اساس دسته‌بندی، قیمت و تخفیف.",
+  description: "جست‌وجو و فیلتر محصولات فروشگاه بر اساس دسته‌بندی، برند، قیمت و تخفیف.",
 };
 
 function positiveNumber(value: string | string[] | undefined) {
@@ -20,6 +20,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const params = await searchParams;
   const page = Math.max(1, Math.floor(positiveNumber(params.page) ?? 1));
   const categoryId = positiveNumber(params.category);
+  const productBrandId = positiveNumber(params.productBrandId);
   const minPrice = positiveNumber(params.minPrice);
   const maxPrice = positiveNumber(params.maxPrice);
   const q = Array.isArray(params.q) ? params.q[0] : params.q;
@@ -29,6 +30,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     hasDiscount: params.discount === "true",
     ...(q?.trim() ? { name: q.trim().slice(0, 100) } : {}),
     ...(categoryId && Number.isSafeInteger(categoryId) ? { categoryId } : {}),
+    ...(productBrandId && Number.isSafeInteger(productBrandId) ? { productBrandId } : {}),
     ...(minPrice !== undefined ? { minPrice } : {}),
     ...(maxPrice !== undefined ? { maxPrice } : {}),
     ...(params.priceDec === "true" ? { isPriceDec: true } : {}),

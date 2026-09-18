@@ -12,15 +12,34 @@ import type {
   SellerUpdateOutput,
 } from "../models/seller";
 
+let sellersRequest: Promise<SellerListOutput[]> | null = null;
+const sellerRequests = new Map<number, Promise<SellerGetOutput>>();
+
 export const sellerApi = {
   async list(): Promise<SellerListOutput[]> {
-    const { data } = await httpClient.get<ApiResult<SellerListOutput[]>>("/api/Seller");
-    return resolveResult(data, "Failed to load sellers");
+    if (!sellersRequest) {
+      sellersRequest = httpClient
+        .get<ApiResult<SellerListOutput[]>>("/api/Seller")
+        .then(({ data }) => resolveResult(data, "Failed to load sellers"))
+        .finally(() => {
+          sellersRequest = null;
+        });
+    }
+    return sellersRequest;
   },
 
   async get(id: number): Promise<SellerGetOutput> {
-    const { data } = await httpClient.get<ApiResult<SellerGetOutput>>(`/api/Seller/${id}`);
-    return resolveResult(data, "Failed to load seller");
+    const pending = sellerRequests.get(id);
+    if (pending) return pending;
+
+    const request = httpClient
+      .get<ApiResult<SellerGetOutput>>(`/api/Seller/${id}`)
+      .then(({ data }) => resolveResult(data, "Failed to load seller"))
+      .finally(() => {
+        sellerRequests.delete(id);
+      });
+    sellerRequests.set(id, request);
+    return request;
   },
 
   async create(input: SellerCreateInput): Promise<SellerCreateOutput> {

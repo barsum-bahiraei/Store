@@ -29,11 +29,11 @@ export default function AttributesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<AttributeType>(AttributeType.String);
-  const [unit, setUnit] = useState<AttributeUnit>(AttributeUnit.Geram);
+  const [unit, setUnit] = useState<AttributeUnit>(AttributeUnit.None);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editType, setEditType] = useState<AttributeType>(AttributeType.String);
-  const [editUnit, setEditUnit] = useState<AttributeUnit>(AttributeUnit.Geram);
+  const [editUnit, setEditUnit] = useState<AttributeUnit>(AttributeUnit.None);
 
   useEffect(() => {
     void fetchAttributes();

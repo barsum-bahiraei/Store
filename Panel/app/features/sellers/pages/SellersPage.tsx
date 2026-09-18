@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { createClientId } from "~/shared/utils/create-client-id";
 import { SellerLocationMap } from "../components/SellerLocationMap";
 import { SellerStatus, type SellerImage, type SellerListOutput } from "../models/seller";
@@ -30,6 +30,7 @@ export default function SellersPage() {
   const [selectedImage, setSelectedImage] = useState<{ file: File; previewUrl: string } | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const editRequestId = useRef(0);
 
   const latitudeNumber = latitude === "" ? null : Number(latitude);
   const longitudeNumber = longitude === "" ? null : Number(longitude);
@@ -47,6 +48,7 @@ export default function SellersPage() {
   }, [selectedImage]);
 
   const closeForm = () => {
+    editRequestId.current += 1;
     setFormOpen(false);
     setEditingId(null);
     setName("");
@@ -61,6 +63,7 @@ export default function SellersPage() {
   };
 
   const startEditing = async (seller: SellerListOutput) => {
+    const requestId = ++editRequestId.current;
     setFormOpen(true);
     setEditingId(seller.id);
     setExistingImage(null);
@@ -72,6 +75,7 @@ export default function SellersPage() {
     setFormLoading(true);
     try {
       const details = await getSeller(seller.id);
+      if (requestId !== editRequestId.current) return;
       setName(details.name);
       setDescription(details.description ?? "");
       setAddress(details.address ?? "");
@@ -80,7 +84,7 @@ export default function SellersPage() {
       setStatus(details.status);
       setExistingImage(details.images.find((image) => image.isMain) ?? details.images[0] ?? null);
     } finally {
-      setFormLoading(false);
+      if (requestId === editRequestId.current) setFormLoading(false);
     }
   };
 
@@ -222,7 +226,7 @@ export default function SellersPage() {
             <article key={seller.id} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-start justify-between gap-3">
                  <div className="flex min-w-0 items-center gap-3"><span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950/40 dark:text-primary-400">{resolveSellerImageUrl(seller.image) ? <img src={resolveSellerImageUrl(seller.image) ?? undefined} alt="" className="size-full object-cover" /> : <span className="material-symbols-outlined">storefront</span>}</span><div className="min-w-0"><h2 className="truncate font-semibold text-gray-950 dark:text-white">{seller.name}</h2><p className="text-xs text-gray-500">{statuses.find((item) => item.value === seller.status)?.label}</p></div></div>
-                <div className="flex"><button onClick={() => void startEditing(seller)} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-800" aria-label={`Edit ${seller.name}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void remove(seller)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label={`Delete ${seller.name}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
+                 <div className="flex"><button onClick={() => void startEditing(seller)} disabled={formLoading} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800" aria-label={`Edit ${seller.name}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void remove(seller)} disabled={submitting} className="flex size-11 items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label={`Delete ${seller.name}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
               </div>
               <p className="mt-4 line-clamp-3 min-h-15 text-sm leading-5 text-gray-500 dark:text-gray-400">{seller.description || "No description"}</p>
               <p className="mt-3 flex items-start gap-2 border-t border-gray-100 pt-3 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400"><span className="material-symbols-outlined mt-0.5 text-base text-primary-500">location_on</span><span className="line-clamp-2">{seller.address || "No address"}</span></p>

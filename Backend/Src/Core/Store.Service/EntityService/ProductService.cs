@@ -161,6 +161,73 @@ public class ProductService(
             }
         }
 
+        ProductBrandDetailOutput? brand = null;
+        if (entity.ProductBrand != null)
+        {
+            var brandImageResult = await fileService.GetAsync(
+                TableNameEnum.ProductBrands,
+                TargetNameEnum.ProductBrandId,
+                entity.ProductBrand.Id,
+                cancellation);
+
+            brand = new ProductBrandDetailOutput
+            {
+                Id = entity.ProductBrand.Id,
+                Name = entity.ProductBrand.Name,
+                Image = brandImageResult.Data == null
+                    ? null
+                    : new ProductBrandImageDetailOutput
+                    {
+                        Id = brandImageResult.Data.Id,
+                        Name = brandImageResult.Data.Name,
+                        Url = brandImageResult.Data.Url,
+                        FileType = brandImageResult.Data.FileType
+                    }
+            };
+        }
+
+        var similarEntities = await productRepository.SimilarListAsync(
+            entity.Id,
+            entity.CategoryId,
+            cancellation);
+        var similarProducts = new List<ProductSimilarDetailOutput>();
+
+        foreach (var similarEntity in similarEntities)
+        {
+            var ratings = similarEntity.ProductComments
+                .Where(x => x.IsShow == true && x.Rating.HasValue)
+                .ToList();
+            var imageResult = await fileService.GetAsync(
+                TableNameEnum.Products,
+                TargetNameEnum.ProductId,
+                similarEntity.Id,
+                cancellation);
+
+            similarProducts.Add(new ProductSimilarDetailOutput
+            {
+                Id = similarEntity.Id,
+                Name = similarEntity.Name,
+                ShortDescription = similarEntity.ShortDescription,
+                Price = similarEntity.Price,
+                Discount = similarEntity.Discount,
+                AverageRating = ratings.Count != 0
+                    ? ratings.Average(x => (decimal)x.Rating!.Value)
+                    : 0,
+                CategoryId = similarEntity.CategoryId,
+                CategoryTitle = similarEntity.Category.Name,
+                Image = imageResult.Data == null
+                    ? null
+                    : new ProductImageDetailOutput
+                    {
+                        Id = imageResult.Data.Id,
+                        Name = imageResult.Data.Name,
+                        Url = imageResult.Data.Url,
+                        IsMain = imageResult.Data.IsMain,
+                        FileType = imageResult.Data.FileType
+                    }
+            });
+        }
+
         var result = new ProductDetailOutput
         {
             Id = entity.Id,
@@ -172,6 +239,7 @@ public class ProductService(
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
             Categories = categories,
+            Brand = brand,
             Images = images,
             Seller = new ProductSellerDetailOutput
             {
@@ -202,7 +270,14 @@ public class ProductService(
                         FirstName = x.User.FirstName,
                         LastName = x.User.LastName
                     }
-                }).ToList()
+                }).ToList(),
+            Variants = entity.ProductVariants.Select(x => new ProductVariantDetailOutput
+            {
+                Id = x.Id,
+                ColorName = x.ColorName,
+                ColorCode = x.ColorCode
+            }).ToList(),
+            SimilarProducts = similarProducts
         };
 
         return Result<ProductDetailOutput?>.Success(result);
@@ -269,6 +344,32 @@ public class ProductService(
             }
         }
 
+        ProductBrandGetOutput? brand = null;
+        if (entity.ProductBrand != null)
+        {
+            var brandImageResult = await fileService.GetAsync(
+                TableNameEnum.ProductBrands,
+                TargetNameEnum.ProductBrandId,
+                entity.ProductBrand.Id,
+                cancellation);
+
+            brand = new ProductBrandGetOutput
+            {
+                Id = entity.ProductBrand.Id,
+                Name = entity.ProductBrand.Name,
+                Image = brandImageResult.Data == null
+                    ? null
+                    : new ProductBrandImageOutput
+                    {
+                        Id = brandImageResult.Data.Id,
+                        Name = brandImageResult.Data.Name,
+                        Url = brandImageResult.Data.Url,
+                        IsMain = brandImageResult.Data.IsMain,
+                        FileType = brandImageResult.Data.FileType
+                    }
+            };
+        }
+
         var result = new ProductGetOutput
         {
             Id = entity.Id,
@@ -279,6 +380,7 @@ public class ProductService(
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
+            Brand = brand,
             Images = images,
             Seller = new ProductSellerGetOutput
             {
@@ -293,6 +395,12 @@ public class ProductService(
                 AttributeTitle = x.Attribute.Name,
                 AttributeType = x.Attribute.Type,
                 AttributeUnit = x.Attribute.Unit
+            }).ToList(),
+            Variants = entity.ProductVariants.Select(x => new ProductVariantGetOutput
+            {
+                Id = x.Id,
+                ColorName = x.ColorName,
+                ColorCode = x.ColorCode
             }).ToList()
         };
 
@@ -304,6 +412,14 @@ public class ProductService(
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
             return Result<ProductCreateOutput>.Failure("Seller not found");
 
+        if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
+            return Result<ProductCreateOutput>.Failure("Product brand not found");
+
+        var variantIds = input.ProductVariantIds.Distinct().ToList();
+        var variants = await productRepository.VariantListAsync(variantIds, cancellation);
+        if (variants.Count != variantIds.Count)
+            return Result<ProductCreateOutput>.Failure("Product variant not found");
+
         var entity = new ProductEntity
         {
             Name = input.Name,
@@ -313,11 +429,13 @@ public class ProductService(
             Discount = input.Discount,
             CategoryId = input.CategoryId,
             SellerId = input.SellerId,
+            ProductBrandId = input.ProductBrandId,
             ProductAttributes = input.Attributes.Select(x => new ProductAttributeEntity
             {
                 AttributeId = x.AttributeId,
                 Value = x.Value
-            }).ToList()
+            }).ToList(),
+            ProductVariants = variants
         };
 
         var created = await productRepository.CreateAsync(entity, cancellation);
@@ -332,11 +450,18 @@ public class ProductService(
             Discount = created.Discount,
             CategoryId = created.CategoryId,
             SellerId = created.SellerId,
+            ProductBrandId = created.ProductBrandId,
             Attributes = created.ProductAttributes.Select(x => new ProductAttributeOutput
             {
                 Id = x.Id,
                 AttributeId = x.AttributeId,
                 Value = x.Value
+            }).ToList(),
+            Variants = created.ProductVariants.Select(x => new ProductVariantCreateOutput
+            {
+                Id = x.Id,
+                ColorName = x.ColorName,
+                ColorCode = x.ColorCode
             }).ToList()
         });
     }
@@ -351,6 +476,14 @@ public class ProductService(
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
             return Result<ProductUpdateOutput>.Failure("Seller not found");
 
+        if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
+            return Result<ProductUpdateOutput>.Failure("Product brand not found");
+
+        var variantIds = input.ProductVariantIds.Distinct().ToList();
+        var variants = await productRepository.VariantListAsync(variantIds, cancellation);
+        if (variants.Count != variantIds.Count)
+            return Result<ProductUpdateOutput>.Failure("Product variant not found");
+
         entity.Name = input.Name;
         entity.ShortDescription = input.ShortDescription;
         entity.LongDescription = input.LongDescription;
@@ -358,6 +491,7 @@ public class ProductService(
         entity.Discount = input.Discount;
         entity.CategoryId = input.CategoryId;
         entity.SellerId = input.SellerId;
+        entity.ProductBrandId = input.ProductBrandId;
 
         foreach (var item in input.Attributes)
         {
@@ -366,6 +500,10 @@ public class ProductService(
             if (attribute != null)
                 attribute.Value = item.Value;
         }
+
+        entity.ProductVariants.Clear();
+        foreach (var item in variants)
+            entity.ProductVariants.Add(item);
 
         var updated = await productRepository.UpdateAsync(entity, cancellation);
 
@@ -380,11 +518,18 @@ public class ProductService(
             CategoryId = updated.CategoryId,
             CategoryTitle = updated.Category.Name,
             SellerId = updated.SellerId,
+            ProductBrandId = updated.ProductBrandId,
             Attributes = updated.ProductAttributes.Select(x => new ProductAttributeUpdateOutput
             {
                 Id = x.Id,
                 AttributeId = x.AttributeId,
                 Value = x.Value
+            }).ToList(),
+            Variants = updated.ProductVariants.Select(x => new ProductVariantUpdateOutput
+            {
+                Id = x.Id,
+                ColorName = x.ColorName,
+                ColorCode = x.ColorCode
             }).ToList()
         });
     }
@@ -398,6 +543,186 @@ public class ProductService(
 
         await productRepository.DeleteAsync(entity, cancellation);
 
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<List<ProductBrandListOutput>>> BrandListAsync(CancellationToken cancellation)
+    {
+        var entities = await productRepository.BrandListAsync(cancellation);
+        var result = new List<ProductBrandListOutput>();
+
+        foreach (var entity in entities)
+        {
+            var imageResult = await fileService.GetAsync(
+                TableNameEnum.ProductBrands,
+                TargetNameEnum.ProductBrandId,
+                entity.Id,
+                cancellation);
+
+            result.Add(new ProductBrandListOutput
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Image = imageResult.Data == null
+                    ? null
+                    : new ProductBrandImageOutput
+                    {
+                        Id = imageResult.Data.Id,
+                        Name = imageResult.Data.Name,
+                        Url = imageResult.Data.Url,
+                        IsMain = imageResult.Data.IsMain,
+                        FileType = imageResult.Data.FileType
+                    }
+            });
+        }
+
+        return Result<List<ProductBrandListOutput>>.Success(result);
+    }
+
+    public async Task<Result<ProductBrandGetOutput?>> BrandGetAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await productRepository.BrandGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<ProductBrandGetOutput?>.Failure("Product brand not found");
+
+        var imageResult = await fileService.GetAsync(
+            TableNameEnum.ProductBrands,
+            TargetNameEnum.ProductBrandId,
+            entity.Id,
+            cancellation);
+
+        return Result<ProductBrandGetOutput?>.Success(new ProductBrandGetOutput
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+            Image = imageResult.Data == null
+                ? null
+                : new ProductBrandImageOutput
+                {
+                    Id = imageResult.Data.Id,
+                    Name = imageResult.Data.Name,
+                    Url = imageResult.Data.Url,
+                    IsMain = imageResult.Data.IsMain,
+                    FileType = imageResult.Data.FileType
+                }
+        });
+    }
+
+    public async Task<Result<ProductBrandCreateOutput>> BrandCreateAsync(ProductBrandCreateInput input,
+        CancellationToken cancellation)
+    {
+        var created = await productRepository.BrandCreateAsync(new ProductBrandEntity
+        {
+            Name = input.Name
+        }, cancellation);
+
+        return Result<ProductBrandCreateOutput>.Success(new ProductBrandCreateOutput
+        {
+            Id = created.Id,
+            Name = created.Name
+        });
+    }
+
+    public async Task<Result<ProductBrandUpdateOutput>> BrandUpdateAsync(int id, ProductBrandUpdateInput input,
+        CancellationToken cancellation)
+    {
+        var entity = await productRepository.BrandGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<ProductBrandUpdateOutput>.Failure("Product brand not found");
+
+        entity.Name = input.Name;
+        var updated = await productRepository.BrandUpdateAsync(entity, cancellation);
+        return Result<ProductBrandUpdateOutput>.Success(new ProductBrandUpdateOutput
+        {
+            Id = updated.Id,
+            Name = updated.Name
+        });
+    }
+
+    public async Task<Result<bool>> BrandDeleteAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await productRepository.BrandGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<bool>.Failure("Product brand not found");
+
+        if (entity.Products.Count != 0)
+            return Result<bool>.Failure("Product brand is in use");
+
+        await productRepository.BrandDeleteAsync(entity, cancellation);
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<List<ProductVariantListOutput>>> VariantListAsync(CancellationToken cancellation)
+    {
+        var entities = await productRepository.VariantListAsync(cancellation);
+        var result = entities.Select(x => new ProductVariantListOutput
+        {
+            Id = x.Id,
+            ColorName = x.ColorName,
+            ColorCode = x.ColorCode
+        }).ToList();
+        return Result<List<ProductVariantListOutput>>.Success(result);
+    }
+
+    public async Task<Result<ProductVariantGetOutput?>> VariantGetAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await productRepository.VariantGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<ProductVariantGetOutput?>.Failure("Product variant not found");
+
+        return Result<ProductVariantGetOutput?>.Success(new ProductVariantGetOutput
+        {
+            Id = entity.Id,
+            ColorName = entity.ColorName,
+            ColorCode = entity.ColorCode
+        });
+    }
+
+    public async Task<Result<ProductVariantCreateOutput>> VariantCreateAsync(ProductVariantCreateInput input,
+        CancellationToken cancellation)
+    {
+        var created = await productRepository.VariantCreateAsync(new ProductVariantEntity
+        {
+            ColorName = input.ColorName,
+            ColorCode = input.ColorCode
+        }, cancellation);
+
+        return Result<ProductVariantCreateOutput>.Success(new ProductVariantCreateOutput
+        {
+            Id = created.Id,
+            ColorName = created.ColorName,
+            ColorCode = created.ColorCode
+        });
+    }
+
+    public async Task<Result<ProductVariantUpdateOutput>> VariantUpdateAsync(int id, ProductVariantUpdateInput input,
+        CancellationToken cancellation)
+    {
+        var entity = await productRepository.VariantGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<ProductVariantUpdateOutput>.Failure("Product variant not found");
+
+        entity.ColorName = input.ColorName;
+        entity.ColorCode = input.ColorCode;
+        var updated = await productRepository.VariantUpdateAsync(entity, cancellation);
+        return Result<ProductVariantUpdateOutput>.Success(new ProductVariantUpdateOutput
+        {
+            Id = updated.Id,
+            ColorName = updated.ColorName,
+            ColorCode = updated.ColorCode
+        });
+    }
+
+    public async Task<Result<bool>> VariantDeleteAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await productRepository.VariantGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<bool>.Failure("Product variant not found");
+
+        if (entity.Products.Count != 0)
+            return Result<bool>.Failure("Product variant is in use");
+
+        await productRepository.VariantDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
     }
 

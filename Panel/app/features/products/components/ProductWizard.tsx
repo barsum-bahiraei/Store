@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { AttributeType } from "~/features/attributes/models/enums/attribute-type";
-import { getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
+import { AttributeUnit, getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
 import { categoryApi } from "~/features/categories/api/category-api";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
 import { flattenCategories } from "~/features/categories/utils/category-tree";
+import { brandApi } from "~/features/brands/api/brand-api";
+import type { Brand } from "~/features/brands/models/brand";
 import { sellerApi } from "~/features/sellers/api/seller-api";
 import type { SellerListOutput } from "~/features/sellers/models/seller";
+import { variantApi } from "~/features/variants/api/variant-api";
+import type { ProductVariant } from "~/features/variants/models/variant";
 import { createClientId } from "~/shared/utils/create-client-id";
 import { unescapeHtmlEntities } from "~/shared/utils/unescape-html-entities";
 import { RichTextEditor } from "~/components/common/rich-text-editor";
@@ -38,6 +42,61 @@ const steps = [
 const inputClasses =
   "block min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder-gray-500";
 
+interface AttributeValueFieldProps {
+  attribute: ProductAttributeDefinition;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function AttributeValueField({ attribute, value, onChange }: AttributeValueFieldProps) {
+  const unit = attribute.attributeUnit === AttributeUnit.None
+    ? null
+    : getAttributeUnitLabel(attribute.attributeUnit);
+
+  if (attribute.attributeType === AttributeType.Bool) {
+    return <select value={value} onChange={(event) => onChange(event.target.value)} className={inputClasses}><option value="">Select</option><option value="true">Yes</option><option value="false">No</option></select>;
+  }
+
+  if (attribute.attributeType === AttributeType.LongText || attribute.attributeType === AttributeType.MultiSelect) {
+    return (
+      <div>
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} min-h-24 resize-y`} placeholder={attribute.attributeType === AttributeType.MultiSelect ? "Separate multiple values with commas" : "Enter a detailed value"} />
+        {unit && <span className="mt-1 block text-xs text-gray-400">Unit: {unit}</span>}
+      </div>
+    );
+  }
+
+  const inputProps = (() => {
+    switch (attribute.attributeType) {
+      case AttributeType.Int:
+        return { type: "number", inputMode: "numeric" as const, step: "1" };
+      case AttributeType.Date:
+        return { type: "date" };
+      case AttributeType.DateTime:
+        return { type: "datetime-local" };
+      case AttributeType.Time:
+        return { type: "time" };
+      case AttributeType.Url:
+        return { type: "url", inputMode: "url" as const, placeholder: "https://example.com" };
+      case AttributeType.Email:
+        return { type: "email", inputMode: "email" as const, placeholder: "name@example.com" };
+      case AttributeType.Phone:
+        return { type: "tel", inputMode: "tel" as const, placeholder: "+1 555 000 0000" };
+      case AttributeType.Select:
+        return { type: "text", placeholder: "Enter the selected value" };
+      default:
+        return { type: "text" };
+    }
+  })();
+
+  return (
+    <div className="relative">
+      <input {...inputProps} value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} ${unit ? "pr-24" : ""}`} />
+      {unit && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{unit}</span>}
+    </div>
+  );
+}
+
 function errorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : "An unexpected error occurred.";
 }
@@ -50,9 +109,13 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [step, setStep] = useState(isEditing ? 1 : 0);
   const [categories, setCategories] = useState<CategoryListOutput[]>([]);
   const [sellers, setSellers] = useState<SellerListOutput[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [attributes, setAttributes] = useState<ProductAttributeDefinition[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [sellerId, setSellerId] = useState<number | null>(null);
+  const [productBrandId, setProductBrandId] = useState<number | null>(null);
+  const [productVariantIds, setProductVariantIds] = useState<number[]>([]);
   const [title, setTitle] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
@@ -72,12 +135,22 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   useEffect(() => {
     let active = true;
     const request = isEditing
-      ? Promise.all([categoryApi.list(), sellerApi.list(), getProduct(editingProductId)]).then(([list, sellerList, details]) => {
+      ? Promise.all([
+          categoryApi.list(),
+          sellerApi.list(),
+          brandApi.list(),
+          variantApi.list(),
+          getProduct(editingProductId),
+        ]).then(([list, sellerList, brandList, variantList, details]) => {
           if (!active) return;
           setCategories(list);
           setSellers(sellerList);
+          setBrands(brandList);
+          setVariants(variantList);
           setCategoryId(details.categoryId);
           setSellerId(details.seller.id);
+          setProductBrandId(details.brand?.id ?? null);
+          setProductVariantIds((details.variants ?? []).map((variant) => variant.id));
           setTitle(details.name);
           setShortDescription(details.shortDescription ?? "");
           setLongDescription(unescapeHtmlEntities(details.longDescription) ?? "");
@@ -89,12 +162,17 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           );
           setExistingImages(details.images ?? []);
         })
-      : Promise.all([categoryApi.list(), sellerApi.list()]).then(([list, sellerList]) => {
+      : Promise.all([categoryApi.list(), sellerApi.list(), brandApi.list(), variantApi.list()]).then(
+          ([list, sellerList, brandList, variantList]) => {
           if (!active) return;
           setCategories(list);
           setSellers(sellerList);
+          setBrands(brandList);
+          setVariants(variantList);
           setSellerId(sellerList[0]?.id ?? null);
-        });
+          setProductBrandId(brandList[0]?.id ?? null);
+        }
+      );
 
     request
       .catch((reason: unknown) => active && setError(errorMessage(reason)))
@@ -130,7 +208,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
   const saveDetails = async (event: FormEvent) => {
     event.preventDefault();
-    if (categoryId === null || sellerId === null || !title.trim() || !price) return;
+    if (categoryId === null || sellerId === null || productBrandId === null || !title.trim() || !price) return;
     setError(null);
     try {
       const input = {
@@ -141,6 +219,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         discount: Number(discount || 0),
         categoryId,
         sellerId,
+        productBrandId,
+        productVariantIds,
         attributes: attributes.map((attribute) => ({
           attributeId: attribute.attributeId,
           value: attributeValues[attribute.attributeId]?.trim() ?? "",
@@ -233,8 +313,18 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     }
   };
 
+  const toggleVariant = (variantId: number) => {
+    setProductVariantIds((ids) =>
+      ids.includes(variantId) ? ids.filter((id) => id !== variantId) : [...ids, variantId]
+    );
+  };
+
   const canSubmitDetails =
-    title.trim().length > 0 && sellerId !== null && Number(price) > 0 && Number(discount || 0) >= 0;
+    title.trim().length > 0 &&
+    sellerId !== null &&
+    productBrandId !== null &&
+    Number(price) > 0 &&
+    Number(discount || 0) >= 0;
   const hasRetainedMainImage = existingImages.some(
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   );
@@ -299,34 +389,50 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           {step === 1 && (
             <form id="product-details-form" onSubmit={saveDetails}>
               <h3 className="text-lg font-semibold text-gray-950 dark:text-white">Product details</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Add pricing, description, and category-specific specifications.</p>
-               <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Seller <span className="text-red-500">*</span></span><select value={sellerId ?? ""} onChange={(event) => setSellerId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">Select a seller</option>{sellers.map((seller) => <option key={seller.id} value={seller.id}>{seller.name}</option>)}</select>{sellers.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Create a seller before saving a product.</p>}</label>
-                <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Title <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="e.g. Wireless headphones" required autoFocus /></label>
+               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Add pricing, brand, available colors, and category-specific specifications.</p>
+                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Seller <span className="text-red-500">*</span></span><select value={sellerId ?? ""} onChange={(event) => setSellerId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">Select a seller</option>{sellers.map((seller) => <option key={seller.id} value={seller.id}>{seller.name}</option>)}</select>{sellers.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Create a seller before saving a product.</p>}</label>
+                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Brand <span className="text-red-500">*</span></span><select value={productBrandId ?? ""} onChange={(event) => setProductBrandId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">Select a brand</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select>{brands.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Create a brand before saving a product.</p>}</label>
+                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Title <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="e.g. Wireless headphones" required autoFocus /></label>
                 <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Price <span className="text-red-500">*</span></span><input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className={inputClasses} placeholder="0.00" required /></label>
                 <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Discount</span><input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0.00" /></label>
                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Short description</span><textarea value={shortDescription} onChange={(event) => setShortDescription(event.target.value)} className={`${inputClasses} min-h-20 resize-y`} placeholder="Brief summary of the product" /></label>
-                <div className="sm:col-span-2">
+                 <div className="sm:col-span-2">
                   <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Long description</span>
                   <RichTextEditor
                     data={longDescription}
                     onChange={setLongDescription}
                     placeholder="Detailed product description (supports HTML formatting)"
-                  />
-                </div>
-              </div>
+                   />
+                 </div>
+                 <fieldset className="sm:col-span-2">
+                   <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">Available colors</legend>
+                   {variants.length === 0 ? (
+                     <p className="mt-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">No colors have been created yet. You can save this product without a color.</p>
+                   ) : (
+                     <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                       {variants.map((variant) => {
+                         const selected = productVariantIds.includes(variant.id);
+                         return (
+                           <label key={variant.id} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors ${selected ? "border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950/40 dark:text-primary-200" : "border-gray-200 text-gray-700 hover:border-primary-300 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-700"}`}>
+                             <input type="checkbox" checked={selected} onChange={() => toggleVariant(variant.id)} className="size-4 accent-primary-600" />
+                             <span className="size-6 shrink-0 rounded-full border border-gray-300 dark:border-gray-600" style={{ backgroundColor: variant.colorCode }} aria-hidden="true" />
+                             <span className="min-w-0 truncate text-sm font-medium">{variant.colorName}</span>
+                           </label>
+                         );
+                       })}
+                     </div>
+                   )}
+                 </fieldset>
+               </div>
               {attributes.length > 0 && (
                 <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
                   <div className="flex items-center gap-2"><span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span><h4 className="font-semibold text-gray-900 dark:text-white">Specifications</h4></div>
                   <div className="mt-4 grid gap-5 sm:grid-cols-2">
-                    {attributes.map((attribute) => (
-                      <label key={attribute.attributeId}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle ?? `Attribute ${attribute.attributeId}`}</span>
-                        {attribute.attributeType === AttributeType.Bool ? (
-                          <select value={attributeValues[attribute.attributeId] ?? ""} onChange={(event) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: event.target.value }))} className={inputClasses}><option value="">Select</option><option value="true">Yes</option><option value="false">No</option></select>
-                        ) : (
-                          <div className="relative"><input type={attribute.attributeType === AttributeType.String ? "text" : "number"} inputMode={attribute.attributeType === AttributeType.Int ? "numeric" : attribute.attributeType === AttributeType.Decimal ? "decimal" : undefined} step={attribute.attributeType === AttributeType.Decimal ? "any" : undefined} value={attributeValues[attribute.attributeId] ?? ""} onChange={(event) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: event.target.value }))} className={`${inputClasses} pr-24`} /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{getAttributeUnitLabel(attribute.attributeUnit)}</span></div>
-                        )}
-                      </label>
+                     {attributes.map((attribute) => (
+                       <label key={attribute.attributeId}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle ?? `Attribute ${attribute.attributeId}`}</span>
+                         <AttributeValueField attribute={attribute} value={attributeValues[attribute.attributeId] ?? ""} onChange={(value) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: value }))} />
+                       </label>
                     ))}
                   </div>
                 </div>

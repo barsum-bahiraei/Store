@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
@@ -7,8 +8,31 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-const navItems = [
-  { to: "/products", label: "Products", icon: "inventory_2" },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: string;
+}
+
+interface NavGroup {
+  label: string;
+  icon: string;
+  children: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Products",
+    icon: "inventory_2",
+    children: [
+      { to: "/products", label: "All products", icon: "inventory_2" },
+      { to: "/brands", label: "Brands", icon: "branding_watermark" },
+      { to: "/variants", label: "Colors", icon: "palette" },
+    ],
+  },
+];
+
+const navItems: NavItem[] = [
   { to: "/sellers", label: "Sellers", icon: "storefront" },
   { to: "/attributes", label: "Attributes", icon: "list_alt" },
   { to: "/categories", label: "Categories", icon: "folder" },
@@ -20,6 +44,31 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    const initial = new Set<string>();
+    for (const group of navGroups) {
+      if (group.children.some((child) => location.pathname === child.to)) {
+        initial.add(group.label);
+      }
+    }
+    return initial;
+  });
+
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
+
+  const linkClasses = (isActive: boolean) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
+        : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+    }`;
 
   return (
     <>
@@ -48,7 +97,55 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {navGroups.map((group) => {
+            const isExpanded = expandedGroups.has(group.label);
+            const isGroupActive = group.children.some(
+              (child) => location.pathname === child.to
+            );
+
+            return (
+              <div key={group.label}>
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isGroupActive && !isExpanded
+                      ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
+                      : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{group.icon}</span>
+                  <span className="flex-1 text-left">{group.label}</span>
+                  <span
+                    className={`material-symbols-outlined text-[18px] transition-transform ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                  >
+                    expand_more
+                  </span>
+                </button>
+                {isExpanded && (
+                  <div className="ml-4 mt-0.5 space-y-0.5 border-l border-gray-200 pl-3 dark:border-gray-700">
+                    {group.children.map((child) => {
+                      const isActive = location.pathname === child.to;
+                      return (
+                        <Link
+                          key={child.to}
+                          to={child.to}
+                          onClick={onMobileClose}
+                          className={linkClasses(isActive)}
+                        >
+                          <span className="material-symbols-outlined text-[20px]">{child.icon}</span>
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
           {navItems.map((item) => {
             const isActive = location.pathname === item.to;
             return (
@@ -56,11 +153,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 key={item.to}
                 to={item.to}
                 onClick={onMobileClose}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                }`}
+                className={linkClasses(isActive)}
               >
                 <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                 {item.label}

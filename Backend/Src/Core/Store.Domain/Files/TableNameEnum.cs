@@ -4,4 +4,5 @@ public enum TableNameEnum
 {
     Products,
     Sellers,
+    ProductBrands,
 }

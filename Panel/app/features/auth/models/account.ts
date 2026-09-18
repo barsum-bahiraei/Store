@@ -10,6 +10,24 @@ export interface AccountUser {
   isEmailVerified: boolean;
 }
 
+export interface UserProfileUpdateInput {
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  gender: number;
+  nationalCode: string | null;
+  birthDate: string | null;
+}
+
+export interface UserProfileUpdateOutput {
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  gender: number;
+  nationalCode: string | null;
+  birthDate: string | null;
+}
+
 export interface AuthenticatedUser extends AccountUser {
   token: string;
 }

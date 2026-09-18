@@ -6,6 +6,8 @@ import type {
   AuthenticatedUser,
   LoginInput,
   RegisterInput,
+  UserProfileUpdateInput,
+  UserProfileUpdateOutput,
 } from "../models/account";
 
 let pendingProfile: Promise<AccountUser> | null = null;
@@ -37,5 +39,13 @@ export const authApi = {
         pendingProfile = null;
       });
     return pendingProfile;
+  },
+
+  async updateProfile(input: UserProfileUpdateInput): Promise<UserProfileUpdateOutput> {
+    const { data } = await httpClient.put<ApiResult<UserProfileUpdateOutput>>(
+      "/api/Account/UserProfile",
+      input,
+    );
+    return resolveResult(data, "Unable to update profile");
   },
 };

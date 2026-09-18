@@ -4,4 +4,5 @@ public enum TargetNameEnum
 {
     ProductId,
     SellerId,
+    ProductBrandId,
 }

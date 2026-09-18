@@ -1,5 +1,7 @@
 import type { AttributeType } from "~/features/attributes/models/enums/attribute-type";
 import type { AttributeUnit } from "~/features/attributes/models/enums/attribute-unit";
+import type { Brand } from "~/features/brands/models/brand";
+import type { ProductVariant } from "~/features/variants/models/variant";
 
 export interface ProductAttributeInput {
   attributeId: number;
@@ -29,20 +31,26 @@ export interface ProductCreateInput {
   discount: number;
   categoryId: number;
   sellerId: number;
+  productBrandId: number;
+  productVariantIds: number[];
   attributes: ProductAttributeInput[];
 }
 
-export interface ProductCreateOutput extends Omit<ProductCreateInput, "attributes"> {
+export interface ProductCreateOutput
+  extends Omit<ProductCreateInput, "attributes" | "productVariantIds"> {
   id: number;
   attributes: ProductAttributeOutput[];
+  variants: ProductVariant[];
 }
 
 export interface ProductUpdateInput extends ProductCreateInput {}
 
-export interface ProductUpdateOutput extends Omit<ProductUpdateInput, "attributes"> {
+export interface ProductUpdateOutput
+  extends Omit<ProductUpdateInput, "attributes" | "productVariantIds"> {
   id: number;
   categoryTitle: string;
   attributes: ProductAttributeOutput[];
+  variants: ProductVariant[];
 }
 
 export interface ProductListOutput {
@@ -72,6 +80,8 @@ export interface ProductImage {
 
 export interface ProductGetOutput extends Omit<ProductListOutput, "image"> {
   longDescription: string | null;
+  brand: Brand | null;
+  variants: ProductVariant[];
   attributes: ProductAttributeGetOutput[];
   images: ProductImage[];
 }

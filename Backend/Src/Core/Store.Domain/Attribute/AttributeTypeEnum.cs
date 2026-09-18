@@ -4,6 +4,14 @@ public enum AttributeTypeEnum
 {
     String,
     Int,
-    Decimal,
     Bool,
+    LongText,
+    Date,
+    DateTime,
+    Time,
+    Select,
+    MultiSelect,
+    Url,
+    Email,
+    Phone,
 }

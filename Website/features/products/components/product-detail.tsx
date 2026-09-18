@@ -11,10 +11,9 @@ import "swiper/css/free-mode";
 import "swiper/css/thumbs";
 import { useCart, useCartItemActions } from "@/features/cart/hooks/use-cart";
 import { useProductDetail } from "../hooks/use-products";
-import { getProductImageUrl, getSalePrice, formatToman } from "../utils/product";
+import { formatProductAttributeValue, formatToman, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice } from "../utils/product";
+import { ProductCard } from "./product-card";
 import { ProductComments } from "./product-comments";
-
-const units = ["g", "kg", "m"];
 
 export function ProductDetailContent({ productId }: { productId: number }) {
   const { data: product, isPending, isError, isFetching, refetch } = useProductDetail(productId);
@@ -28,6 +27,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   if (isError || !product) return <div role="alert" className="rounded-xl border border-border bg-surface p-8 text-center"><span className="material-symbols-rounded text-5xl text-error" aria-hidden="true">error</span><h1 className="mt-3 text-2xl font-black">محصول در دسترس نیست</h1><p className="mt-2 text-muted-foreground">بارگذاری این محصول انجام نشد.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-5 min-h-11 rounded-lg bg-primary px-5 font-bold text-primary-foreground disabled:opacity-60">{isFetching ? "در حال بارگذاری…" : "تلاش دوباره"}</button></div>;
 
   const images = product.images.map((image) => ({ ...image, resolvedUrl: getProductImageUrl(image.url) })).filter((image) => image.resolvedUrl).sort((left, right) => Number(right.isMain) - Number(left.isMain));
+  const brandImageUrl = getProductImageUrl(product.brand?.image?.url);
   const quantity = isAuthenticated ? cartItems?.find((item) => item.product.id === product.id)?.productCount ?? 0 : guestItems.find((item) => item.productId === product.id)?.count ?? 0;
   const salePrice = getSalePrice(product.price, product.discount);
   const averageRating = product.comments.reduce((total, comment) => total + (comment.rating ?? 0), 0) / (product.comments.filter((comment) => comment.rating).length || 1);
@@ -121,7 +121,39 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             <span className="text-sm text-muted-foreground">{product.comments.length} نظر</span>
             <span className="text-sm text-muted-foreground">فروشنده: {product.seller.name}</span>
           </div>
+          {product.brand && (
+            <div className="mt-5 flex w-fit items-center gap-3 rounded-xl border border-border bg-surface p-3">
+              <div className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted">
+                {brandImageUrl ? (
+                  <Image src={brandImageUrl} alt={`لوگوی ${product.brand.name}`} fill unoptimized sizes="3rem" className="object-contain p-1" />
+                ) : (
+                  <span className="material-symbols-rounded text-2xl text-muted-foreground" aria-hidden="true">branding_watermark</span>
+                )}
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">برند</span>
+                <span className="font-black">{product.brand.name}</span>
+              </div>
+            </div>
+          )}
           {product.shortDescription && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.shortDescription}</p>}
+          {product.variants.length > 0 && (
+            <div className="mt-6" aria-labelledby="product-colors-title">
+              <h2 id="product-colors-title" className="text-sm font-black">رنگ‌های موجود</h2>
+              <ul className="mt-3 flex flex-wrap gap-3" role="list">
+                {product.variants.map((variant) => (
+                  <li key={variant.id} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold">
+                    <span
+                      aria-hidden="true"
+                      style={{ backgroundColor: variant.colorCode }}
+                      className="block size-6 shrink-0 rounded-full border-2 border-surface shadow-[0_0_0_1px_var(--border)]"
+                    />
+                    <span>{variant.colorName}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="mt-7 flex flex-wrap items-baseline gap-3">
             <span className="text-3xl font-black text-primary">{formatToman(salePrice)}</span>
             {product.discount > 0 && (
@@ -152,7 +184,10 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             {product.attributes.map((attribute) => (
               <div key={attribute.id} className="flex justify-between gap-4 border-b border-border p-4 last:border-b-0 sm:odd:border-r">
                 <dt className="text-sm text-muted-foreground">{attribute.attributeTitle ?? "ویژگی"}</dt>
-                <dd className="text-right text-sm font-bold">{attribute.value}{units[attribute.attributeUnit] ? ` ${units[attribute.attributeUnit]}` : ""}</dd>
+                <dd className="min-w-0 whitespace-pre-wrap break-words text-right text-sm font-bold">
+                  {formatProductAttributeValue(attribute.value, attribute.attributeType)}
+                  {getProductAttributeUnitLabel(attribute.attributeUnit) && ` ${getProductAttributeUnitLabel(attribute.attributeUnit)}`}
+                </dd>
               </div>
             ))}
           </dl>
@@ -163,6 +198,17 @@ export function ProductDetailContent({ productId }: { productId: number }) {
         <section aria-labelledby="description-title" className="mt-10 border-t border-border pt-8">
           <h2 id="description-title" className="text-2xl font-black">توضیحات محصول</h2>
           <div className="mt-5 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.longDescription }} />
+        </section>
+      )}
+
+      {product.similarProducts.length > 0 && (
+        <section aria-labelledby="similar-products-title" className="mt-10 border-t border-border pt-8">
+          <h2 id="similar-products-title" className="text-2xl font-black">محصولات مشابه</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {product.similarProducts.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
         </section>
       )}
 

@@ -13,9 +13,12 @@ public class ProductEntity : BaseEntity
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
+    public int? ProductBrandId { get; set; }
     public CategoryEntity Category { get; set; }
     public SellerEntity Seller { get; set; }
+    public ProductBrandEntity? ProductBrand { get; set; }
     public ICollection<ProductAttributeEntity> ProductAttributes { get; set; }
+    public ICollection<ProductVariantEntity> ProductVariants { get; set; }
     public ICollection<InvoiceEntity> Invoices { get; set; }
     public ICollection<PreInvoiceEntity> PreInvoices { get; set; }
     public ICollection<ProductCommentEntity> ProductComments { get; set; }

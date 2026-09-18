@@ -1,13 +1,14 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createProductComment, getProductDetail, searchProducts } from "../services/product-service";
+import { createProductComment, getProductBrands, getProductDetail, searchProducts } from "../services/product-service";
 import type { CreateProductCommentInput, ProductSearchInput } from "../types/product";
 
 export const productKeys = {
   all: ["products"] as const,
   search: (input: ProductSearchInput) => ["products", "search", input] as const,
   detail: (id: number) => ["products", "detail", id] as const,
+  brands: () => ["products", "brands"] as const,
 };
 
 export function useProductSearch(input: ProductSearchInput) {
@@ -24,6 +25,13 @@ export function useProductDetail(id: number) {
     queryFn: ({ signal }) => getProductDetail(id, signal),
     enabled: Number.isSafeInteger(id) && id > 0,
     retry: false,
+  });
+}
+
+export function useProductBrands() {
+  return useQuery({
+    queryKey: productKeys.brands(),
+    queryFn: ({ signal }) => getProductBrands(signal),
   });
 }
 

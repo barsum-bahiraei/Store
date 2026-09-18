@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCategories } from "@/features/categories/hooks/use-categories";
 import type { Category } from "@/features/categories/types/category";
 import { ProductCard } from "./product-card";
-import { useProductSearch } from "../hooks/use-products";
+import { useProductBrands, useProductSearch } from "../hooks/use-products";
 import type { ProductSearchInput } from "../types/product";
 
 const pageSize = 12;
@@ -20,6 +20,7 @@ function pageHref(filters: ProductSearchInput, page: number) {
   const params = new URLSearchParams();
   if (filters.name) params.set("q", filters.name);
   if (filters.categoryId) params.set("category", String(filters.categoryId));
+  if (filters.productBrandId) params.set("productBrandId", String(filters.productBrandId));
   if (filters.hasDiscount) params.set("discount", "true");
   if (filters.minPrice && filters.minPrice > 0) params.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice && filters.maxPrice > 0) params.set("maxPrice", String(filters.maxPrice));
@@ -38,6 +39,7 @@ function sortValue(filters: ProductSearchInput) {
 
 export function ProductSearch({ filters }: { filters: ProductSearchInput }) {
   const { data, isPending, isError, isFetching, refetch } = useProductSearch(filters);
+  const { data: brands = [], isPending: areBrandsPending, isError: isBrandsError } = useProductBrands();
   const { data: categoryTree = [] } = useCategories();
   const categories = flattenCategories(categoryTree);
   const totalPages = Math.max(1, Math.ceil((data?.totalCount ?? 0) / pageSize));
@@ -49,6 +51,14 @@ export function ProductSearch({ filters }: { filters: ProductSearchInput }) {
         <form key={JSON.stringify(filters)} action="/search" method="get" className="space-y-5">
           <div><label htmlFor="filter-name" className="text-sm font-bold">نام محصول</label><input id="filter-name" name="q" type="search" defaultValue={filters.name} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div>
           <div><label htmlFor="filter-category" className="text-sm font-bold">دسته‌بندی</label><select id="filter-category" name="category" defaultValue={filters.categoryId ?? ""} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"><option value="">همه دسته‌بندی‌ها</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div>
+          <div>
+            <label htmlFor="filter-brand" className="text-sm font-bold">برند</label>
+            <select id="filter-brand" name="productBrandId" defaultValue={filters.productBrandId ?? ""} disabled={areBrandsPending || isBrandsError} aria-describedby={isBrandsError ? "brand-filter-error" : undefined} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60">
+              <option value="">{areBrandsPending ? "در حال بارگذاری برندها…" : isBrandsError ? "برندها در دسترس نیستند" : "همه برندها"}</option>
+              {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+            </select>
+            {isBrandsError && <p id="brand-filter-error" role="alert" className="mt-2 text-xs text-error">بارگذاری فهرست برندها انجام نشد.</p>}
+          </div>
           <div className="grid grid-cols-2 gap-3"><div><label htmlFor="min-price" className="text-sm font-bold">حداقل قیمت</label><input id="min-price" name="minPrice" type="number" min="0" step="0.01" defaultValue={filters.minPrice} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div><div><label htmlFor="max-price" className="text-sm font-bold">حداکثر قیمت</label><input id="max-price" name="maxPrice" type="number" min="0" step="0.01" defaultValue={filters.maxPrice} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div></div>
           <label className="flex min-h-11 items-center gap-3 text-sm font-bold"><input name="discount" value="true" type="checkbox" defaultChecked={filters.hasDiscount} className="size-5 accent-primary" />فقط محصولات تخفیف‌دار</label>
           <div><label htmlFor="sort-order" className="text-sm font-bold">مرتب‌سازی</label><select id="sort-order" name="sort" defaultValue={sortValue(filters)} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"><option value="default">پیش‌فرض</option><option value="newest">جدیدترین</option><option value="priceAsc">ارزان‌ترین</option><option value="priceDesc">گران‌ترین</option></select></div>

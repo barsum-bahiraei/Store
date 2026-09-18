@@ -15,10 +15,48 @@ public class ProductDetailOutput
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
     public List<ProductCategoryDetailOutput> Categories { get; set; }
+    public ProductBrandDetailOutput? Brand { get; set; }
     public ProductSellerDetailOutput Seller { get; set; }
     public List<ProductImageDetailOutput> Images { get; set; }
     public List<ProductAttributeDetailOutput> Attributes { get; set; }
     public List<ProductCommentDetailOutput> Comments { get; set; }
+    public List<ProductVariantDetailOutput> Variants { get; set; }
+    public List<ProductSimilarDetailOutput> SimilarProducts { get; set; }
+}
+
+public class ProductSimilarDetailOutput
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string? ShortDescription { get; set; }
+    public decimal Price { get; set; }
+    public decimal Discount { get; set; }
+    public decimal AverageRating { get; set; }
+    public int CategoryId { get; set; }
+    public string CategoryTitle { get; set; }
+    public ProductImageDetailOutput? Image { get; set; }
+}
+
+public class ProductBrandDetailOutput
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public ProductBrandImageDetailOutput? Image { get; set; }
+}
+
+public class ProductBrandImageDetailOutput
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Url { get; set; }
+    public FileTypeEnum FileType { get; set; }
+}
+
+public class ProductVariantDetailOutput
+{
+    public int Id { get; set; }
+    public string ColorName { get; set; }
+    public string ColorCode { get; set; }
 }
 
 public class ProductCategoryDetailOutput

@@ -11,7 +11,9 @@ public class ProductUpdateOutput
     public int CategoryId { get; set; }
     public string CategoryTitle { get; set; }
     public int SellerId { get; set; }
+    public int? ProductBrandId { get; set; }
     public List<ProductAttributeUpdateOutput> Attributes { get; set; }
+    public List<ProductVariantUpdateOutput> Variants { get; set; }
 }
 
 public class ProductAttributeUpdateOutput

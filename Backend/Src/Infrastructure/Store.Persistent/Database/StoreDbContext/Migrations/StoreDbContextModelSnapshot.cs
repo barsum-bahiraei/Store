@@ -22,6 +22,21 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ProductEntityProductVariantEntity", b =>
+                {
+                    b.Property<int>("ProductVariantsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ProductVariantsId", "ProductsId");
+
+                    b.HasIndex("ProductsId");
+
+                    b.ToTable("ProductsVariants", (string)null);
+                });
+
             modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -439,6 +454,29 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.ToTable("ProductBookmarks", (string)null);
                 });
 
+            modelBuilder.Entity("Store.Domain.Products.ProductBrandEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductBrands", (string)null);
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductCommentEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -507,6 +545,9 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
+                    b.Property<int?>("ProductBrandId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SellerId")
                         .HasColumnType("integer");
 
@@ -520,9 +561,38 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("ProductBrandId");
+
                     b.HasIndex("SellerId");
 
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductVariantEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColorCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ColorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductVariants", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
@@ -567,6 +637,21 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Sellers", (string)null);
+                });
+
+            modelBuilder.Entity("ProductEntityProductVariantEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductVariantEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ProductVariantsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Products.ProductEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ProductsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
@@ -731,6 +816,11 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Store.Domain.Products.ProductBrandEntity", "ProductBrand")
+                        .WithMany("Products")
+                        .HasForeignKey("ProductBrandId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Store.Domain.Sellers.SellerEntity", "Seller")
                         .WithMany("Products")
                         .HasForeignKey("SellerId")
@@ -738,6 +828,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("ProductBrand");
 
                     b.Navigation("Seller");
                 });
@@ -788,6 +880,11 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Navigation("Children");
 
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.ProductBrandEntity", b =>
+                {
                     b.Navigation("Products");
                 });
 
