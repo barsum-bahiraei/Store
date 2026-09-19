@@ -156,7 +156,9 @@ public class AccountService(
         if (phoneNumber == null)
             return Result<UserOtpSendOutput>.Failure("Phone number is invalid");
 
-        var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+        // TODO: Restore random OTP generation after Kavenegar account verification is complete.
+        // var code = RandomNumberGenerator.GetInt32(10000, 100000).ToString();
+        const string code = "55555";
         var entity = new VerificationCodeEntity
         {
             PhoneNumber = phoneNumber,
@@ -169,15 +171,8 @@ public class AccountService(
         if (created == null)
             return Result<UserOtpSendOutput>.Failure("Please wait before requesting another verification code");
 
-        try
-        {
-            await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
-        }
-        catch
-        {
-            await accountRepository.VerificationCodeInvalidateAsync(created.Id, CancellationToken.None);
-            throw;
-        }
+        // TODO: Enable after Kavenegar account verification is complete.
+        // await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
 
         return Result<UserOtpSendOutput>.Success(new UserOtpSendOutput
         {
@@ -189,7 +184,7 @@ public class AccountService(
         CancellationToken cancellation)
     {
         var phoneNumber = NormalizePhoneNumber(input.PhoneNumber);
-        if (phoneNumber == null || string.IsNullOrWhiteSpace(input.Code) || input.Code.Length != 6 ||
+        if (phoneNumber == null || string.IsNullOrWhiteSpace(input.Code) || input.Code.Length != 5 ||
             input.Code.Any(x => !char.IsDigit(x)))
             return Result<UserOtpVerifyOutput>.Failure("Phone number or verification code is invalid");
 
