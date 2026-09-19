@@ -34,7 +34,7 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = `${currentUser.firstName[0] ?? ""}${currentUser.lastName[0] ?? ""}`.toUpperCase();
+  const initials = `${currentUser.firstName?.[0] ?? ""}${currentUser.lastName?.[0] ?? ""}`.toUpperCase();
 
   const latitudeNumber = latitude === "" ? null : Number(latitude);
   const longitudeNumber = longitude === "" ? null : Number(longitude);

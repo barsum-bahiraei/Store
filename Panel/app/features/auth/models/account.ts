@@ -1,6 +1,6 @@
 export interface AccountUser {
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
   email: string;
   gender: number;
   address: string | null;

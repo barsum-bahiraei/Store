@@ -49,7 +49,7 @@ export default function DashboardLayout() {
               <p className="max-w-48 truncate text-xs text-gray-500 dark:text-gray-400">{currentUser?.email}</p>
             </div>
             <div className="flex size-9 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
-              {currentUser ? `${currentUser.firstName[0] ?? ""}${currentUser.lastName[0] ?? ""}`.toUpperCase() : <span className="material-symbols-outlined text-xl">person</span>}
+              {currentUser ? `${currentUser.firstName?.[0] ?? ""}${currentUser.lastName?.[0] ?? ""}`.toUpperCase() || <span className="material-symbols-outlined text-xl">person</span> : <span className="material-symbols-outlined text-xl">person</span>}
             </div>
             <span className="material-symbols-outlined hidden text-lg text-gray-400 sm:block">chevron_left</span>
           </Link>
