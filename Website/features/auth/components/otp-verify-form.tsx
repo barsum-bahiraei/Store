@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSendOtp, useVerifyOtp } from "../hooks/use-account";
 
 const OTP_EXPIRY_SECONDS = 5 * 60;
-const INPUT_LENGTH = 6;
+const INPUT_LENGTH = 5;
 
 export function OtpVerifyForm({ phone }: { phone: string }) {
   const router = useRouter();
@@ -89,7 +89,7 @@ export function OtpVerifyForm({ phone }: { phone: string }) {
             value={code}
             onChange={handleCodeChange}
             dir="ltr"
-            placeholder="------"
+            placeholder="-----"
             className="mt-3 h-14 w-full rounded-xl border border-border bg-surface px-4 text-center text-2xl font-black tracking-[0.5em] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15"
           />
         </div>

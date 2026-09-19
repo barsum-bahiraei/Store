@@ -4,7 +4,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
 import loginImage from "~/assets/images/login.png";
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 5;
 const RESEND_COOLDOWN = 300;
 
 export default function VerifyPage() {
