@@ -17,12 +17,15 @@ export function OtpVerifyForm({ phone }: { phone: string }) {
   const [remainingSeconds, setRemainingSeconds] = useState(OTP_EXPIRY_SECONDS);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
 
   const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
   const canResend = remainingSeconds <= 0;
 
   useEffect(() => {
+    mountedRef.current = true;
     inputRef.current?.focus();
+    return () => { mountedRef.current = false; };
   }, []);
 
   useEffect(() => {
@@ -43,10 +46,12 @@ export function OtpVerifyForm({ phone }: { phone: string }) {
 
   const handleVerify = useCallback(async (codeValue: string) => {
     setError("");
+    if (timerRef.current) clearInterval(timerRef.current);
     try {
       await verifyOtpMutation.mutateAsync({ phoneNumber: phone, code: codeValue });
       router.push("/account");
     } catch (caughtError) {
+      if (!mountedRef.current) return;
       setError(caughtError instanceof Error ? caughtError.message : "تأیید کد انجام نشد.");
       setCode("");
       inputRef.current?.focus();
@@ -66,9 +71,12 @@ export function OtpVerifyForm({ phone }: { phone: string }) {
     setCode("");
     try {
       await sendOtpMutation.mutateAsync({ phoneNumber: phone });
-      setRemainingSeconds(OTP_EXPIRY_SECONDS);
-      inputRef.current?.focus();
+      if (mountedRef.current) {
+        setRemainingSeconds(OTP_EXPIRY_SECONDS);
+        inputRef.current?.focus();
+      }
     } catch (caughtError) {
+      if (!mountedRef.current) return;
       setError(caughtError instanceof Error ? caughtError.message : "ارسال مجدد کد انجام نشد.");
     }
   }
