@@ -4,6 +4,7 @@ using Store.Domain.Products;
 using Store.Domain.Products.Models.Input;
 using Store.Domain.Products.Models.Output;
 using Store.Domain.Sellers;
+using Microsoft.Extensions.Configuration;
 
 namespace Store.Service.EntityService;
 
@@ -11,8 +12,147 @@ public class ProductService(
     IProductRepository productRepository,
     ISellerRepository sellerRepository,
     ICategoryRepository categoryRepository,
-    FileService fileService)
+    FileService fileService,
+    IFileRepository fileRepository,
+    IConfiguration configuration)
 {
+    public async Task<Result<ProductTorobOutput>> TorobListAsync(ProductTorobInput input,
+        CancellationToken cancellation)
+    {
+        if (input.AdditionalData is { Count: > 0 })
+            return Result<ProductTorobOutput>.Failure(
+                $"{input.AdditionalData.Keys.First()} parameter is not supported");
+
+        var hasPageUrls = input.PageUrls != null;
+        var hasPageUniques = input.PageUniques != null;
+        var hasPage = input.Page.HasValue;
+        var hasCursor = input.Cursor != null;
+        var isFirstCursorPage = !hasPageUrls && !hasPageUniques && !hasPage && !hasCursor && input.Sort != null;
+        var modeCount = (hasPageUrls ? 1 : 0) + (hasPageUniques ? 1 : 0) +
+                        (hasPage ? 1 : 0) + (hasCursor ? 1 : 0) + (isFirstCursorPage ? 1 : 0);
+        if (modeCount != 1)
+            return Result<ProductTorobOutput>.Failure(
+                "provide exactly one of page_urls, page_uniques, page, or cursor pagination");
+
+        var websiteUrl = configuration["Torob:WebsiteUrl"]?.TrimEnd('/');
+        var imageUrl = configuration["Torob:ImageUrl"]?.TrimEnd('/');
+        var imageBucket = configuration["Minio:Bucket"]?.Trim('/');
+        if (string.IsNullOrWhiteSpace(websiteUrl) || string.IsNullOrWhiteSpace(imageUrl))
+            return Result<ProductTorobOutput>.Failure("Torob website or image URL is not configured");
+        imageBucket = string.IsNullOrWhiteSpace(imageBucket) ? "store" : imageBucket;
+
+        string ProductUrl(int id) => $"{websiteUrl}/products/{id}";
+
+        if (hasPageUrls || hasPageUniques)
+        {
+            if (input.Sort != null || input.Page.HasValue || input.Cursor != null)
+                return Result<ProductTorobOutput>.Failure(
+                    "lookup requests cannot contain page, sort, or cursor parameters");
+
+            var values = hasPageUrls ? input.PageUrls! : input.PageUniques!;
+            if (values.Count == 0 || values.Any(string.IsNullOrWhiteSpace))
+                return Result<ProductTorobOutput>.Failure(
+                    $"{(hasPageUrls ? "page_urls" : "page_uniques")} must be a non-empty array of strings");
+
+            input.ProductIds = [];
+            foreach (var value in values.Distinct())
+            {
+                var identifier = hasPageUrls ? value.TrimEnd('/').Split('/').Last() : value;
+                if (!int.TryParse(identifier, out var id))
+                    continue;
+                if (hasPageUrls && !string.Equals(value.TrimEnd('/'), ProductUrl(id), StringComparison.OrdinalIgnoreCase))
+                    continue;
+                input.ProductIds.Add(id);
+            }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(input.Sort))
+                return Result<ProductTorobOutput>.Failure("sort parameter is not provided");
+
+            if (hasPage)
+            {
+                if (input.Page < 1)
+                    return Result<ProductTorobOutput>.Failure("page must be an integer greater than zero");
+                if (input.Sort is not ("date_added_desc" or "date_updated_desc"))
+                    return Result<ProductTorobOutput>.Failure(
+                        "sort must be date_added_desc or date_updated_desc for page pagination");
+            }
+            else
+            {
+                if (input.Sort != "product_id_desc")
+                    return Result<ProductTorobOutput>.Failure(
+                        "sort must be product_id_desc for cursor pagination");
+                if (hasCursor && (!int.TryParse(input.Cursor, out var cursorId) || cursorId < 1))
+                    return Result<ProductTorobOutput>.Failure(
+                        "cursor must be a positive integer encoded as a string");
+                if (hasCursor)
+                    input.CursorId = int.Parse(input.Cursor!);
+            }
+        }
+
+        var entities = await productRepository.TorobListAsync(input, cancellation);
+        var products = new List<ProductTorobItemOutput>();
+
+        foreach (var entity in entities.Items)
+        {
+            var imageEntities = await fileRepository.ListAsync(
+                TableNameEnum.Products,
+                TargetNameEnum.ProductId,
+                entity.Id,
+                cancellation);
+            var imageLinks = imageEntities
+                .OrderByDescending(x => x.IsMain)
+                .ThenBy(x => x.Id)
+                .Select(x => $"{imageUrl}/{imageBucket}/{x.Url.TrimStart('/')}")
+                .ToList();
+
+            products.Add(new ProductTorobItemOutput
+            {
+                PageUnique = entity.Id.ToString(),
+                PageUrl = ProductUrl(entity.Id),
+                ProductGroupId = null,
+                Title = entity.Name,
+                Subtitle = null,
+                CurrentPrice = (long)decimal.Truncate(Math.Max(0, entity.Price - entity.Discount)),
+                OldPrice = entity.Discount > 0 ? (long)decimal.Truncate(entity.Price) : null,
+                Availability = entity.IsAvailable,
+                CategoryName = entity.Category.Name,
+                ImageLinks = imageLinks,
+                Spec = entity.ProductAttributes
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Attribute.Name))
+                    .GroupBy(x => x.Attribute.Name)
+                    .ToDictionary(x => x.Key, x => x.Last().Value),
+                Guarantee = null,
+                ShortDescription = entity.ShortDescription,
+                DateAdded = FormatTorobDate(entity.CreatedAt),
+                DateUpdated = FormatTorobDate(entity.UpdatedAt),
+                SellerName = entity.Seller.Name,
+                SellerCity = null
+            });
+        }
+
+        return Result<ProductTorobOutput>.Success(new ProductTorobOutput
+        {
+            ApiVersion = "torob_api_v3",
+            CurrentPage = entities.CurrentPage,
+            Total = entities.TotalCount,
+            MaxPages = entities.TotalCount.HasValue
+                ? Math.Max(1, (int)Math.Ceiling(entities.TotalCount.Value / 100m))
+                : null,
+            NextCursor = entities.NextCursor,
+            Products = products
+        });
+    }
+
+    private static string FormatTorobDate(DateTime value)
+    {
+        var utcValue = value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
+        return utcValue.ToString("O");
+    }
+
     public async Task<Result<List<ProductListOutput>>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation)
     {
         var entities = await productRepository.ListAsync(userId, input, cancellation);

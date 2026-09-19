@@ -10,6 +10,16 @@ namespace Store.Api.Controllers;
 [ApiController]
 public class ProductController(ProductService productService) : ControllerBase
 {
+    [HttpPost("/torob_api/v3/products")]
+    public async Task<IActionResult> TorobProducts(ProductTorobInput input,
+        CancellationToken cancellation = default)
+    {
+        var result = await productService.TorobListAsync(input, cancellation);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.ErrorMessage });
+        return Ok(result.Data);
+    }
+
     [HttpPost("Search")]
     public async Task<IActionResult> Search(ProductSearchInput input, CancellationToken cancellation = default)
     {

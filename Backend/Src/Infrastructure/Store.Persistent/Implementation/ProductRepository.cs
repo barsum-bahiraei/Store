@@ -86,6 +86,67 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         return (result, totalCount);
     }
 
+    public async Task<(List<ProductEntity> Items, int? TotalCount, int CurrentPage, string? NextCursor)> TorobListAsync(
+        ProductTorobInput input, CancellationToken cancellation)
+    {
+        const int pageSize = 100;
+        var currentPage = input.Page ?? 1;
+        int? totalCount;
+        string? nextCursor = null;
+
+        var query = context.Products
+            .AsNoTracking()
+            .Include(x => x.Category)
+            .Include(x => x.Seller)
+            .Include(x => x.ProductAttributes)
+            .ThenInclude(x => x.Attribute)
+            .AsQueryable();
+
+        if (input.ProductIds != null)
+        {
+            var entities = await query
+                .Where(x => input.ProductIds.Contains(x.Id))
+                .ToListAsync(cancellation);
+            var entitiesById = entities.ToDictionary(x => x.Id);
+            var result = input.ProductIds
+                .Where(entitiesById.ContainsKey)
+                .Select(x => entitiesById[x])
+                .ToList();
+            return (result, result.Count, currentPage, nextCursor);
+        }
+
+        if (input.Page.HasValue)
+        {
+            totalCount = await query.CountAsync(cancellation);
+            query = input.Sort == "date_added_desc"
+                ? query.OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id)
+                : query.OrderByDescending(x => x.UpdatedAt).ThenByDescending(x => x.Id);
+            var result = await query
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellation);
+            return (result, totalCount, currentPage, nextCursor);
+        }
+
+        if (input.CursorId.HasValue)
+        {
+            currentPage = await context.Products
+                .CountAsync(x => x.Id >= input.CursorId.Value, cancellation) / pageSize + 1;
+            query = query.Where(x => x.Id < input.CursorId.Value);
+        }
+
+        var cursorEntities = await query
+            .OrderByDescending(x => x.Id)
+            .Take(pageSize + 1)
+            .ToListAsync(cancellation);
+        var hasMore = cursorEntities.Count > pageSize;
+        var cursorResult = cursorEntities.Take(pageSize).ToList();
+        if (hasMore)
+            nextCursor = cursorResult[^1].Id.ToString();
+
+        return (cursorResult, null, currentPage, nextCursor);
+    }
+
     public async Task<ProductEntity?> GetAsync(int id, int userId, CancellationToken cancellation)
     {
         var result = await context.Products

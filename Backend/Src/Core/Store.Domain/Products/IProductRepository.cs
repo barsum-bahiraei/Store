@@ -7,6 +7,8 @@ public interface IProductRepository
     Task<List<ProductEntity>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation);
     Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation);
+    Task<(List<ProductEntity> Items, int? TotalCount, int CurrentPage, string? NextCursor)> TorobListAsync(
+        ProductTorobInput input, CancellationToken cancellation);
     Task<ProductEntity?> GetAsync(int id, CancellationToken cancellation);
     Task<ProductEntity?> GetAsync(int id, int userId, CancellationToken cancellation);
     Task<List<ProductEntity>> SimilarListAsync(int id, int categoryId, CancellationToken cancellation);
