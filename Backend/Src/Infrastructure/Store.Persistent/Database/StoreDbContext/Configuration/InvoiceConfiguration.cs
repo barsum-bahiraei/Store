@@ -9,7 +9,8 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<InvoiceEntity>
     public void Configure(EntityTypeBuilder<InvoiceEntity> builder)
     {
         builder.ToTable("Invoices");
-        
+        builder.Property(x => x.ProductPrice).HasPrecision(18, 2);
+
         builder.HasOne(x => x.Product)
             .WithMany(x => x.Invoices)
             .HasForeignKey(x => x.ProductId)

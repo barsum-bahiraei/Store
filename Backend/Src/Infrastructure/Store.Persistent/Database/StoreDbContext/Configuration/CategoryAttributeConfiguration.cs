@@ -15,5 +15,6 @@ public class CategoryAttributeConfiguration : IEntityTypeConfiguration<CategoryA
         builder.HasOne(x => x.Attribute)
             .WithMany(x => x.CategoryAttributes)
             .HasForeignKey(x => x.AttributeId);
+        builder.HasIndex(x => new { x.CategoryId, x.AttributeId }).IsUnique();
     }
 }

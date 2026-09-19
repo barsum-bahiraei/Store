@@ -9,5 +9,6 @@ public class ProductBrandConfiguration : IEntityTypeConfiguration<ProductBrandEn
     public void Configure(EntityTypeBuilder<ProductBrandEntity> builder)
     {
         builder.ToTable("ProductBrands");
+        builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
     }
 }

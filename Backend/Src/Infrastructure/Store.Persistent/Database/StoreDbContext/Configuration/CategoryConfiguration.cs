@@ -9,6 +9,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<CategoryEntity>
     public void Configure(EntityTypeBuilder<CategoryEntity> builder)
     {
         builder.ToTable("Categories");
+        builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
 
         builder.HasOne(c => c.Parent)
             .WithMany(x => x.Children)

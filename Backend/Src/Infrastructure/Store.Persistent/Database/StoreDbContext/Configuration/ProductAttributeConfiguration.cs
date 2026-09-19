@@ -17,5 +17,7 @@ public class ProductAttributeConfiguration : IEntityTypeConfiguration<ProductAtt
         builder.HasOne(x => x.Attribute)
             .WithMany(x => x.ProductAttributes)
             .HasForeignKey(x => x.AttributeId);
+
+        builder.HasIndex(x => new { x.ProductId, x.AttributeId }).IsUnique();
     }
 }

@@ -9,5 +9,6 @@ public class AttributeConfiguration : IEntityTypeConfiguration<AttributeEntity>
     public void Configure(EntityTypeBuilder<AttributeEntity> builder)
     {
         builder.ToTable("Attributes");
+        builder.Property(x => x.Name).IsRequired().HasMaxLength(128);
     }
 }
