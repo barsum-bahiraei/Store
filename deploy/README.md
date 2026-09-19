@@ -38,7 +38,7 @@ Environment secrets:
 - `GHCR_TOKEN`: classic PAT with `read:packages`
 - `PRODUCTION_ENV`: full contents based on `.env.example`
 
-Create the secrets under the `production` environment. Generate dotenv-safe application secrets with `openssl rand -hex 32`. If the PostgreSQL volume already contains data, changing `POSTGRES_PASSWORD` in `PRODUCTION_ENV` does not change the existing database role password; rotate that role inside PostgreSQL first.
+Create the secrets under the `production` environment. Add `KAVENEGAR_API_KEY` and `KAVENEGAR_SENDER` to the `PRODUCTION_ENV` content based on `.env.example`; do not create them as Docker build arguments. Generate dotenv-safe application secrets with `openssl rand -hex 32`. If the PostgreSQL volume already contains data, changing `POSTGRES_PASSWORD` in `PRODUCTION_ENV` does not change the existing database role password; rotate that role inside PostgreSQL first.
 
 Generate `SERVER_KNOWN_HOSTS` from a trusted network and verify its fingerprint before saving it:
 

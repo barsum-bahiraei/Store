@@ -13,6 +13,9 @@ const genders = [
 
 export default function ProfilePage() {
   const { currentUser, updateProfile } = useAuth();
+  const [firstName, setFirstName] = useState(currentUser?.firstName ?? "");
+  const [lastName, setLastName] = useState(currentUser?.lastName ?? "");
+  const [email, setEmail] = useState(currentUser?.email ?? "");
   const [address, setAddress] = useState(currentUser?.address ?? "");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -45,6 +48,9 @@ export default function ProfilePage() {
     setSuccess(false);
     try {
       await updateProfile({
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
+        email: email.trim() || undefined,
         address: address.trim() || null,
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null,
@@ -102,12 +108,20 @@ export default function ProfilePage() {
           )}
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <label>
+              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">نام</span>
+              <input value={firstName} onChange={(event) => setFirstName(event.target.value)} className={inputClasses} placeholder="نام خود را وارد کنید" />
+            </label>
+
+            <label>
+              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">نام خانوادگی</span>
+              <input value={lastName} onChange={(event) => setLastName(event.target.value)} className={inputClasses} placeholder="نام خانوادگی خود را وارد کنید" />
+            </label>
+
+            <label className="sm:col-span-2">
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">آدرس ایمیل</span>
-              <div className="flex min-h-11 items-center rounded-xl border border-gray-200 bg-gray-50 px-3.5 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
-                {currentUser.email}
-              </div>
-            </div>
+              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className={inputClasses} placeholder="you@example.com" dir="ltr" />
+            </label>
 
             <label>
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">جنسیت</span>

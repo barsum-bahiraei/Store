@@ -3,9 +3,10 @@ import { resolveResult } from "~/shared/http/resolve-result";
 import type { ApiResult } from "~/shared/models/api-result";
 import type {
   AccountUser,
-  AuthenticatedUser,
-  LoginInput,
-  RegisterInput,
+  OtpSendInput,
+  OtpSendOutput,
+  OtpVerifyInput,
+  OtpVerifyOutput,
   UserProfileUpdateInput,
   UserProfileUpdateOutput,
 } from "../models/account";
@@ -13,20 +14,20 @@ import type {
 let pendingProfile: Promise<AccountUser> | null = null;
 
 export const authApi = {
-  async login(input: LoginInput): Promise<AuthenticatedUser> {
-    const { data } = await httpClient.post<ApiResult<AuthenticatedUser>>(
-      "/api/Account/UserLogin",
+  async sendOtp(input: OtpSendInput): Promise<OtpSendOutput> {
+    const { data } = await httpClient.post<ApiResult<OtpSendOutput>>(
+      "/api/Account/UserOtpSend",
       input,
     );
-    return resolveResult(data, "Unable to sign in");
+    return resolveResult(data, "ارسال کد تأیید ناموفق بود");
   },
 
-  async register(input: RegisterInput): Promise<AuthenticatedUser> {
-    const { data } = await httpClient.post<ApiResult<AuthenticatedUser>>(
-      "/api/Account/UserRegister",
+  async verifyOtp(input: OtpVerifyInput): Promise<OtpVerifyOutput> {
+    const { data } = await httpClient.post<ApiResult<OtpVerifyOutput>>(
+      "/api/Account/UserOtpVerify",
       input,
     );
-    return resolveResult(data, "Unable to create account");
+    return resolveResult(data, "تأیید کد ناموفق بود");
   },
 
   async profile(): Promise<AccountUser> {

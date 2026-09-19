@@ -17,6 +17,7 @@ export function ProfileEditForm({ user, returnTo }: ProfileEditFormProps) {
   const router = useRouter();
   const updateProfile = useUpdateUserProfile();
   const [form, setForm] = useState({
+    email: user.email ?? "",
     address: user.address ?? "",
     latitude: user.latitude?.toString() ?? "",
     longitude: user.longitude?.toString() ?? "",
@@ -49,6 +50,7 @@ export function ProfileEditForm({ user, returnTo }: ProfileEditFormProps) {
 
     try {
       await updateProfile.mutateAsync({
+        email: form.email.trim() || null,
         address: form.address.trim(),
         latitude,
         longitude,
@@ -71,6 +73,10 @@ export function ProfileEditForm({ user, returnTo }: ProfileEditFormProps) {
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-5 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label htmlFor="profile-email" className="text-sm font-bold">ایمیل</label>
+            <input id="profile-email" type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} disabled={updateProfile.isPending} dir="ltr" placeholder="example@email.com" className={inputClassName} />
+          </div>
           <div>
             <label htmlFor="profile-gender" className="text-sm font-bold">جنسیت</label>
             <select id="profile-gender" value={form.gender} onChange={(event) => setForm((current) => ({ ...current, gender: Number(event.target.value) as Gender }))} disabled={updateProfile.isPending} className={inputClassName}>

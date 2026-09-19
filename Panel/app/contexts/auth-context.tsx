@@ -1,14 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "~/features/auth/api/auth-api";
-import type { AccountUser, LoginInput, RegisterInput, UserProfileUpdateInput } from "~/features/auth/models/account";
+import type { AccountUser, UserProfileUpdateInput } from "~/features/auth/models/account";
 import { AUTH_TOKEN_KEY } from "~/shared/http/http-client";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
   isReady: boolean;
   currentUser: AccountUser | null;
-  login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
+  sendOtp: (phoneNumber: string) => Promise<void>;
+  verifyOtp: (phoneNumber: string, code: string) => Promise<void>;
   updateProfile: (input: UserProfileUpdateInput) => Promise<void>;
   logout: () => void;
 }
@@ -37,18 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const login = async (input: LoginInput) => {
-    const { token, ...user } = await authApi.login(input);
-    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
-    setCurrentUser(user);
-    setHasToken(true);
+  const sendOtp = async (phoneNumber: string) => {
+    await authApi.sendOtp({ phoneNumber });
   };
 
-  const register = async (input: RegisterInput) => {
-    const { token, ...user } = await authApi.register(input);
+  const verifyOtp = async (phoneNumber: string, code: string) => {
+    const { token } = await authApi.verifyOtp({ phoneNumber, code });
     window.localStorage.setItem(AUTH_TOKEN_KEY, token);
-    setCurrentUser(user);
     setHasToken(true);
+    const user = await authApi.profile();
+    setCurrentUser(user);
   };
 
   const logout = () => {
@@ -66,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: hasToken, isReady, currentUser, login, register, updateProfile, logout }}
+      value={{ isAuthenticated: hasToken, isReady, currentUser, sendOtp, verifyOtp, updateProfile, logout }}
     >
       {children}
     </AuthContext.Provider>

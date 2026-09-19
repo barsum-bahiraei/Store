@@ -9,8 +9,8 @@ import {
   getAuthToken,
   setAuthToken,
 } from "@/lib/auth-token";
-import { getUserProfile, login, register, updateUserProfile } from "../services/account-service";
-import type { AccountUser, AuthenticatedUser, LoginInput, RegisterInput } from "../types/account";
+import { getUserProfile, sendOtp, verifyOtp, updateUserProfile } from "../services/account-service";
+import type { AccountUser, AuthenticatedUser, OtpVerifyInput } from "../types/account";
 
 export const accountKeys = {
   profile: ["account", "profile"] as const,
@@ -46,12 +46,12 @@ function useAuthenticationMutation<TInput>(mutationFn: (input: TInput) => Promis
   });
 }
 
-export function useLogin() {
-  return useAuthenticationMutation<LoginInput>(login);
+export function useSendOtp() {
+  return useMutation({ mutationFn: sendOtp });
 }
 
-export function useRegister() {
-  return useAuthenticationMutation<RegisterInput>(register);
+export function useVerifyOtp() {
+  return useAuthenticationMutation<OtpVerifyInput>(verifyOtp);
 }
 
 export function useUserProfile() {
@@ -71,7 +71,7 @@ export function useUpdateUserProfile() {
   return useMutation({
     mutationFn: updateUserProfile,
     onSuccess: (profile) => {
-      queryClient.setQueryData<AccountUser>(accountKeys.profile, (current) => current ? { ...current, ...profile } : current);
+      queryClient.setQueryData<AccountUser>(accountKeys.profile, (current) => current ? { ...current, ...profile, email: profile.email ?? current.email } : current);
     },
   });
 }

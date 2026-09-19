@@ -15,6 +15,7 @@ export type AccountUser = {
 };
 
 export type UpdateUserProfileInput = {
+  email: string | null;
   address: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -29,13 +30,11 @@ export type AuthenticatedUser = AccountUser & {
   token: string;
 };
 
-export type LoginInput = {
-  email: string;
-  password: string;
+export type OtpSendInput = {
+  phoneNumber: string;
 };
 
-export type RegisterInput = LoginInput & {
-  firstName: string;
-  lastName: string;
-  gender: Gender;
+export type OtpVerifyInput = {
+  phoneNumber: string;
+  code: string;
 };

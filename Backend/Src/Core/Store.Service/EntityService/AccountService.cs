@@ -1,19 +1,20 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Store.Domain.Accounts;
 using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
+using Store.Service.ProviderService;
 
 namespace Store.Service.EntityService;
 
 public class AccountService(
     IAccountRepository accountRepository,
     IConfiguration configuration,
-    IPasswordHasher<UserEntity> passwordHasher
+    KavenegarSmsService smsService
 )
 {
     public async Task<Result<List<UserListOutput>>> UserListAsync(UserListInput input, CancellationToken cancellation)
@@ -33,6 +34,7 @@ public class AccountService(
             PhoneNumber = x.PhoneNumber,
             NationalCode = x.NationalCode,
             IsEmailVerified = x.IsEmailVerified,
+            IsPhoneNumberVerified = x.IsPhoneNumberVerified
         }).ToList();
         return Result<List<UserListOutput>>.Success(result);
     }
@@ -61,6 +63,7 @@ public class AccountService(
             PhoneNumber = entity.PhoneNumber,
             NationalCode = entity.NationalCode,
             IsEmailVerified = entity.IsEmailVerified,
+            IsPhoneNumberVerified = entity.IsPhoneNumberVerified,
             Roles = entity.UserRoles.Select(x => new UserRoleGetOutput
             {
                 Id = x.Id,
@@ -100,6 +103,7 @@ public class AccountService(
             PhoneNumber = entity.PhoneNumber,
             NationalCode = entity.NationalCode,
             IsEmailVerified = entity.IsEmailVerified,
+            IsPhoneNumberVerified = entity.IsPhoneNumberVerified
         };
         return Result<UserProfileGetOutput>.Success(result);
     }
@@ -111,6 +115,18 @@ public class AccountService(
         if (entity == null)
             return Result<UserProfileUpdateOutput>.Failure("User not found");
 
+        var email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim();
+        if (email != null && !string.Equals(email, entity.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var emailOwner = await accountRepository.UserGetByEmailAsync(email, cancellation);
+            if (emailOwner != null && emailOwner.Id != id)
+                return Result<UserProfileUpdateOutput>.Failure("Email is already in use");
+            entity.IsEmailVerified = false;
+        }
+
+        entity.FirstName = string.IsNullOrWhiteSpace(input.FirstName) ? null : input.FirstName.Trim();
+        entity.LastName = string.IsNullOrWhiteSpace(input.LastName) ? null : input.LastName.Trim();
+        entity.Email = email;
         entity.Address = input.Address;
         entity.Latitude = input.Latitude;
         entity.Longitude = input.Longitude;
@@ -121,6 +137,9 @@ public class AccountService(
         var updated = await accountRepository.UserUpdateAsync(entity, cancellation);
         return Result<UserProfileUpdateOutput>.Success(new UserProfileUpdateOutput
         {
+            FirstName = updated.FirstName,
+            LastName = updated.LastName,
+            Email = updated.Email,
             Address = updated.Address,
             Latitude = updated.Latitude,
             Longitude = updated.Longitude,
@@ -130,85 +149,74 @@ public class AccountService(
         });
     }
 
-    public async Task<Result<UserRegisterOutput>> UserRegisterAsync(UserRegisterInput input,
+    public async Task<Result<UserOtpSendOutput>> UserOtpSendAsync(UserOtpSendInput input,
         CancellationToken cancellation)
     {
-        var user = await accountRepository.UserGetAsync(input.Email, cancellation);
-        if (user != null)
+        var phoneNumber = NormalizePhoneNumber(input.PhoneNumber);
+        if (phoneNumber == null)
+            return Result<UserOtpSendOutput>.Failure("Phone number is invalid");
+
+        var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+        var entity = new VerificationCodeEntity
         {
-            return Result<UserRegisterOutput>.Failure("User exists!");
+            PhoneNumber = phoneNumber,
+            CodeHash = HashVerificationCode(phoneNumber, code),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            IsUsed = false
+        };
+
+        var created = await accountRepository.VerificationCodeReplaceAsync(entity, cancellation);
+        if (created == null)
+            return Result<UserOtpSendOutput>.Failure("Please wait before requesting another verification code");
+
+        try
+        {
+            await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
+        }
+        catch
+        {
+            await accountRepository.VerificationCodeInvalidateAsync(created.Id, CancellationToken.None);
+            throw;
         }
 
-        var entity = new UserEntity
+        return Result<UserOtpSendOutput>.Success(new UserOtpSendOutput
         {
-            FirstName = input.FirstName,
-            LastName = input.LastName,
-            Email = input.Email,
-            Gender = input.Gender
-        };
-        entity.PasswordHash = passwordHasher.HashPassword(entity, input.Password);
-        var created = await accountRepository.UserCreateAsync(entity, cancellation);
-        var userRoleEntity = new UserRoleEntity
-        {
-            UserId = created.Id,
-            RoleId = 1,
-        };
-        await accountRepository.UserRoleCreateAsync(userRoleEntity, cancellation);
-
-        var result = new UserRegisterOutput
-        {
-            FirstName = created.FirstName,
-            LastName = created.LastName,
-            Email = created.Email,
-            Gender = created.Gender,
-            Address = created.Address,
-            Latitude = created.Latitude,
-            Longitude = created.Longitude,
-            BirthDate = created.BirthDate,
-            NationalCode = created.NationalCode,
-            PhoneNumber = created.PhoneNumber,
-            IsEmailVerified = created.IsEmailVerified,
-            Token = GenerateToken(created.Id)
-        };
-        return Result<UserRegisterOutput>.Success(result);
+            ExpiresAt = created.ExpiresAt
+        });
     }
 
-    public async Task<Result<UserLoginOutput>> UserLoginAsync(UserLoginInput input, CancellationToken cancellation)
+    public async Task<Result<UserOtpVerifyOutput>> UserOtpVerifyAsync(UserOtpVerifyInput input,
+        CancellationToken cancellation)
     {
-        var entity = await accountRepository.UserGetAsync(input.Email, cancellation);
-        if (entity == null)
-        {
-            return Result<UserLoginOutput>.Failure("Invalid email or password");
-        }
+        var phoneNumber = NormalizePhoneNumber(input.PhoneNumber);
+        if (phoneNumber == null || string.IsNullOrWhiteSpace(input.Code) || input.Code.Length != 6 ||
+            input.Code.Any(x => !char.IsDigit(x)))
+            return Result<UserOtpVerifyOutput>.Failure("Phone number or verification code is invalid");
 
-        var passwordResult = passwordHasher.VerifyHashedPassword(entity, entity.PasswordHash, input.Password);
-        if (passwordResult == PasswordVerificationResult.Failed)
-        {
-            return Result<UserLoginOutput>.Failure("Invalid email or password");
-        }
+        var verificationCode = await accountRepository.VerificationCodeGetAsync(phoneNumber, cancellation);
+        if (verificationCode == null || verificationCode.ExpiresAt <= DateTime.UtcNow ||
+            !CryptographicOperations.FixedTimeEquals(
+                Convert.FromHexString(verificationCode.CodeHash),
+                Convert.FromHexString(HashVerificationCode(phoneNumber, input.Code))))
+            return Result<UserOtpVerifyOutput>.Failure("Verification code is invalid or expired");
 
-        if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)
-        {
-            entity.PasswordHash = passwordHasher.HashPassword(entity, input.Password);
-            await accountRepository.UserUpdateAsync(entity, cancellation);
-        }
+        var authentication = await accountRepository.VerificationCodeUseAsync(
+            verificationCode.Id,
+            phoneNumber,
+            "User",
+            cancellation);
+        if (authentication == null)
+            return Result<UserOtpVerifyOutput>.Failure("Verification code is invalid or expired");
 
-        var result = new UserLoginOutput
+        var (user, isNewUser) = authentication.Value;
+
+        return Result<UserOtpVerifyOutput>.Success(new UserOtpVerifyOutput
         {
-            FirstName = entity.FirstName,
-            LastName = entity.LastName,
-            Email = entity.Email,
-            Gender = entity.Gender,
-            Address = entity.Address,
-            Latitude = entity.Latitude,
-            Longitude = entity.Longitude,
-            BirthDate = entity.BirthDate,
-            NationalCode = entity.NationalCode,
-            PhoneNumber = entity.PhoneNumber,
-            IsEmailVerified = entity.IsEmailVerified,
-            Token = GenerateToken(entity.Id)
-        };
-        return Result<UserLoginOutput>.Success(result);
+            Id = user.Id,
+            PhoneNumber = user.PhoneNumber,
+            IsNewUser = isNewUser,
+            Token = GenerateToken(user.Id)
+        });
     }
 
     public async Task<Result<List<RoleListOutput>>> RoleListAsync(CancellationToken cancellation)
@@ -376,5 +384,30 @@ public class AccountService(
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static string? NormalizePhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber))
+            return null;
+
+        var normalized = phoneNumber.Trim()
+            .Replace(" ", string.Empty)
+            .Replace("-", string.Empty);
+        if (normalized.StartsWith("+98"))
+            normalized = $"0{normalized[3..]}";
+        else if (normalized.StartsWith("0098"))
+            normalized = $"0{normalized[4..]}";
+
+        return normalized.Length == 11 && normalized.StartsWith("09") && normalized.All(char.IsDigit)
+            ? normalized
+            : null;
+    }
+
+    private string HashVerificationCode(string phoneNumber, string code)
+    {
+        return Convert.ToHexString(HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!),
+            Encoding.UTF8.GetBytes($"otp:{phoneNumber}:{code}")));
     }
 }

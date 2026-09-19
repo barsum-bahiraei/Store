@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Store.Api.Authorization;
 using Store.Domain.Accounts.Models.Input;
 using Store.Service.EntityService;
@@ -28,17 +29,20 @@ public class AccountController(AccountService accountService, ControllerAccessPr
         return Ok(result);
     }
 
-    [HttpPost("UserRegister")]
-    public async Task<IActionResult> UserRegisterPost(UserRegisterInput input, CancellationToken cancellation = default)
+    [HttpPost("UserOtpSend")]
+    [EnableRateLimiting("otp-send")]
+    public async Task<IActionResult> UserOtpSendPost(UserOtpSendInput input, CancellationToken cancellation = default)
     {
-        var result = await accountService.UserRegisterAsync(input, cancellation);
+        var result = await accountService.UserOtpSendAsync(input, cancellation);
         return Ok(result);
     }
 
-    [HttpPost("UserLogin")]
-    public async Task<IActionResult> UserLoginPost(UserLoginInput input, CancellationToken cancellation = default)
+    [HttpPost("UserOtpVerify")]
+    [EnableRateLimiting("otp-verify")]
+    public async Task<IActionResult> UserOtpVerifyPost(UserOtpVerifyInput input,
+        CancellationToken cancellation = default)
     {
-        var result = await accountService.UserLoginAsync(input, cancellation);
+        var result = await accountService.UserOtpVerifyAsync(input, cancellation);
         return Ok(result);
     }
 

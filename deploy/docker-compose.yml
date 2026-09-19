@@ -50,6 +50,8 @@ services:
       Jwt__Issuer: ${JWT_ISSUER}
       Jwt__Audience: ${JWT_AUDIENCE}
       Jwt__ExpireMinutes: ${JWT_EXPIRE_MINUTES}
+      Kavenegar__ApiKey: ${KAVENEGAR_API_KEY}
+      Kavenegar__Sender: ${KAVENEGAR_SENDER}
     depends_on:
       postgres:
         condition: service_healthy

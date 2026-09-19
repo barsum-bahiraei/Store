@@ -12,13 +12,13 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
         var query = context.Users.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(input.FirstName))
-            query = query.Where(x => x.FirstName.Contains(input.FirstName.Trim()));
+            query = query.Where(x => x.FirstName != null && x.FirstName.Contains(input.FirstName.Trim()));
 
         if (!string.IsNullOrWhiteSpace(input.LastName))
-            query = query.Where(x => x.LastName.Contains(input.LastName.Trim()));
+            query = query.Where(x => x.LastName != null && x.LastName.Contains(input.LastName.Trim()));
 
         if (!string.IsNullOrWhiteSpace(input.Email))
-            query = query.Where(x => x.Email.Contains(input.Email.Trim()));
+            query = query.Where(x => x.Email != null && x.Email.Contains(input.Email.Trim()));
 
         if (!string.IsNullOrWhiteSpace(input.PhoneNumber))
             query = query.Where(x => x.PhoneNumber != null && x.PhoneNumber.Contains(input.PhoneNumber.Trim()));
@@ -33,10 +33,16 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
         return result;
     }
 
-    public async Task<UserEntity?> UserGetAsync(string email, CancellationToken cancellation = default)
+    public async Task<UserEntity?> UserGetByPhoneNumberAsync(string phoneNumber,
+        CancellationToken cancellation = default)
     {
-        var result = await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellation);
+        var result = await context.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber, cancellation);
         return result;
+    }
+
+    public async Task<UserEntity?> UserGetByEmailAsync(string email, CancellationToken cancellation = default)
+    {
+        return await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellation);
     }
 
     public async Task<UserEntity?> UserGetAsync(int id, CancellationToken cancellation = default)
@@ -60,6 +66,114 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
         context.Users.Update(input);
         await context.SaveChangesAsync(cancellation);
         return input;
+    }
+
+    public async Task<VerificationCodeEntity?> VerificationCodeReplaceAsync(VerificationCodeEntity input,
+        CancellationToken cancellation = default)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({input.PhoneNumber}, 0))",
+            cancellation);
+
+        var now = DateTime.UtcNow;
+        var canSend = !await context.VerificationCodes.AnyAsync(
+            x => x.PhoneNumber == input.PhoneNumber &&
+                 !x.IsUsed &&
+                 x.ExpiresAt > now,
+            cancellation);
+        if (!canSend)
+            return null;
+
+        await context.VerificationCodes
+            .Where(x => x.PhoneNumber == input.PhoneNumber && !x.IsUsed)
+            .ExecuteUpdateAsync(x => x.SetProperty(item => item.IsUsed, true), cancellation);
+        await context.VerificationCodes.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        await transaction.CommitAsync(cancellation);
+        return input;
+    }
+
+    public async Task VerificationCodeInvalidateAsync(int id, CancellationToken cancellation = default)
+    {
+        await context.VerificationCodes
+            .Where(x => x.Id == id && !x.IsUsed)
+            .ExecuteUpdateAsync(x => x.SetProperty(item => item.IsUsed, true), cancellation);
+    }
+
+    public async Task<VerificationCodeEntity?> VerificationCodeGetAsync(string phoneNumber,
+        CancellationToken cancellation = default)
+    {
+        return await context.VerificationCodes
+            .AsNoTracking()
+            .Where(x => x.PhoneNumber == phoneNumber && !x.IsUsed)
+            .OrderByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellation);
+    }
+
+    public async Task<(UserEntity User, bool IsNewUser)?> VerificationCodeUseAsync(
+        int id,
+        string phoneNumber,
+        string roleName,
+        CancellationToken cancellation = default)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({phoneNumber}, 0))",
+            cancellation);
+
+        var affectedRows = await context.VerificationCodes
+            .Where(x => x.Id == id && x.PhoneNumber == phoneNumber && !x.IsUsed && x.ExpiresAt > DateTime.UtcNow)
+            .ExecuteUpdateAsync(x => x.SetProperty(item => item.IsUsed, true), cancellation);
+        if (affectedRows != 1)
+            return null;
+
+        await context.VerificationCodes
+            .Where(x => x.PhoneNumber == phoneNumber && !x.IsUsed)
+            .ExecuteUpdateAsync(x => x.SetProperty(item => item.IsUsed, true), cancellation);
+
+        var user = await context.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber, cancellation);
+        var isNewUser = user == null;
+        if (user == null)
+        {
+            user = new UserEntity
+            {
+                PhoneNumber = phoneNumber,
+                Gender = GenderTypeEnum.unknown,
+                IsPhoneNumberVerified = true
+            };
+            await context.Users.AddAsync(user, cancellation);
+            await context.SaveChangesAsync(cancellation);
+
+            var roleLockKey = $"default-role:{roleName}";
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({roleLockKey}, 0))",
+                cancellation);
+            var normalizedRoleName = roleName.ToLower();
+            var role = await context.Roles.FirstOrDefaultAsync(
+                x => x.Name.ToLower() == normalizedRoleName,
+                cancellation);
+            if (role == null)
+            {
+                role = new RoleEntity { Name = roleName };
+                await context.Roles.AddAsync(role, cancellation);
+                await context.SaveChangesAsync(cancellation);
+            }
+
+            await context.UserRoles.AddAsync(new UserRoleEntity
+            {
+                UserId = user.Id,
+                RoleId = role.Id
+            }, cancellation);
+        }
+        else
+        {
+            user.IsPhoneNumberVerified = true;
+        }
+
+        await context.SaveChangesAsync(cancellation);
+        await transaction.CommitAsync(cancellation);
+        return (user, isNewUser);
     }
 
     public async Task<List<RoleEntity>> RoleListAsync(CancellationToken cancellation = default)

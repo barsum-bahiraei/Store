@@ -77,6 +77,8 @@ jobs:
           test -n "$SERVER_SSH_KEY"
           test -n "$SERVER_KNOWN_HOSTS"
           test -n "$PRODUCTION_ENV"
+          grep -q '^KAVENEGAR_API_KEY=.' <<< "$PRODUCTION_ENV"
+          grep -q '^KAVENEGAR_SENDER=.' <<< "$PRODUCTION_ENV"
           test -n "$GHCR_USERNAME"
           test -n "$GHCR_TOKEN"
 

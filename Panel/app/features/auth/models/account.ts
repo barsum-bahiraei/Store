@@ -11,6 +11,9 @@ export interface AccountUser {
 }
 
 export interface UserProfileUpdateInput {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   address: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -20,6 +23,9 @@ export interface UserProfileUpdateInput {
 }
 
 export interface UserProfileUpdateOutput {
+  firstName: string;
+  lastName: string;
+  email: string;
   address: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -32,13 +38,22 @@ export interface AuthenticatedUser extends AccountUser {
   token: string;
 }
 
-export interface LoginInput {
-  email: string;
-  password: string;
+export interface OtpSendInput {
+  phoneNumber: string;
 }
 
-export interface RegisterInput extends LoginInput {
-  firstName: string;
-  lastName: string;
-  gender: number;
+export interface OtpSendOutput {
+  expiresAt: string;
+}
+
+export interface OtpVerifyInput {
+  phoneNumber: string;
+  code: string;
+}
+
+export interface OtpVerifyOutput {
+  id: number;
+  phoneNumber: string;
+  isNewUser: boolean;
+  token: string;
 }

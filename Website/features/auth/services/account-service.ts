@@ -1,23 +1,23 @@
 import { apiClient } from "@/lib/api-client";
 import { resolveApiResponse, type ApiResponse } from "@/lib/api-response";
-import type { AccountUser, AuthenticatedUser, LoginInput, RegisterInput, UpdatedUserProfile, UpdateUserProfileInput } from "../types/account";
+import type { AccountUser, AuthenticatedUser, OtpSendInput, OtpVerifyInput, UpdatedUserProfile, UpdateUserProfileInput } from "../types/account";
 
-export async function login(input: LoginInput): Promise<AuthenticatedUser> {
-  const { data } = await apiClient.post<ApiResponse<AuthenticatedUser>>(
-    "/Account/UserLogin",
+export async function sendOtp(input: OtpSendInput): Promise<void> {
+  const { data } = await apiClient.post<ApiResponse<null>>(
+    "/Account/UserOtpSend",
     input,
   );
 
-  return resolveApiResponse(data, "ورود انجام نشد.");
+  resolveApiResponse(data, "ارسال کد انجام نشد.");
 }
 
-export async function register(input: RegisterInput): Promise<AuthenticatedUser> {
+export async function verifyOtp(input: OtpVerifyInput): Promise<AuthenticatedUser> {
   const { data } = await apiClient.post<ApiResponse<AuthenticatedUser>>(
-    "/Account/UserRegister",
+    "/Account/UserOtpVerify",
     input,
   );
 
-  return resolveApiResponse(data, "ساخت حساب انجام نشد.");
+  return resolveApiResponse(data, "تأیید کد انجام نشد.");
 }
 
 export async function getUserProfile(signal?: AbortSignal): Promise<AccountUser> {

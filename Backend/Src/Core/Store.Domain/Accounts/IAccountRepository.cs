@@ -5,10 +5,17 @@ namespace Store.Domain.Accounts;
 public interface IAccountRepository
 {
     Task<List<UserEntity>> UserListAsync(UserListInput input, CancellationToken cancellation);
-    Task<UserEntity?> UserGetAsync(string email, CancellationToken cancellation);
+    Task<UserEntity?> UserGetByEmailAsync(string email, CancellationToken cancellation);
+    Task<UserEntity?> UserGetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellation);
     Task<UserEntity?> UserGetAsync(int id, CancellationToken cancellation);
     Task<UserEntity> UserCreateAsync(UserEntity input, CancellationToken cancellation);
     Task<UserEntity> UserUpdateAsync(UserEntity input, CancellationToken cancellation);
+    Task<VerificationCodeEntity?> VerificationCodeReplaceAsync(VerificationCodeEntity input,
+        CancellationToken cancellation);
+    Task VerificationCodeInvalidateAsync(int id, CancellationToken cancellation);
+    Task<VerificationCodeEntity?> VerificationCodeGetAsync(string phoneNumber, CancellationToken cancellation);
+    Task<(UserEntity User, bool IsNewUser)?> VerificationCodeUseAsync(int id, string phoneNumber, string roleName,
+        CancellationToken cancellation);
     Task<List<RoleEntity>> RoleListAsync(CancellationToken cancellation);
     Task<RoleEntity?> RoleGetAsync(int id, CancellationToken cancellation);
     Task<RoleEntity> RoleCreateAsync(RoleEntity input, CancellationToken cancellation);

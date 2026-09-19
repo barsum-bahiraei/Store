@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
 import loginImage from "~/assets/images/login.png";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { login } = useAuth();
+  const { sendOtp } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -17,17 +16,23 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!email.trim() || !password.trim()) {
-      setError("لطفاً تمام فیلدها را پر کنید.");
+    const cleaned = phoneNumber.replace(/\s+/g, "");
+    if (!cleaned) {
+      setError("لطفاً شماره تماس را وارد کنید.");
+      return;
+    }
+
+    if (!/^(09\d{9}|\+989\d{9}|00989\d{9})$/.test(cleaned)) {
+      setError("شماره تماس وارد شده معتبر نیست.");
       return;
     }
 
     setSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
-      navigate("/attributes");
+      await sendOtp(cleaned);
+      navigate("/verify", { state: { phoneNumber: cleaned } });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "امکان ورود وجود ندارد.");
+      setError(caughtError instanceof Error ? caughtError.message : "امکان ارسال کد تأیید وجود ندارد.");
     } finally {
       setSubmitting(false);
     }
@@ -63,37 +68,23 @@ export default function LoginPage() {
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">خوش آمدید</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              به حساب خود وارد شوید
+              شماره تماس خود را وارد کنید تا کد تأیید دریافت کنید
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                آدرس ایمیل
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                شماره تماس
               </label>
               <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                رمز عبور
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="رمز عبور خود را وارد کنید"
+                id="phoneNumber"
+                type="tel"
+                autoComplete="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="09123456789"
+                dir="ltr"
                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
               />
             </div>
@@ -105,16 +96,9 @@ export default function LoginPage() {
               disabled={submitting}
               className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-gray-950"
             >
-              {submitting ? "در حال ورود..." : "ورود"}
+              {submitting ? "در حال ارسال..." : "ارسال کد تأیید"}
             </button>
           </form>
-
-          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            حساب کاربری ندارید؟{" "}
-            <Link to="/register" className="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">
-              ثبت‌نام کنید
-            </Link>
-          </p>
         </div>
       </div>
     </div>

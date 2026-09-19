@@ -27,6 +27,7 @@ public class StoreDbContext : DbContext
     public DbSet<AttributeEntity> Attributes { get; set; }
     public DbSet<FileEntity> Files { get; set; }
     public DbSet<UserEntity> Users { get; set; }
+    public DbSet<VerificationCodeEntity> VerificationCodes { get; set; }
     public DbSet<RoleEntity> Roles { get; set; }
     public DbSet<UserRoleEntity> UserRoles { get; set; }
     public DbSet<RoleAccessEntity> RoleAccess { get; set; }
