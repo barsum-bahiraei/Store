@@ -38,7 +38,7 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
     return <main className="grid flex-1 place-items-center px-5 py-16 text-center"><div><span className="material-symbols-rounded text-5xl text-primary" aria-hidden="true">person</span><h1 className="mt-4 text-2xl font-black">برای مشاهده حساب وارد شوید</h1><p className="mt-2 text-muted-foreground">به پروفایل و تجربه خرید شخصی خود دسترسی داشته باشید.</p><Link href="/login" className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-primary px-6 font-black text-primary-foreground">ورود</Link></div></main>;
   }
 
-  const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase();
+  const initials = `${user.firstName?.[0] ?? "?"}${user.lastName?.[0] ?? "?"}`.toUpperCase();
 
   function handleLogout() {
     logout();
