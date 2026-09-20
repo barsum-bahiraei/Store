@@ -1,20 +1,59 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router";
+import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { Sidebar } from "~/components/layout/Sidebar";
+import {
+  canAccessPanel,
+  canAccessRoute,
+} from "~/features/auth/utils/authorization";
 
 export default function DashboardLayout() {
-  const { isAuthenticated, isReady, currentUser } = useAuth();
+  const { isAuthenticated, isReady, currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (isReady && !isAuthenticated) {
       navigate("/", { replace: true });
+      return;
     }
   }, [isAuthenticated, isReady, navigate]);
 
   if (!isReady || !isAuthenticated) return null;
+
+  if (!currentUser) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
+        <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <span className="material-symbols-outlined text-5xl text-red-500">lock</span>
+          <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
+            دسترسی غیرمجاز
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            شما دسترسی لازم برای ورود به پنل مدیریت را ندارید.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              navigate("/", { replace: true });
+            }}
+            className="mt-6 min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+          >
+            بازگشت به ورود
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  if (
+    !canAccessPanel(currentUser) ||
+    !canAccessRoute(currentUser, location.pathname)
+  ) {
+    return <Navigate to="/404" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">

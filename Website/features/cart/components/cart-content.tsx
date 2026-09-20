@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useUserProfile } from "@/features/auth/hooks/use-account";
+import { isUserRole } from "@/features/auth/types/account";
 import { useCart } from "../hooks/use-cart";
 import { CartItemControls } from "./cart-item-controls";
 
 export function CartContent() {
   const { data: serverItems = [], guestItems, isAuthenticated, isPending, isError, isFetching, refetch } = useCart();
+  const { data: userProfile } = useUserProfile();
+  const canPurchase = isUserRole(userProfile);
   const items = isAuthenticated ? serverItems : guestItems.map((item) => ({
-    id: item.productId,
+    id: -item.productVariantId,
     productCount: item.count,
     product: { id: item.productId, name: item.name ?? `محصول شماره ${item.productId}` },
+    productVariantId: item.productVariantId,
+    variantName: item.variantName,
   }));
   const linkClass = "inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
@@ -32,12 +38,12 @@ export function CartContent() {
       <ul className="divide-y divide-border rounded-xl border border-border bg-surface px-4 sm:px-6">
         {items.map((item) => (
           <li key={item.id} className="flex flex-col justify-between gap-4 py-6 sm:flex-row sm:items-center">
-            <div className="min-w-0"><h2 className="break-words text-lg font-bold">{item.product.name}</h2><p className="mt-1 text-sm text-muted-foreground">محصول شماره {item.product.id}</p></div>
-            <div className="shrink-0"><CartItemControls item={item} /></div>
+            <div className="min-w-0"><h2 className="break-words text-lg font-bold">{item.product.name}</h2><p className="mt-1 text-sm text-muted-foreground">محصول شماره {item.product.id}{"variantName" in item && item.variantName ? `، تنوع ${item.variantName}` : ""}</p></div>
+            <div className="shrink-0"><CartItemControls item={item} productVariantId={"productVariantId" in item ? item.productVariantId : undefined} /></div>
           </li>
         ))}
       </ul>
-      {isAuthenticated && <div className="flex justify-end"><Link href="/checkout" className={`${linkClass} gap-2`}><span className="material-symbols-rounded text-xl" aria-hidden="true">shopping_cart_checkout</span>تکمیل خرید</Link></div>}
+      {isAuthenticated && canPurchase && <div className="flex justify-end"><Link href="/checkout" className={`${linkClass} gap-2`}><span className="material-symbols-rounded text-xl" aria-hidden="true">shopping_cart_checkout</span>تکمیل خرید</Link></div>}
     </section>
   );
 }

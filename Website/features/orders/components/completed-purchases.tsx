@@ -1,13 +1,14 @@
 "use client";
 
 import { formatToman } from "@/features/products/utils/product";
-import { useCompletedInvoices } from "../hooks/use-invoices";
+import { useInvoices } from "../hooks/use-invoices";
 import { DeliveryMethod, PaymentMethod } from "../types/invoice";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   [PaymentMethod.Cash]: "نقدی",
   [PaymentMethod.Online]: "آنلاین",
+  [PaymentMethod.Check]: "چک",
 };
 const deliveryMethodLabels: Record<DeliveryMethod, string> = {
   [DeliveryMethod.Pickup]: "تحویل حضوری",
@@ -19,24 +20,24 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? "تاریخ نامشخص" : dateFormatter.format(date);
 }
 
-function PurchasesSkeleton() {
+function OrdersSkeleton() {
   return (
-    <div className="grid gap-4" aria-label="در حال بارگذاری خریدهای تکمیل‌شده">
+    <div className="grid gap-4" aria-label="در حال بارگذاری سفارش‌ها">
       {[0, 1, 2].map((item) => <div key={item} className="h-44 animate-pulse rounded-xl border border-border bg-muted" />)}
     </div>
   );
 }
 
-export function CompletedPurchases() {
-  const { data: invoices = [], isLoading, isError, error, refetch, isFetching } = useCompletedInvoices();
+export function OrdersList() {
+  const { data: invoices = [], isLoading, isError, error, refetch, isFetching } = useInvoices();
 
-  if (isLoading) return <PurchasesSkeleton />;
+  if (isLoading) return <OrdersSkeleton />;
 
   if (isError) {
     return (
       <div role="alert" className="rounded-xl border border-border bg-surface p-6 text-center">
         <span className="material-symbols-rounded text-4xl text-error" aria-hidden="true">receipt_long</span>
-        <p className="mt-3 font-black">خریدهای شما بارگذاری نشد</p>
+        <p className="mt-3 font-black">سفارش‌های شما بارگذاری نشد</p>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-5 min-h-11 rounded-lg bg-primary px-5 text-sm font-black text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
           {isFetching ? "در حال تلاش…" : "تلاش دوباره"}
@@ -49,8 +50,8 @@ export function CompletedPurchases() {
     return (
       <div className="rounded-xl border border-border bg-surface px-6 py-12 text-center">
         <span className="material-symbols-rounded text-5xl text-muted-foreground" aria-hidden="true">shopping_bag</span>
-        <p className="mt-4 font-black">هنوز خرید تکمیل‌شده‌ای ندارید</p>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">پس از تکمیل سفارش، اطلاعات آن در این بخش نمایش داده می‌شود.</p>
+        <p className="mt-4 font-black">هنوز سفارشی ندارید</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">پس از ثبت سفارش، اطلاعات آن در این بخش نمایش داده می‌شود.</p>
       </div>
     );
   }

@@ -13,6 +13,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
         builder.Property(x => x.ShortDescription).HasMaxLength(500);
         builder.Property(x => x.Price).HasPrecision(18, 2);
         builder.Property(x => x.Discount).HasPrecision(18, 2);
+        builder.Ignore(x => x.Invoices);
         builder.HasOne(x => x.Category)
             .WithMany(x => x.Products)
             .HasForeignKey(x => x.CategoryId)

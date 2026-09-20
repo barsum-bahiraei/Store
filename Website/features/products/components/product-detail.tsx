@@ -10,6 +10,8 @@ import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/thumbs";
 import { useCart, useCartItemActions } from "@/features/cart/hooks/use-cart";
+import { useUserProfile } from "@/features/auth/hooks/use-account";
+import { isUserRole } from "@/features/auth/types/account";
 import { useProductDetail } from "../hooks/use-products";
 import { formatProductAttributeValue, formatToman, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice } from "../utils/product";
 import { ProductCard } from "./product-card";
@@ -18,7 +20,22 @@ import { ProductComments } from "./product-comments";
 export function ProductDetailContent({ productId }: { productId: number }) {
   const { data: product, isPending, isError, isFetching, refetch } = useProductDetail(productId);
   const { data: cartItems, guestItems, isAuthenticated } = useCart();
-  const { change, isPending: isAdding, error: cartError } = useCartItemActions(productId, product?.name);
+  const { data: userProfile } = useUserProfile();
+  const canPurchase = isUserRole(userProfile);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const effectiveVariantId = product?.variants.length === 1 ? product.variants[0].id : selectedVariantId;
+  const selectedVariant = product?.variants.find((variant) => variant.id === effectiveVariantId);
+  const serverItem = isAuthenticated && product?.variants.length === 1
+    ? cartItems?.find((item) => item.product.id === productId)
+    : undefined;
+  const { change, productCount: serverQuantity, isPending: isAdding, error: cartError } = useCartItemActions({
+    productId,
+    productVariantId: effectiveVariantId ?? undefined,
+    productName: product?.name,
+    variantName: selectedVariant?.colorName,
+    cartItemId: serverItem?.id,
+    productCount: serverItem?.productCount,
+  });
   const [mainSwiper, setMainSwiper] = useState<SwiperInstance | null>(null);
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperInstance | null>(null);
 
@@ -28,7 +45,11 @@ export function ProductDetailContent({ productId }: { productId: number }) {
 
   const images = product.images.map((image) => ({ ...image, resolvedUrl: getProductImageUrl(image.url) })).filter((image) => image.resolvedUrl).sort((left, right) => Number(right.isMain) - Number(left.isMain));
   const brandImageUrl = getProductImageUrl(product.brand?.image?.url);
-  const quantity = isAuthenticated ? cartItems?.find((item) => item.product.id === product.id)?.productCount ?? 0 : guestItems.find((item) => item.productId === product.id)?.count ?? 0;
+  const quantity = isAuthenticated
+    ? serverQuantity
+    : effectiveVariantId != null
+      ? guestItems.find((item) => item.productId === product.id && item.productVariantId === effectiveVariantId)?.count ?? 0
+      : 0;
   const salePrice = getSalePrice(product.price, product.discount);
   const averageRating = product.comments.reduce((total, comment) => total + (comment.rating ?? 0), 0) / (product.comments.filter((comment) => comment.rating).length || 1);
 
@@ -143,19 +164,28 @@ export function ProductDetailContent({ productId }: { productId: number }) {
           {product.shortDescription && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.shortDescription}</p>}
           {product.variants.length > 0 && (
             <div className="mt-6" aria-labelledby="product-colors-title">
-              <h2 id="product-colors-title" className="text-sm font-black">رنگ‌های موجود</h2>
-              <ul className="mt-3 flex flex-wrap gap-3" role="list">
+              <h2 id="product-colors-title" className="text-sm font-black">انتخاب رنگ</h2>
+              <div className="mt-3 flex flex-wrap gap-3" role="radiogroup" aria-labelledby="product-colors-title">
                 {product.variants.map((variant) => (
-                  <li key={variant.id} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold">
+                  <button
+                    key={variant.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={effectiveVariantId === variant.id}
+                    onClick={() => setSelectedVariantId(variant.id)}
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${effectiveVariantId === variant.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface hover:bg-muted"}`}
+                  >
                     <span
                       aria-hidden="true"
                       style={{ backgroundColor: variant.colorCode }}
                       className="block size-6 shrink-0 rounded-full border-2 border-surface shadow-[0_0_0_1px_var(--border)]"
                     />
                     <span>{variant.colorName}</span>
-                  </li>
+                    {effectiveVariantId === variant.id && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
+                  </button>
                 ))}
-              </ul>
+              </div>
+              {product.variants.length > 1 && effectiveVariantId == null && <p className="mt-2 text-sm text-warning">برای افزودن به سبد، یک رنگ را انتخاب کنید.</p>}
             </div>
           )}
           <div className="mt-7 flex flex-wrap items-baseline gap-3">
@@ -169,16 +199,23 @@ export function ProductDetailContent({ productId }: { productId: number }) {
           </div>
           {product.isAvailable ? (
             <>
-              <div className="mt-7 flex items-center gap-3">
-                <button type="button" onClick={() => change("decrease")} disabled={isAdding || quantity === 0} aria-label="کاهش تعداد" className="grid size-12 place-items-center rounded-xl border border-border bg-surface text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-40">
-                  <span className="material-symbols-rounded" aria-hidden="true">remove</span>
-                </button>
-                <span className="min-w-[3rem] text-center text-lg font-black tabular-nums" aria-live="polite">{quantity}</span>
-                <button type="button" onClick={() => change("increase")} disabled={isAdding} aria-label="افزودن به سبد" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60">
-                  <span className="material-symbols-rounded" aria-hidden="true">add_shopping_cart</span>
-                  {isAdding ? "در حال افزودن…" : quantity > 0 ? "افزودن به سبد" : "افزودن به سبد"}
-                </button>
-              </div>
+              {canPurchase ? (
+                <div className="mt-7 flex items-center gap-3">
+                  <button type="button" onClick={() => change("decrease")} disabled={isAdding || quantity === 0} aria-label="کاهش تعداد" className="grid size-12 place-items-center rounded-xl border border-border bg-surface text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-40">
+                    <span className="material-symbols-rounded" aria-hidden="true">remove</span>
+                  </button><span className="min-w-12 text-center text-lg font-black tabular-nums" aria-live="polite">{quantity.toLocaleString("fa-IR")}</span>
+                  <button type="button" onClick={() => change("increase")} disabled={isAdding || effectiveVariantId == null} aria-label="افزودن تنوع انتخاب‌شده به سبد" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span className="material-symbols-rounded" aria-hidden="true">add_shopping_cart</span>
+                    {isAdding ? "در حال افزودن…" : "افزودن به سبد"}
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-7 flex items-center gap-3 rounded-xl border border-border bg-muted p-4">
+                  <span className="material-symbols-rounded text-2xl text-muted-foreground" aria-hidden="true">block</span>
+                  <span className="text-sm font-bold text-muted-foreground">امکان خرید برای نقش شما فعال نیست.</span>
+                </div>
+              )}
+              {product.variants.length === 0 && <p role="alert" className="mt-2 text-sm text-error">برای این محصول تنوع قابل سفارشی ثبت نشده است.</p>}
               {cartError && <p role="alert" className="mt-2 text-sm text-error">{cartError.message}</p>}
             </>
           ) : (

@@ -14,4 +14,5 @@ public class UserProfileGetOutput
     public double? Longitude { get; set; }
     public bool IsEmailVerified { get; set; }
     public bool IsPhoneNumberVerified { get; set; }
+    public List<string> Roles { get; set; }
 }

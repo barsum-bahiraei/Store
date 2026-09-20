@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CartContent } from "@/features/cart/components/cart-content";
 import { useCart } from "@/features/cart/hooks/use-cart";
-import { CompletedPurchases } from "@/features/orders/components/completed-purchases";
+import { OrdersList } from "@/features/orders/components/completed-purchases";
 import { BookmarkList } from "@/features/bookmarks/components/bookmark-list";
 import { useLogout, useUserProfile } from "../hooks/use-account";
 import { ProfileEditForm } from "./profile-edit-form";
@@ -54,7 +54,7 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
             {([
               { id: "profile", label: "پروفایل", icon: "person" },
               { id: "cart", label: "سبد خرید", icon: "shopping_bag" },
-              { id: "orders", label: "خریدهای تکمیل‌شده", icon: "receipt_long" },
+              { id: "orders", label: "سفارش‌ها", icon: "receipt_long" },
               { id: "bookmarks", label: "علاقه‌مندی‌ها", icon: "favorite" },
             ] as const).map((item) => (
               <Link key={item.id} href={`/account?tab=${item.id}`} aria-current={tab === item.id ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${tab === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
@@ -70,7 +70,7 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
               </div>
             )}
             {tab === "cart" && <section aria-labelledby="account-cart-title"><h2 id="account-cart-title" className="mb-4 text-2xl font-black">سبد خرید</h2><CartContent /></section>}
-            {tab === "orders" && <section aria-labelledby="completed-purchases-title"><h2 id="completed-purchases-title" className="mb-4 text-2xl font-black">خریدهای تکمیل‌شده</h2><CompletedPurchases /></section>}
+            {tab === "orders" && <section aria-labelledby="orders-title"><h2 id="orders-title" className="mb-4 text-2xl font-black">سفارش‌ها</h2><OrdersList /></section>}
             {tab === "bookmarks" && <section aria-labelledby="bookmarks-title"><h2 id="bookmarks-title" className="mb-4 text-2xl font-black">علاقه‌مندی‌ها</h2><BookmarkList /></section>}
             {tab === "profile" && <div className="space-y-6"><section className="overflow-hidden rounded-3xl border border-border bg-surface shadow-xl shadow-primary-shadow">
           <div className="flex flex-col gap-5 bg-secondary p-6 text-secondary-foreground sm:flex-row sm:items-center sm:p-8"><div className="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary text-xl font-black text-primary-foreground">{initials}</div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-black">{user.firstName} {user.lastName}</h2>{user.isEmailVerified && <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-black text-primary-foreground"><span className="material-symbols-rounded text-sm" aria-hidden="true">verified</span>تأییدشده</span>}</div><p className="mt-1 truncate text-sm text-secondary-foreground/70" dir="ltr">{user.email}</p></div></div>

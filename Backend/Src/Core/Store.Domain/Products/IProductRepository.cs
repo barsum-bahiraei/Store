@@ -17,12 +17,12 @@ public interface IProductRepository
     Task<ProductBrandEntity> BrandCreateAsync(ProductBrandEntity input, CancellationToken cancellation);
     Task<ProductBrandEntity> BrandUpdateAsync(ProductBrandEntity input, CancellationToken cancellation);
     Task BrandDeleteAsync(ProductBrandEntity input, CancellationToken cancellation);
-    Task<List<ProductVariantEntity>> VariantListAsync(CancellationToken cancellation);
-    Task<List<ProductVariantEntity>> VariantListAsync(List<int> ids, CancellationToken cancellation);
-    Task<ProductVariantEntity?> VariantGetAsync(int id, CancellationToken cancellation);
-    Task<ProductVariantEntity> VariantCreateAsync(ProductVariantEntity input, CancellationToken cancellation);
-    Task<ProductVariantEntity> VariantUpdateAsync(ProductVariantEntity input, CancellationToken cancellation);
-    Task VariantDeleteAsync(ProductVariantEntity input, CancellationToken cancellation);
+    Task<List<VariantEntity>> VariantListAsync(CancellationToken cancellation);
+    Task<List<VariantEntity>> VariantListAsync(List<int> ids, CancellationToken cancellation);
+    Task<VariantEntity?> VariantGetAsync(int id, CancellationToken cancellation);
+    Task<VariantEntity> VariantCreateAsync(VariantEntity input, CancellationToken cancellation);
+    Task<VariantEntity> VariantUpdateAsync(VariantEntity input, CancellationToken cancellation);
+    Task VariantDeleteAsync(VariantEntity input, CancellationToken cancellation);
     Task<ProductEntity> CreateAsync(ProductEntity input, CancellationToken cancellation);
     Task<ProductEntity> UpdateAsync(ProductEntity input, CancellationToken cancellation);
     Task DeleteAsync(ProductEntity input, CancellationToken cancellation);

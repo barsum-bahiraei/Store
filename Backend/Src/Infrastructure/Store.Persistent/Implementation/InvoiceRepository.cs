@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Store.Domain.Accounts;
 using Store.Domain.Invoices;
 using Store.Persistent.Database.StoreDbContext;
 
@@ -6,65 +7,87 @@ namespace Store.Persistent.Implementation;
 
 public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
 {
-    public async Task<List<PreInvoiceEntity>> PreInvoiceListAsync(int userId, CancellationToken cancellation)
+    public async Task<List<CartEntity>> CartListAsync(int userId, CancellationToken cancellation)
     {
-        var result = await context.PreInvoices
+        var result = await context.Carts
             .Include(x => x.Product)
+            .Include(x => x.ProductVariants)
             .Where(x => x.UserId == userId)
             .ToListAsync(cancellation);
         return result;
     }
 
-    public async Task<PreInvoiceEntity?> PreInvoiceGetAsync(int userId, CancellationToken cancellation)
+    public async Task<CartEntity?> CartGetAsync(int id, int userId, CancellationToken cancellation)
     {
-        var result = await context.PreInvoices
+        var result = await context.Carts
             .Include(x => x.Product)
-            .Where(x => x.UserId == userId)
-            .FirstOrDefaultAsync(cancellation);
-        return result;
-    }
-
-    public async Task<PreInvoiceEntity?> PreInvoiceGetAsync(int id, int userId, CancellationToken cancellation)
-    {
-        var result = await context.PreInvoices
-            .Include(x => x.Product)
+            .Include(x => x.ProductVariants)
             .Where(x => x.Id == id && x.UserId == userId)
             .FirstOrDefaultAsync(cancellation);
         return result;
     }
 
-    public async Task<PreInvoiceEntity> PreInvoiceCreateAsync(PreInvoiceEntity input, CancellationToken cancellation)
+    public async Task<CartEntity> CartCreateAsync(CartEntity input, CancellationToken cancellation)
     {
-        await context.PreInvoices.AddAsync(input, cancellation);
+        await context.Carts.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
-        var result = await context.PreInvoices
+        var result = await context.Carts
             .Include(x => x.Product)
+            .Include(x => x.ProductVariants)
             .Where(x => x.Id == input.Id && x.UserId == input.UserId)
             .FirstAsync(cancellation);
         return result;
     }
 
-    public async Task<PreInvoiceEntity> PreInvoiceUpdateAsync(PreInvoiceEntity input, CancellationToken cancellation)
+    public async Task<CartEntity> CartUpdateAsync(CartEntity input, CancellationToken cancellation)
     {
-        context.PreInvoices.Update(input);
+        context.Carts.Update(input);
         await context.SaveChangesAsync(cancellation);
-        var result = await context.PreInvoices
+        var result = await context.Carts
             .Include(x => x.Product)
+            .Include(x => x.ProductVariants)
             .Where(x => x.Id == input.Id && x.UserId == input.UserId)
             .FirstAsync(cancellation);
         return result;
     }
 
-    public async Task PreInvoiceDeleteAsync(PreInvoiceEntity input, CancellationToken cancellation)
+    public async Task CartDeleteAsync(CartEntity input, CancellationToken cancellation)
     {
-        context.PreInvoices.Remove(input);
+        context.Carts.Remove(input);
         await context.SaveChangesAsync(cancellation);
+    }
+
+    public async Task<UserDiscountCodeEntity?> UserDiscountCodeGetAsync(int userId, string code,
+        CancellationToken cancellation)
+    {
+        return await context.UserDiscountCodes
+            .AsNoTracking()
+            .Include(x => x.DiscountCode)
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.DiscountCode.Code == code, cancellation);
+    }
+
+    public async Task<(InvoiceEntity Invoice, PaymentEntity Payment)> CheckoutCreateAsync(
+        InvoiceEntity invoice, PaymentEntity payment, IReadOnlyCollection<CartEntity> carts,
+        CancellationToken cancellation)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
+
+        invoice.Payments = [payment];
+        await context.Invoices.AddAsync(invoice, cancellation);
+        context.Carts.RemoveRange(carts);
+        await context.SaveChangesAsync(cancellation);
+
+        // TODO: Mark UserDiscountCode as used only after a future payment verification succeeds.
+        await transaction.CommitAsync(cancellation);
+        return (invoice, payment);
     }
 
     public async Task<List<InvoiceEntity>> ListAsync(int userId, CancellationToken cancellation)
     {
         var result = await context.Invoices
             .Include(x => x.User)
+            .Include(x => x.InvoiceItems)
+            .Include(x => x.Payments)
             .Where(x => x.UserId == userId)
             .ToListAsync(cancellation);
         return result;

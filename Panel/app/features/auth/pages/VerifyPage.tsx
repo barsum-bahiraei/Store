@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
+import {
+  canAccessPanel,
+  getDefaultPanelPath,
+} from "~/features/auth/utils/authorization";
 import loginImage from "~/assets/images/login.png";
 
 const OTP_LENGTH = 5;
@@ -53,8 +57,12 @@ export default function VerifyPage() {
 
     setSubmitting(true);
     try {
-      await verifyOtp(phoneNumber, code);
-      navigate("/attributes", { replace: true });
+      const user = await verifyOtp(phoneNumber, code);
+      if (!canAccessPanel(user)) {
+        navigate("/404", { replace: true });
+        return;
+      }
+      navigate(getDefaultPanelPath(user), { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "کد تأیید نامعتبر است.");
     } finally {
@@ -84,7 +92,7 @@ export default function VerifyPage() {
         className="fixed left-4 top-4 z-10 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
         aria-label="تغییر پوسته"
       >
-        <span className="material-symbols-outlined">
+        <span className="material-symbols-outlined" suppressHydrationWarning>
           {theme === "dark" ? "light_mode" : "dark_mode"}
         </span>
       </button>

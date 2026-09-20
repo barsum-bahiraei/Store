@@ -21,7 +21,7 @@ public class ProductEntity : BaseEntity
     public ICollection<ProductAttributeEntity> ProductAttributes { get; set; }
     public ICollection<ProductVariantEntity> ProductVariants { get; set; }
     public ICollection<InvoiceEntity> Invoices { get; set; }
-    public ICollection<PreInvoiceEntity> PreInvoices { get; set; }
+    public ICollection<CartEntity> Cards { get; set; }
     public ICollection<ProductCommentEntity> ProductComments { get; set; }
     public ICollection<ProductBookmarkEntity> ProductBookmarks { get; set; }
 }

@@ -116,6 +116,48 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     }
 
     [HasAccess]
+    [HttpGet("DiscountCode")]
+    public async Task<IActionResult> DiscountCodeGet(CancellationToken cancellation = default)
+    {
+        var result = await accountService.DiscountCodeListAsync(cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpGet("DiscountCode/{id}")]
+    public async Task<IActionResult> DiscountCodeGet(int id, CancellationToken cancellation = default)
+    {
+        var result = await accountService.DiscountCodeGetAsync(id, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpPost("DiscountCode")]
+    public async Task<IActionResult> DiscountCodePost(DiscountCodeUpsertInput input,
+        CancellationToken cancellation = default)
+    {
+        var result = await accountService.DiscountCodeCreateAsync(input, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpPut("DiscountCode/{id}")]
+    public async Task<IActionResult> DiscountCodePut(int id, DiscountCodeUpsertInput input,
+        CancellationToken cancellation = default)
+    {
+        var result = await accountService.DiscountCodeUpdateAsync(id, input, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
+    [HttpDelete("DiscountCode/{id}")]
+    public async Task<IActionResult> DiscountCodeDelete(int id, CancellationToken cancellation = default)
+    {
+        var result = await accountService.DiscountCodeDeleteAsync(id, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
     [HttpGet("RoleAccess/{roleId}")]
     public async Task<IActionResult> RoleAccessGet(int roleId, CancellationToken cancellation = default)
     {

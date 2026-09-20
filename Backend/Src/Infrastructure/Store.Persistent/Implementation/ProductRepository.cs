@@ -154,6 +154,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Include(x => x.Category)
             .Include(x => x.ProductBrand)
             .Include(x => x.ProductVariants)
+            .ThenInclude(x => x.Variant)
             .Include(x => x.ProductAttributes)
             .ThenInclude(x => x.Attribute)
             .FirstOrDefaultAsync(x => x.Id == id && x.Seller.UserId == userId, cancellation);
@@ -167,6 +168,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Include(x => x.Category)
             .Include(x => x.ProductBrand)
             .Include(x => x.ProductVariants)
+            .ThenInclude(x => x.Variant)
             .Include(x => x.ProductComments)
             .ThenInclude(x => x.User)
             .Include(x => x.ProductAttributes)
@@ -227,49 +229,49 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         await context.SaveChangesAsync(cancellation);
     }
 
-    public async Task<List<ProductVariantEntity>> VariantListAsync(CancellationToken cancellation)
+    public async Task<List<VariantEntity>> VariantListAsync(CancellationToken cancellation)
     {
-        var result = await context.ProductVariants
+        var result = await context.Variants
             .OrderBy(x => x.Id)
             .ToListAsync(cancellation);
         return result;
     }
 
-    public async Task<List<ProductVariantEntity>> VariantListAsync(List<int> ids, CancellationToken cancellation)
+    public async Task<List<VariantEntity>> VariantListAsync(List<int> ids, CancellationToken cancellation)
     {
-        var result = await context.ProductVariants
+        var result = await context.Variants
             .Where(x => ids.Contains(x.Id))
             .ToListAsync(cancellation);
         return result;
     }
 
-    public async Task<ProductVariantEntity?> VariantGetAsync(int id, CancellationToken cancellation)
+    public async Task<VariantEntity?> VariantGetAsync(int id, CancellationToken cancellation)
     {
-        var result = await context.ProductVariants
-            .Include(x => x.Products)
+        var result = await context.Variants
+            .Include(x => x.ProductVariants)
             .FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
     }
 
-    public async Task<ProductVariantEntity> VariantCreateAsync(ProductVariantEntity input,
+    public async Task<VariantEntity> VariantCreateAsync(VariantEntity input,
         CancellationToken cancellation)
     {
-        await context.ProductVariants.AddAsync(input, cancellation);
+        await context.Variants.AddAsync(input, cancellation);
         await context.SaveChangesAsync(cancellation);
         return input;
     }
 
-    public async Task<ProductVariantEntity> VariantUpdateAsync(ProductVariantEntity input,
+    public async Task<VariantEntity> VariantUpdateAsync(VariantEntity input,
         CancellationToken cancellation)
     {
-        context.ProductVariants.Update(input);
+        context.Variants.Update(input);
         await context.SaveChangesAsync(cancellation);
         return input;
     }
 
-    public async Task VariantDeleteAsync(ProductVariantEntity input, CancellationToken cancellation)
+    public async Task VariantDeleteAsync(VariantEntity input, CancellationToken cancellation)
     {
-        context.ProductVariants.Remove(input);
+        context.Variants.Remove(input);
         await context.SaveChangesAsync(cancellation);
     }
 
@@ -288,6 +290,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Include(x => x.Category)
             .Include(x => x.ProductBrand)
             .Include(x => x.ProductVariants)
+            .ThenInclude(x => x.Variant)
             .FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
         return entity;
     }

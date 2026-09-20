@@ -3,8 +3,19 @@
 import { useCartItemActions } from "../hooks/use-cart";
 import type { CartItem } from "../types/cart";
 
-export function CartItemControls({ item }: { item: Pick<CartItem, "productCount"> & { product: Pick<CartItem["product"], "id" | "name"> } }) {
-  const { change, isPending, error } = useCartItemActions(item.product.id);
+type CartItemControlsProps = {
+  item: Pick<CartItem, "id" | "productCount"> & { product: Pick<CartItem["product"], "id" | "name"> };
+  productVariantId?: number;
+};
+
+export function CartItemControls({ item, productVariantId }: CartItemControlsProps) {
+  const { change, isPending, error } = useCartItemActions({
+    productId: item.product.id,
+    productVariantId,
+    cartItemId: productVariantId == null ? item.id : undefined,
+    productCount: item.productCount,
+    productName: item.product.name,
+  });
   const buttonClass = "grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-50";
 
   return (

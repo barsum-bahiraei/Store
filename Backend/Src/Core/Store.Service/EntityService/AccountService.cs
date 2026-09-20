@@ -34,7 +34,8 @@ public class AccountService(
             PhoneNumber = x.PhoneNumber,
             NationalCode = x.NationalCode,
             IsEmailVerified = x.IsEmailVerified,
-            IsPhoneNumberVerified = x.IsPhoneNumberVerified
+            IsPhoneNumberVerified = x.IsPhoneNumberVerified,
+            Roles = x.UserRoles.Select(userRole => userRole.Role.Name).ToList()
         }).ToList();
         return Result<List<UserListOutput>>.Success(result);
     }
@@ -103,7 +104,8 @@ public class AccountService(
             PhoneNumber = entity.PhoneNumber,
             NationalCode = entity.NationalCode,
             IsEmailVerified = entity.IsEmailVerified,
-            IsPhoneNumberVerified = entity.IsPhoneNumberVerified
+            IsPhoneNumberVerified = entity.IsPhoneNumberVerified,
+            Roles = entity.UserRoles.Select(x => x.Role.Name).ToList()
         };
         return Result<UserProfileGetOutput>.Success(result);
     }
@@ -301,6 +303,129 @@ public class AccountService(
         return Result<bool>.Success(true);
     }
 
+    public async Task<Result<List<DiscountCodeListOutput>>> DiscountCodeListAsync(CancellationToken cancellation)
+    {
+        var entities = await accountRepository.DiscountCodeListAsync(cancellation);
+        var result = entities.Select(x => new DiscountCodeListOutput
+        {
+            Id = x.Id,
+            Code = x.Code,
+            DiscountPercent = x.DiscountPercent,
+            MaxDiscountAmount = x.MaxDiscountAmount,
+            PaymentMethod = x.PaymentMethod,
+            StartDate = x.StartDate,
+            EndDate = x.EndDate,
+            IsActive = x.IsActive,
+            AssignedUserCount = x.UserDiscountCodes.Count,
+            UsedUserCount = x.UserDiscountCodes.Count(userDiscountCode => userDiscountCode.IsUsed)
+        }).ToList();
+        return Result<List<DiscountCodeListOutput>>.Success(result);
+    }
+
+    public async Task<Result<DiscountCodeOutput>> DiscountCodeGetAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await accountRepository.DiscountCodeGetAsync(id, cancellation);
+        return entity == null
+            ? Result<DiscountCodeOutput>.Failure("Discount code not found")
+            : Result<DiscountCodeOutput>.Success(MapDiscountCode(entity));
+    }
+
+    public async Task<Result<DiscountCodeOutput>> DiscountCodeCreateAsync(DiscountCodeUpsertInput input,
+        CancellationToken cancellation)
+    {
+        var validationError = ValidateDiscountCode(input);
+        if (validationError != null)
+            return Result<DiscountCodeOutput>.Failure(validationError);
+
+        var code = input.Code.Trim();
+        if (await accountRepository.DiscountCodeExistsAsync(code, null, cancellation))
+            return Result<DiscountCodeOutput>.Failure("Discount code already exists");
+
+        var usersResult = await GetDiscountCodeUsersAsync(input.UserIds, cancellation);
+        if (usersResult.Error != null)
+            return Result<DiscountCodeOutput>.Failure(usersResult.Error);
+
+        var entity = new DiscountCodeEntity
+        {
+            Code = code,
+            DiscountPercent = input.DiscountPercent,
+            MaxDiscountAmount = input.MaxDiscountAmount,
+            PaymentMethod = input.PaymentMethod,
+            StartDate = input.StartDate,
+            EndDate = input.EndDate,
+            IsActive = input.IsActive,
+            UserDiscountCodes = usersResult.Users.Select(user => new UserDiscountCodeEntity
+            {
+                UserId = user.Id,
+                User = user,
+                IsUsed = false
+            }).ToList()
+        };
+
+        var created = await accountRepository.DiscountCodeCreateAsync(entity, cancellation);
+        return Result<DiscountCodeOutput>.Success(MapDiscountCode(created));
+    }
+
+    public async Task<Result<DiscountCodeOutput>> DiscountCodeUpdateAsync(int id, DiscountCodeUpsertInput input,
+        CancellationToken cancellation)
+    {
+        var validationError = ValidateDiscountCode(input);
+        if (validationError != null)
+            return Result<DiscountCodeOutput>.Failure(validationError);
+
+        var entity = await accountRepository.DiscountCodeGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<DiscountCodeOutput>.Failure("Discount code not found");
+
+        var code = input.Code.Trim();
+        if (await accountRepository.DiscountCodeExistsAsync(code, id, cancellation))
+            return Result<DiscountCodeOutput>.Failure("Discount code already exists");
+
+        var usersResult = await GetDiscountCodeUsersAsync(input.UserIds, cancellation);
+        if (usersResult.Error != null)
+            return Result<DiscountCodeOutput>.Failure(usersResult.Error);
+
+        var userIds = usersResult.Users.Select(x => x.Id).ToHashSet();
+        foreach (var assignment in entity.UserDiscountCodes.Where(x => !userIds.Contains(x.UserId)).ToList())
+            entity.UserDiscountCodes.Remove(assignment);
+
+        var assignedUserIds = entity.UserDiscountCodes.Select(x => x.UserId).ToHashSet();
+        foreach (var user in usersResult.Users.Where(x => !assignedUserIds.Contains(x.Id)))
+        {
+            entity.UserDiscountCodes.Add(new UserDiscountCodeEntity
+            {
+                UserId = user.Id,
+                User = user,
+                DiscountCodeId = entity.Id,
+                IsUsed = false
+            });
+        }
+
+        entity.Code = code;
+        entity.DiscountPercent = input.DiscountPercent;
+        entity.MaxDiscountAmount = input.MaxDiscountAmount;
+        entity.PaymentMethod = input.PaymentMethod;
+        entity.StartDate = input.StartDate;
+        entity.EndDate = input.EndDate;
+        entity.IsActive = input.IsActive;
+
+        var updated = await accountRepository.DiscountCodeUpdateAsync(entity, cancellation);
+        return Result<DiscountCodeOutput>.Success(MapDiscountCode(updated));
+    }
+
+    public async Task<Result<bool>> DiscountCodeDeleteAsync(int id, CancellationToken cancellation)
+    {
+        var entity = await accountRepository.DiscountCodeGetAsync(id, cancellation);
+        if (entity == null)
+            return Result<bool>.Failure("Discount code not found");
+
+        if (await accountRepository.DiscountCodeIsUsedAsync(id, cancellation))
+            return Result<bool>.Failure("Discount code is used by an invoice and cannot be deleted");
+
+        await accountRepository.DiscountCodeDeleteAsync(entity, cancellation);
+        return Result<bool>.Success(true);
+    }
+
     public async Task<Result<List<RoleAccessListOutput>>> RoleAccessListAsync(
         int roleId,
         CancellationToken cancellation
@@ -379,6 +504,68 @@ public class AccountService(
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private async Task<(List<UserEntity> Users, string? Error)> GetDiscountCodeUsersAsync(
+        List<int> requestedUserIds, CancellationToken cancellation)
+    {
+        var userIds = requestedUserIds.Distinct().ToList();
+        var users = await accountRepository.UserListAsync(userIds, cancellation);
+        if (users.Count != userIds.Count)
+            return ([], "One or more users were not found");
+
+        // if (users.Any(user => user.UserRoles.Count != 1 ||
+        //                       !string.Equals(user.UserRoles.Single().Role.Name, "User",
+        //                           StringComparison.OrdinalIgnoreCase)))
+        //     return ([], "Discount codes can only be assigned to users with the User role");
+
+        return (users, null);
+    }
+
+    private static string? ValidateDiscountCode(DiscountCodeUpsertInput input)
+    {
+        if (string.IsNullOrWhiteSpace(input.Code))
+            return "Discount code is required";
+        if (input.Code.Trim().Length > 100)
+            return "Discount code cannot exceed 100 characters";
+        if (input.DiscountPercent is <= 0 or > 100)
+            return "Discount percent must be greater than zero and at most 100";
+        if (input.MaxDiscountAmount is < 0)
+            return "Maximum discount amount cannot be negative";
+        if (input.PaymentMethod.HasValue && !Enum.IsDefined(input.PaymentMethod.Value))
+            return "Payment method is invalid";
+        if (input.StartDate.HasValue && input.EndDate.HasValue && input.StartDate > input.EndDate)
+            return "Start date cannot be after end date";
+        if (input.UserIds == null || input.UserIds.Count == 0)
+            return "At least one user must be selected";
+        if (input.UserIds.Any(x => x <= 0))
+            return "User id is invalid";
+        return null;
+    }
+
+    private static DiscountCodeOutput MapDiscountCode(DiscountCodeEntity entity)
+    {
+        return new DiscountCodeOutput
+        {
+            Id = entity.Id,
+            Code = entity.Code,
+            DiscountPercent = entity.DiscountPercent,
+            MaxDiscountAmount = entity.MaxDiscountAmount,
+            PaymentMethod = entity.PaymentMethod,
+            StartDate = entity.StartDate,
+            EndDate = entity.EndDate,
+            IsActive = entity.IsActive,
+            Users = entity.UserDiscountCodes.Select(x => new DiscountCodeUserOutput
+            {
+                Id = x.Id,
+                UserId = x.UserId,
+                FirstName = x.User.FirstName,
+                LastName = x.User.LastName,
+                PhoneNumber = x.User.PhoneNumber,
+                IsUsed = x.IsUsed,
+                UsedAt = x.UsedAt
+            }).ToList()
+        };
     }
 
     private static string? NormalizePhoneNumber(string phoneNumber)

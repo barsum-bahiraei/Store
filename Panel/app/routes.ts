@@ -12,6 +12,7 @@ export default [
     route("categories", "features/categories/pages/CategoriesPage.tsx"),
     route("roles", "features/access/pages/RolesPage.tsx"),
     route("users", "features/access/pages/UsersPage.tsx"),
+    route("discount-codes", "features/discount-codes/pages/DiscountCodesPage.tsx"),
     route("profile", "features/auth/pages/ProfilePage.tsx"),
   ]),
   route("*", "features/not-found/pages/NotFoundPage.tsx"),

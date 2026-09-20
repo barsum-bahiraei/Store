@@ -1,20 +1,20 @@
 import { apiClient } from "@/lib/api-client";
 import { resolveApiResponse, type ApiResponse } from "@/lib/api-response";
-import type { CartItem, CreateCartItemInput, UpdateCartItemInput } from "../types/cart";
+import type { CartCreateInput, CartItem, CartUpdateInput } from "../types/cart";
 
-const endpoint = "/Invoice/Order";
+const endpoint = "/Invoice/Cart";
 
 export async function getCart(signal?: AbortSignal): Promise<CartItem[]> {
   const { data } = await apiClient.get<ApiResponse<CartItem[]>>(endpoint, { signal });
   return resolveApiResponse(data, "بارگذاری سبد خرید انجام نشد.");
 }
 
-export async function createCartItem(input: CreateCartItemInput): Promise<CartItem> {
+export async function createCartItem(input: CartCreateInput): Promise<CartItem> {
   const { data } = await apiClient.post<ApiResponse<CartItem>>(endpoint, input);
   return resolveApiResponse(data, "افزودن محصول انجام نشد.");
 }
 
-export async function updateCartItem(id: number, input: UpdateCartItemInput): Promise<CartItem> {
+export async function updateCartItem(id: number, input: CartUpdateInput): Promise<CartItem> {
   const { data } = await apiClient.put<ApiResponse<CartItem>>(`${endpoint}/${id}`, input);
   return resolveApiResponse(data, "به‌روزرسانی محصول انجام نشد.");
 }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Invoices.Models.Input;
@@ -20,38 +21,47 @@ public class InvoiceController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HasAccess]
-    [HttpGet("Order")]
-    public async Task<IActionResult> PreInvoiceGet(CancellationToken cancellation = default)
+    [HttpGet("Cart")]
+    public async Task<IActionResult> CartGet(CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-        var result = await invoiceService.PreInvoiceListAsync(userId, cancellation);
+        var result = await invoiceService.CartListAsync(userId, cancellation);
         return Ok(result);
     }
 
     [HasAccess]
-    [HttpPost("Order")]
-    public async Task<IActionResult> PreInvoicePost(PreInvoiceCreateInput input, CancellationToken cancellation = default)
+    [HttpPost("Cart")]
+    public async Task<IActionResult> CartPost(CartCreateInput input, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-        var result = await invoiceService.PreInvoiceCreateAsync(userId, input, cancellation);
+        var result = await invoiceService.CartCreateAsync(userId, input, cancellation);
         return Ok(result);
     }
 
     [HasAccess]
-    [HttpPut("Order/{id}")]
-    public async Task<IActionResult> PreInvoicePut(int id, PreInvoiceUpdateInput input, CancellationToken cancellation = default)
+    [HttpPut("Cart/{id}")]
+    public async Task<IActionResult> CartPut(int id, CartUpdateInput input, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-        var result = await invoiceService.PreInvoiceUpdateAsync(id, userId, input, cancellation);
+        var result = await invoiceService.CartUpdateAsync(id, userId, input, cancellation);
         return Ok(result);
     }
 
     [HasAccess]
-    [HttpDelete("Order/{id}")]
-    public async Task<IActionResult> PreInvoiceDelete(int id, CancellationToken cancellation = default)
+    [HttpDelete("Cart/{id}")]
+    public async Task<IActionResult> CartDelete(int id, CancellationToken cancellation = default)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-        var result = await invoiceService.PreInvoiceDeleteAsync(id, userId, cancellation);
+        var result = await invoiceService.CartDeleteAsync(id, userId, cancellation);
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPost("Checkout")]
+    public async Task<IActionResult> Checkout(CheckoutInput input, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await invoiceService.CheckoutAsync(userId, input, cancellation);
         return Ok(result);
     }
 }

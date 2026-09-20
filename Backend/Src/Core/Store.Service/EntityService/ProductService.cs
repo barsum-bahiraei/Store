@@ -418,8 +418,8 @@ public class ProductService(
             Variants = entity.ProductVariants.Select(x => new ProductVariantDetailOutput
             {
                 Id = x.Id,
-                ColorName = x.ColorName,
-                ColorCode = x.ColorCode
+                ColorName = x.Variant.Name,
+                ColorCode = x.Variant.Code
             }).ToList(),
             SimilarProducts = similarProducts
         };
@@ -544,8 +544,8 @@ public class ProductService(
             Variants = entity.ProductVariants.Select(x => new ProductVariantGetOutput
             {
                 Id = x.Id,
-                ColorName = x.ColorName,
-                ColorCode = x.ColorCode
+                ColorName = x.Variant.Name,
+                ColorCode = x.Variant.Code
             }).ToList()
         };
 
@@ -581,7 +581,11 @@ public class ProductService(
                 AttributeId = x.AttributeId,
                 Value = x.Value
             }).ToList(),
-            ProductVariants = variants
+            ProductVariants = variants.Select(x => new ProductVariantEntity
+            {
+                VariantId = x.Id,
+                Variant = x
+            }).ToList()
         };
 
         var created = await productRepository.CreateAsync(entity, cancellation);
@@ -607,8 +611,8 @@ public class ProductService(
             Variants = created.ProductVariants.Select(x => new ProductVariantCreateOutput
             {
                 Id = x.Id,
-                ColorName = x.ColorName,
-                ColorCode = x.ColorCode
+                ColorName = x.Variant.Name,
+                ColorCode = x.Variant.Code
             }).ToList()
         });
     }
@@ -651,7 +655,11 @@ public class ProductService(
 
         entity.ProductVariants.Clear();
         foreach (var item in variants)
-            entity.ProductVariants.Add(item);
+            entity.ProductVariants.Add(new ProductVariantEntity
+            {
+                VariantId = item.Id,
+                Variant = item
+            });
 
         var updated = await productRepository.UpdateAsync(entity, cancellation);
 
@@ -677,8 +685,8 @@ public class ProductService(
             Variants = updated.ProductVariants.Select(x => new ProductVariantUpdateOutput
             {
                 Id = x.Id,
-                ColorName = x.ColorName,
-                ColorCode = x.ColorCode
+                ColorName = x.Variant.Name,
+                ColorCode = x.Variant.Code
             }).ToList()
         });
     }
@@ -807,8 +815,8 @@ public class ProductService(
         var result = entities.Select(x => new ProductVariantListOutput
         {
             Id = x.Id,
-            ColorName = x.ColorName,
-            ColorCode = x.ColorCode
+            ColorName = x.Name,
+            ColorCode = x.Code
         }).ToList();
         return Result<List<ProductVariantListOutput>>.Success(result);
     }
@@ -822,25 +830,25 @@ public class ProductService(
         return Result<ProductVariantGetOutput?>.Success(new ProductVariantGetOutput
         {
             Id = entity.Id,
-            ColorName = entity.ColorName,
-            ColorCode = entity.ColorCode
+            ColorName = entity.Name,
+            ColorCode = entity.Code
         });
     }
 
     public async Task<Result<ProductVariantCreateOutput>> VariantCreateAsync(ProductVariantCreateInput input,
         CancellationToken cancellation)
     {
-        var created = await productRepository.VariantCreateAsync(new ProductVariantEntity
+        var created = await productRepository.VariantCreateAsync(new VariantEntity
         {
-            ColorName = input.ColorName,
-            ColorCode = input.ColorCode
+            Name = input.ColorName,
+            Code = input.ColorCode
         }, cancellation);
 
         return Result<ProductVariantCreateOutput>.Success(new ProductVariantCreateOutput
         {
             Id = created.Id,
-            ColorName = created.ColorName,
-            ColorCode = created.ColorCode
+            ColorName = created.Name,
+            ColorCode = created.Code
         });
     }
 
@@ -851,14 +859,14 @@ public class ProductService(
         if (entity == null)
             return Result<ProductVariantUpdateOutput>.Failure("Product variant not found");
 
-        entity.ColorName = input.ColorName;
-        entity.ColorCode = input.ColorCode;
+        entity.Name = input.ColorName;
+        entity.Code = input.ColorCode;
         var updated = await productRepository.VariantUpdateAsync(entity, cancellation);
         return Result<ProductVariantUpdateOutput>.Success(new ProductVariantUpdateOutput
         {
             Id = updated.Id,
-            ColorName = updated.ColorName,
-            ColorCode = updated.ColorCode
+            ColorName = updated.Name,
+            ColorCode = updated.Code
         });
     }
 
@@ -868,7 +876,7 @@ public class ProductService(
         if (entity == null)
             return Result<bool>.Failure("Product variant not found");
 
-        if (entity.Products.Count != 0)
+        if (entity.ProductVariants.Count != 0)
             return Result<bool>.Failure("Product variant is in use");
 
         await productRepository.VariantDeleteAsync(entity, cancellation);

@@ -6,45 +6,51 @@ import type { CartAction } from "../types/cart";
 
 export type GuestCartItem = {
   productId: number;
+  productVariantId: number;
+  variantName?: string;
   name?: string;
   count: number;
-  transfer?: { account: string; target: number };
 };
 
-type GuestCartState = {
+export type CartState = {
   items: GuestCartItem[];
-  change: (productId: number, action: CartAction, name?: string) => void;
-  planTransfer: (productId: number, account: string, target: number) => void;
-  completeTransfer: (productId: number) => void;
 };
+
+export type CartStore = CartState & {
+  change: (productId: number, productVariantId: number, action: CartAction, name?: string, variantName?: string) => void;
+  completeTransfer: (productId: number, productVariantId: number) => void;
+};
+
+function isSameItem(item: GuestCartItem, productId: number, productVariantId: number) {
+  return item.productId === productId && item.productVariantId === productVariantId;
+}
 
 function validItems(value: unknown): GuestCartItem[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is GuestCartItem => {
     if (!item || typeof item !== "object") return false;
     return Number.isSafeInteger(item.productId) && item.productId > 0
+      && Number.isSafeInteger(item.productVariantId) && item.productVariantId > 0
       && Number.isSafeInteger(item.count) && item.count > 0
       && (item.name === undefined || typeof item.name === "string")
-      && (item.transfer === undefined || (typeof item.transfer?.account === "string"
-        && Number.isSafeInteger(item.transfer.target) && item.transfer.target > 0));
-  }).filter((item, index, items) => items.findIndex((entry) => entry.productId === item.productId) === index);
+      && (item.variantName === undefined || typeof item.variantName === "string");
+  }).filter((item, index, items) => items.findIndex((entry) => isSameItem(entry, item.productId, item.productVariantId)) === index);
 }
 
-export const useGuestCartStore = create<GuestCartState>()(persist((set) => ({
+export const useGuestCartStore = create<CartStore>()(persist((set) => ({
   items: [],
-  change: (productId, action, name) => set((state) => {
-    const item = state.items.find((entry) => entry.productId === productId);
+  change: (productId, productVariantId, action, name, variantName) => set((state) => {
+    const item = state.items.find((entry) => isSameItem(entry, productId, productVariantId));
     if (action === "remove" || (action === "decrease" && item?.count === 1)) {
-      return { items: state.items.filter((entry) => entry.productId !== productId) };
+      return { items: state.items.filter((entry) => !isSameItem(entry, productId, productVariantId)) };
     }
-    if (!item) return action === "increase" ? { items: [...state.items, { productId, name, count: 1 }] } : state;
-    return { items: state.items.map((entry) => entry.productId === productId
-      ? { productId, name: name ?? entry.name, count: entry.count + (action === "increase" ? 1 : -1) } : entry) };
+    if (!item) return action === "increase" ? { items: [...state.items, { productId, productVariantId, name, variantName, count: 1 }] } : state;
+    return { items: state.items.map((entry) => isSameItem(entry, productId, productVariantId)
+      ? { ...entry, name: name ?? entry.name, variantName: variantName ?? entry.variantName, count: entry.count + (action === "increase" ? 1 : -1) } : entry) };
   }),
-  planTransfer: (productId, account, target) => set((state) => ({
-    items: state.items.map((item) => item.productId === productId ? { ...item, transfer: { account, target } } : item),
+  completeTransfer: (productId, productVariantId) => set((state) => ({
+    items: state.items.filter((item) => !isSameItem(item, productId, productVariantId)),
   })),
-  completeTransfer: (productId) => set((state) => ({ items: state.items.filter((item) => item.productId !== productId) })),
 }), {
   name: "store-guest-cart",
   storage: createJSONStorage(() => ({

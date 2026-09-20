@@ -9,10 +9,17 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
     public void Configure(EntityTypeBuilder<ProductVariantEntity> builder)
     {
         builder.ToTable("ProductVariants");
-        builder.Property(x => x.ColorName).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.ColorCode).IsRequired().HasMaxLength(32);
-        builder.HasMany(x => x.Products)
+
+        builder.HasOne(x => x.Product)
             .WithMany(x => x.ProductVariants)
-            .UsingEntity(x => x.ToTable("ProductsVariants"));
+            .HasForeignKey(x => x.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Variant)
+            .WithMany(x => x.ProductVariants)
+            .HasForeignKey(x => x.VariantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.ProductId, x.VariantId }).IsUnique();
     }
 }

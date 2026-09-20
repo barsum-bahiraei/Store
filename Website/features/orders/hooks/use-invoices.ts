@@ -2,20 +2,20 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuthToken } from "@/features/auth/hooks/use-account";
-import { getCompletedInvoices } from "../services/invoice-service";
+import { getInvoices } from "../services/invoice-service";
 
 export const invoiceKeys = {
-  completed: (token: string | null) => ["invoices", "completed", token] as const,
+  list: (token: string | null) => ["invoices", "list", token] as const,
 };
 
-export function useCompletedInvoices() {
+export function useInvoices() {
   const token = useAuthToken();
 
   return useQuery({
-    queryKey: invoiceKeys.completed(token),
+    queryKey: invoiceKeys.list(token),
     queryFn: ({ signal }) => {
       if (!token) throw new Error("برای مشاهده خریدها وارد حساب خود شوید.");
-      return getCompletedInvoices(signal);
+      return getInvoices(signal);
     },
     enabled: Boolean(token),
     retry: false,

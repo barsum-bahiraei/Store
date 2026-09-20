@@ -1,5 +1,11 @@
 export type Gender = 0 | 1 | 2;
 
+export enum Role {
+  Owner = "Owner",
+  Seller = "Seller",
+  User = "User",
+}
+
 export type AccountUser = {
   firstName: string;
   lastName: string;
@@ -12,6 +18,7 @@ export type AccountUser = {
   latitude: number | null;
   longitude: number | null;
   isEmailVerified: boolean;
+  roles: string[];
 };
 
 export type UpdateUserProfileInput = {
@@ -29,6 +36,10 @@ export type UpdatedUserProfile = UpdateUserProfileInput;
 export type AuthenticatedUser = AccountUser & {
   token: string;
 };
+
+export function isUserRole(user?: AccountUser): boolean {
+  return Boolean(user?.roles?.includes(Role.User));
+}
 
 export type OtpSendInput = {
   phoneNumber: string;

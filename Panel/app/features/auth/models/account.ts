@@ -1,13 +1,23 @@
+export enum UserRole {
+  Owner = "Owner",
+  Seller = "Seller",
+  User = "User",
+}
+
 export interface AccountUser {
   firstName: string | null;
   lastName: string | null;
-  email: string;
+  email: string | null;
   gender: number;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   birthDate: string | null;
   nationalCode: string | null;
-  phoneNumber: string | null;
+  phoneNumber: string;
   isEmailVerified: boolean;
+  isPhoneNumberVerified: boolean;
+  roles: UserRole[];
 }
 
 export interface UserProfileUpdateInput {
@@ -23,9 +33,9 @@ export interface UserProfileUpdateInput {
 }
 
 export interface UserProfileUpdateOutput {
-  firstName: string;
-  lastName: string;
-  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
   address: string | null;
   latitude: number | null;
   longitude: number | null;

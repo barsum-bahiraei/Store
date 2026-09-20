@@ -1,6 +1,6 @@
 namespace Store.Domain.Invoices.Models.Input;
 
-public class PreInvoiceUpdateInput
+public class CartUpdateInput
 {
     public int ProductCount { get; set; }
 }

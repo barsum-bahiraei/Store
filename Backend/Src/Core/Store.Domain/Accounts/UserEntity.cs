@@ -20,8 +20,9 @@ public class UserEntity : BaseEntity
     public bool IsPhoneNumberVerified { get; set; }
     public ICollection<UserRoleEntity> UserRoles { get; set; }
     public ICollection<SellerEntity> Sellers { get; set; }
+    public ICollection<CartEntity> Cards { get; set; }
     public ICollection<InvoiceEntity> Invoices { get; set; }
-    public ICollection<PreInvoiceEntity> PreInvoices { get; set; }
     public ICollection<ProductCommentEntity> ProductComments { get; set; }
     public ICollection<ProductBookmarkEntity> ProductBookmarks { get; set; }
+    public ICollection<UserDiscountCodeEntity> UserDiscountCodes { get; set; }
 }

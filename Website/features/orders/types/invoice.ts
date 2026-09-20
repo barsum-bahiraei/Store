@@ -1,11 +1,12 @@
 export enum PaymentMethod {
-  Cash,
-  Online,
+  Cash = 0,
+  Online = 1,
+  Check = 2,
 }
 
 export enum DeliveryMethod {
-  Pickup,
-  Delivery,
+  Pickup = 0,
+  Delivery = 1,
 }
 
 export type InvoiceListItem = {

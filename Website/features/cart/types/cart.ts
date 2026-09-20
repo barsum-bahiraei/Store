@@ -16,12 +16,13 @@ export type CartItem = {
   };
 };
 
-export type CreateCartItemInput = {
+export type CartCreateInput = {
   productId: number;
+  productVariantId: number;
   productCount: number;
 };
 
-export type UpdateCartItemInput = {
+export type CartUpdateInput = {
   productCount: number;
 };
 

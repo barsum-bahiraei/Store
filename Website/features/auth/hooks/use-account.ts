@@ -39,9 +39,11 @@ function useAuthenticationMutation<TInput>(mutationFn: (input: TInput) => Promis
 
   return useMutation({
     mutationFn,
-    onSuccess: ({ token, ...user }) => {
+    onSuccess: async ({ token, ...user }) => {
       setAuthToken(token);
       queryClient.setQueryData<AccountUser>(accountKeys.profile, user);
+      const profile = await getUserProfile();
+      queryClient.setQueryData<AccountUser>(accountKeys.profile, profile);
     },
   });
 }
@@ -71,7 +73,7 @@ export function useUpdateUserProfile() {
   return useMutation({
     mutationFn: updateUserProfile,
     onSuccess: (profile) => {
-      queryClient.setQueryData<AccountUser>(accountKeys.profile, (current) => current ? { ...current, ...profile, email: profile.email ?? current.email } : current);
+      queryClient.setQueryData<AccountUser>(accountKeys.profile, (current) => current ? { ...current, ...profile, email: profile.email ?? current.email, roles: (profile as AccountUser).roles ?? current.roles ?? [] } : current);
     },
   });
 }

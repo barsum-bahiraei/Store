@@ -9,7 +9,10 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
 {
     public async Task<List<UserEntity>> UserListAsync(UserListInput input, CancellationToken cancellation)
     {
-        var query = context.Users.AsQueryable();
+        var query = context.Users
+            .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(input.FirstName))
             query = query.Where(x => x.FirstName != null && x.FirstName.Contains(input.FirstName.Trim()));
@@ -31,6 +34,16 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
 
         var result = await query.OrderBy(x => x.Id).ToListAsync(cancellation);
         return result;
+    }
+
+    public async Task<List<UserEntity>> UserListAsync(IReadOnlyCollection<int> ids,
+        CancellationToken cancellation = default)
+    {
+        return await context.Users
+            .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
+            .Where(x => ids.Contains(x.Id))
+            .ToListAsync(cancellation);
     }
 
     public async Task<UserEntity?> UserGetByPhoneNumberAsync(string phoneNumber,
@@ -227,6 +240,60 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
     public async Task UserRoleDeleteAsync(UserRoleEntity input, CancellationToken cancellation = default)
     {
         context.UserRoles.Remove(input);
+        await context.SaveChangesAsync(cancellation);
+    }
+
+    public async Task<List<DiscountCodeEntity>> DiscountCodeListAsync(
+        CancellationToken cancellation = default)
+    {
+        return await context.DiscountCodes
+            .Include(x => x.UserDiscountCodes)
+            .OrderByDescending(x => x.Id)
+            .ToListAsync(cancellation);
+    }
+
+    public async Task<DiscountCodeEntity?> DiscountCodeGetAsync(int id,
+        CancellationToken cancellation = default)
+    {
+        return await context.DiscountCodes
+            .Include(x => x.UserDiscountCodes)
+            .ThenInclude(x => x.User)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellation);
+    }
+
+    public async Task<bool> DiscountCodeExistsAsync(string code, int? excludedId,
+        CancellationToken cancellation = default)
+    {
+        var normalizedCode = code.ToLower();
+        return await context.DiscountCodes.AnyAsync(
+            x => x.Code.ToLower() == normalizedCode && (!excludedId.HasValue || x.Id != excludedId.Value),
+            cancellation);
+    }
+
+    public async Task<DiscountCodeEntity> DiscountCodeCreateAsync(DiscountCodeEntity input,
+        CancellationToken cancellation = default)
+    {
+        await context.DiscountCodes.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
+
+    public async Task<DiscountCodeEntity> DiscountCodeUpdateAsync(DiscountCodeEntity input,
+        CancellationToken cancellation = default)
+    {
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
+
+    public async Task<bool> DiscountCodeIsUsedAsync(int id, CancellationToken cancellation = default)
+    {
+        return await context.Invoices.AnyAsync(x => x.DiscountCodeId == id, cancellation);
+    }
+
+    public async Task DiscountCodeDeleteAsync(DiscountCodeEntity input,
+        CancellationToken cancellation = default)
+    {
+        context.DiscountCodes.Remove(input);
         await context.SaveChangesAsync(cancellation);
     }
 

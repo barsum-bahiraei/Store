@@ -8,7 +8,7 @@ interface AuthContextValue {
   isReady: boolean;
   currentUser: AccountUser | null;
   sendOtp: (phoneNumber: string) => Promise<void>;
-  verifyOtp: (phoneNumber: string, code: string) => Promise<void>;
+  verifyOtp: (phoneNumber: string, code: string) => Promise<AccountUser>;
   updateProfile: (input: UserProfileUpdateInput) => Promise<void>;
   logout: () => void;
 }
@@ -45,8 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token } = await authApi.verifyOtp({ phoneNumber, code });
     window.localStorage.setItem(AUTH_TOKEN_KEY, token);
     setHasToken(true);
-    const user = await authApi.profile();
-    setCurrentUser(user);
+    try {
+      const user = await authApi.profile();
+      setCurrentUser(user);
+      return user;
+    } catch (error) {
+      window.localStorage.removeItem(AUTH_TOKEN_KEY);
+      setHasToken(false);
+      setCurrentUser(null);
+      throw error;
+    }
   };
 
   const logout = () => {

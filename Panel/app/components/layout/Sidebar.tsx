@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
+import { canAccessRoute } from "~/features/auth/utils/authorization";
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -38,11 +39,12 @@ const navItems: NavItem[] = [
   { to: "/categories", label: "دسته‌بندی‌ها", icon: "folder" },
   { to: "/roles", label: "نقش‌ها", icon: "admin_panel_settings" },
   { to: "/users", label: "کاربران", icon: "group" },
+  { to: "/discount-codes", label: "کدهای تخفیف", icon: "local_offer" },
 ];
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     const initial = new Set<string>();
@@ -69,6 +71,18 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
         : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
     }`;
+
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      children: group.children.filter((child) =>
+        canAccessRoute(currentUser, child.to),
+      ),
+    }))
+    .filter((group) => group.children.length > 0);
+  const visibleItems = navItems.filter((item) =>
+    canAccessRoute(currentUser, item.to),
+  );
 
   return (
     <>
@@ -98,7 +112,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navGroups.map((group) => {
+          {visibleGroups.map((group) => {
             const isExpanded = expandedGroups.has(group.label);
             const isGroupActive = group.children.some(
               (child) => location.pathname === child.to
@@ -146,7 +160,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             );
           })}
 
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = location.pathname === item.to;
             return (
               <Link
@@ -167,10 +181,10 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             onClick={toggleTheme}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[20px]" suppressHydrationWarning>
               {theme === "dark" ? "light_mode" : "dark_mode"}
             </span>
-            {theme === "dark" ? "حالت روشن" : "حالت تاریک"}
+            <span suppressHydrationWarning>{theme === "dark" ? "حالت روشن" : "حالت تاریک"}</span>
           </button>
 
           <button

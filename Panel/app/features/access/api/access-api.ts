@@ -85,15 +85,18 @@ export const accessApi = {
   },
 
   async listUsers(params?: UserListParams): Promise<UserSummary[]> {
-    const query: Record<string, string> = {};
-    if (params?.firstName) query.firstName = params.firstName;
-    if (params?.lastName) query.lastName = params.lastName;
-    if (params?.email) query.email = params.email;
-    if (params?.phoneNumber) query.phoneNumber = params.phoneNumber;
-    if (params?.birthDate) query.birthDate = params.birthDate;
-    if (params?.gender != null) query.gender = String(params.gender);
-    const { data } = await httpClient.get<ApiResult<UserSummary[]>>("/api/Account/User", { params: query });
-    return resolveResult(data, "Unable to load users");
+    const key = `users-${JSON.stringify(params ?? {})}`;
+    return dedupe(key, async () => {
+      const query: Record<string, string> = {};
+      if (params?.firstName) query.firstName = params.firstName;
+      if (params?.lastName) query.lastName = params.lastName;
+      if (params?.email) query.email = params.email;
+      if (params?.phoneNumber) query.phoneNumber = params.phoneNumber;
+      if (params?.birthDate) query.birthDate = params.birthDate;
+      if (params?.gender != null) query.gender = String(params.gender);
+      const { data } = await httpClient.get<ApiResult<UserSummary[]>>("/api/Account/User", { params: query });
+      return resolveResult(data, "Unable to load users");
+    });
   },
 
   async getUser(id: number): Promise<UserDetails> {

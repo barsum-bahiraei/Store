@@ -22,6 +22,7 @@ public class StoreDbContext : DbContext
     public DbSet<ProductCommentEntity> ProductComments { get; set; }
     public DbSet<ProductBrandEntity> ProductBrands { get; set; }
     public DbSet<ProductVariantEntity> ProductVariants { get; set; }
+    public DbSet<VariantEntity> Variants { get; set; }
     public DbSet<CategoryEntity> Categoryies { get; set; }
     public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
     public DbSet<AttributeEntity> Attributes { get; set; }
@@ -33,7 +34,11 @@ public class StoreDbContext : DbContext
     public DbSet<RoleAccessEntity> RoleAccess { get; set; }
     public DbSet<SellerEntity> Sellers { get; set; }
     public DbSet<InvoiceEntity> Invoices { get; set; }
-    public DbSet<PreInvoiceEntity> PreInvoices { get; set; }
+    public DbSet<CartEntity> Carts { get; set; }
+    public DbSet<InvoiceItemEntity> InvoiceItems { get; set; }
+    public DbSet<PaymentEntity> Payments { get; set; }
+    public DbSet<DiscountCodeEntity> DiscountCodes { get; set; }
+    public DbSet<UserDiscountCodeEntity> UserDiscountCodes { get; set; }
     public DbSet<ProductBookmarkEntity> ProductBookmarks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
