@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Store.Api.Authorization;
@@ -48,7 +47,7 @@ public class AccountController(AccountService accountService, ControllerAccessPr
         return Ok(result);
     }
 
-    [Authorize]
+    [HasAccess]
     [HttpGet("UserProfile")]
     public async Task<IActionResult> UserProfileGet(CancellationToken cancellation = default)
     {
@@ -57,7 +56,7 @@ public class AccountController(AccountService accountService, ControllerAccessPr
         return Ok(result);
     }
 
-    [Authorize]
+    [HasAccess]
     [HttpPut("UserProfile")]
     public async Task<IActionResult> UserProfilePut(UserProfileUpdateInput input,
         CancellationToken cancellation = default)
