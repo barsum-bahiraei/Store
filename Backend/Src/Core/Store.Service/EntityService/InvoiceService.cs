@@ -57,13 +57,6 @@ public class InvoiceService(
     public async Task<Result<CartCreateOutput>> CartCreateAsync(int userId, CartCreateInput input,
         CancellationToken cancellation)
     {
-        var user = await accountRepository.UserGetAsync(userId, cancellation);
-        if (user == null)
-            return Result<CartCreateOutput>.Failure("User not found");
-
-        if (!IsCustomer(user))
-            return Result<CartCreateOutput>.Failure("Only users with the User role can add products to the cart");
-
         if (input.ProductCount <= 0)
             return Result<CartCreateOutput>.Failure("Product count must be greater than zero");
 
@@ -200,15 +193,12 @@ public class InvoiceService(
         if (!Enum.IsDefined(input.DeliveryMethod))
             return Result<CheckoutOutput>.Failure("Delivery method is invalid");
 
-        var user = await accountRepository.UserGetAsync(userId, cancellation);
-        if (user == null)
-            return Result<CheckoutOutput>.Failure("User not found");
-
-        if (!IsCustomer(user))
-            return Result<CheckoutOutput>.Failure("Only users with the User role can checkout");
-
         if (input.DeliveryMethod == DeliveryMethodEnum.Delivery)
         {
+            var user = await accountRepository.UserGetAsync(userId, cancellation);
+            if (user == null)
+                return Result<CheckoutOutput>.Failure("User not found");
+
             if (string.IsNullOrWhiteSpace(user.Address) ||
                 !user.Latitude.HasValue ||
                 !user.Longitude.HasValue)
@@ -299,9 +289,4 @@ public class InvoiceService(
         });
     }
 
-    private static bool IsCustomer(UserEntity user)
-    {
-        return user.UserRoles.Any(userRole =>
-            string.Equals(userRole.Role.Name, "User", StringComparison.OrdinalIgnoreCase));
-    }
 }

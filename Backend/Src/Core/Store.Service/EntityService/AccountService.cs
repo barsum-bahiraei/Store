@@ -514,11 +514,6 @@ public class AccountService(
         if (users.Count != userIds.Count)
             return ([], "One or more users were not found");
 
-        // if (users.Any(user => user.UserRoles.Count != 1 ||
-        //                       !string.Equals(user.UserRoles.Single().Role.Name, "User",
-        //                           StringComparison.OrdinalIgnoreCase)))
-        //     return ([], "Discount codes can only be assigned to users with the User role");
-
         return (users, null);
     }
 

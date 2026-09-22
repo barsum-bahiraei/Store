@@ -12,8 +12,8 @@ using Store.Persistent.Database.StoreDbContext;
 namespace Store.Persistent.Database.StoreDbContext.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    [Migration("20260918192357_AddProductIsAvailable")]
-    partial class AddProductIsAvailable
+    [Migration("20260922161154_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,19 +25,51 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ProductEntityProductVariantEntity", b =>
+            modelBuilder.Entity("Store.Domain.Accounts.DiscountCodeEntity", b =>
                 {
-                    b.Property<int>("ProductVariantsId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProductsId")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("MaxDiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int?>("PaymentMethod")
                         .HasColumnType("integer");
 
-                    b.HasKey("ProductVariantsId", "ProductsId");
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.HasIndex("ProductsId");
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.ToTable("ProductsVariants", (string)null);
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("DiscountCodes", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
@@ -102,6 +134,42 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.ToTable("Roles", (string)null);
                 });
 
+            modelBuilder.Entity("Store.Domain.Accounts.UserDiscountCodeEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DiscountCodeId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscountCodeId");
+
+                    b.HasIndex("UserId", "DiscountCodeId")
+                        .IsUnique();
+
+                    b.ToTable("UserDiscountCodes", (string)null);
+                });
+
             modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -111,7 +179,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("BirthDate")
                         .HasColumnType("text");
@@ -120,12 +189,12 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("Gender")
                         .HasColumnType("integer");
@@ -135,9 +204,14 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsPhoneNumberVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
@@ -146,19 +220,24 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<string>("NationalCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
 
                     b.ToTable("Users", (string)null);
                 });
@@ -193,6 +272,45 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.ToTable("UserRoles", (string)null);
                 });
 
+            modelBuilder.Entity("Store.Domain.Accounts.VerificationCodeEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhoneNumber", "IsUsed", "ExpiresAt");
+
+                    b.ToTable("VerificationCodes", (string)null);
+                });
+
             modelBuilder.Entity("Store.Domain.Attribute.AttributeEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -206,7 +324,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -246,7 +365,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.HasIndex("AttributeId");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("CategoryId", "AttributeId")
+                        .IsUnique();
 
                     b.ToTable("CategoriesAttributes", (string)null);
                 });
@@ -264,7 +384,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
@@ -298,7 +419,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<int>("TableName")
                         .HasColumnType("integer");
@@ -314,11 +436,52 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Url")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TableName", "TargetName", "TargetId");
+
                     b.ToTable("Files", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Invoices.CartEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProductCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("UserId", "ProductId", "ProductVariantId")
+                        .IsUnique();
+
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Invoices.InvoiceEntity", b =>
@@ -335,17 +498,14 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<int>("DeliveryMethod")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("DiscountCodeId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProductCount")
+                    b.Property<int>("PaymentStatus")
                         .HasColumnType("integer");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("ProductPrice")
-                        .HasColumnType("numeric");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -355,14 +515,14 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("DiscountCodeId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("Invoices", (string)null);
                 });
 
-            modelBuilder.Entity("Store.Domain.Invoices.PreInvoiceEntity", b =>
+            modelBuilder.Entity("Store.Domain.Invoices.InvoiceItemEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -373,25 +533,68 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProductCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("ProductPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ProductVariantId");
 
-                    b.ToTable("PreInvoices", (string)null);
+                    b.ToTable("InvoiceItems", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Invoices.PaymentEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
@@ -422,7 +625,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.HasIndex("AttributeId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId", "AttributeId")
+                        .IsUnique();
 
                     b.ToTable("ProductsAttributes", (string)null);
                 });
@@ -470,7 +674,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -536,20 +741,25 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("Discount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<bool>("IsAvailable")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("LongDescription")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<int?>("ProductBrandId")
                         .HasColumnType("integer");
@@ -558,7 +768,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ShortDescription")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -582,23 +793,55 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ColorCode")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ColorName")
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VariantId");
+
+                    b.HasIndex("ProductId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("ProductVariants", (string)null);
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.VariantEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductVariants", (string)null);
+                    b.ToTable("Variants", (string)null);
                 });
 
             modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
@@ -611,7 +854,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -627,7 +871,8 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -645,21 +890,6 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.ToTable("Sellers", (string)null);
                 });
 
-            modelBuilder.Entity("ProductEntityProductVariantEntity", b =>
-                {
-                    b.HasOne("Store.Domain.Products.ProductVariantEntity", null)
-                        .WithMany()
-                        .HasForeignKey("ProductVariantsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Store.Domain.Products.ProductEntity", null)
-                        .WithMany()
-                        .HasForeignKey("ProductsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Store.Domain.Accounts.RoleAccessEntity", b =>
                 {
                     b.HasOne("Store.Domain.Accounts.RoleEntity", "Role")
@@ -669,6 +899,25 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Store.Domain.Accounts.UserDiscountCodeEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Accounts.DiscountCodeEntity", "DiscountCode")
+                        .WithMany("UserDiscountCodes")
+                        .HasForeignKey("DiscountCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("UserDiscountCodes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscountCode");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Store.Domain.Accounts.UserRoleEntity", b =>
@@ -719,42 +968,87 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("Store.Domain.Invoices.InvoiceEntity", b =>
+            modelBuilder.Entity("Store.Domain.Invoices.CartEntity", b =>
                 {
                     b.HasOne("Store.Domain.Products.ProductEntity", "Product")
-                        .WithMany("Invoices")
+                        .WithMany("Cards")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
-                        .WithMany("Invoices")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Store.Domain.Products.ProductVariantEntity", "ProductVariants")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Store.Domain.Accounts.UserEntity", "User")
+                        .WithMany("Cards")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Product");
+
+                    b.Navigation("ProductVariants");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Store.Domain.Invoices.PreInvoiceEntity", b =>
+            modelBuilder.Entity("Store.Domain.Invoices.InvoiceEntity", b =>
                 {
-                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
-                        .WithMany("PreInvoices")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("Store.Domain.Accounts.DiscountCodeEntity", "DiscountCode")
+                        .WithMany()
+                        .HasForeignKey("DiscountCodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Store.Domain.Accounts.UserEntity", "User")
-                        .WithMany("PreInvoices")
+                        .WithMany("Invoices")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Product");
+                    b.Navigation("DiscountCode");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Store.Domain.Invoices.InvoiceItemEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Invoices.InvoiceEntity", "Invoice")
+                        .WithMany("InvoiceItems")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Products.ProductVariantEntity", "ProductVariants")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("ProductVariants");
+                });
+
+            modelBuilder.Entity("Store.Domain.Invoices.PaymentEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Invoices.InvoiceEntity", "Invoice")
+                        .WithMany("Payments")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("Store.Domain.Products.ProductAttributeEntity", b =>
@@ -819,7 +1113,7 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.HasOne("Store.Domain.Categories.CategoryEntity", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Store.Domain.Products.ProductBrandEntity", "ProductBrand")
@@ -840,6 +1134,25 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("Seller");
                 });
 
+            modelBuilder.Entity("Store.Domain.Products.ProductVariantEntity", b =>
+                {
+                    b.HasOne("Store.Domain.Products.ProductEntity", "Product")
+                        .WithMany("ProductVariants")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Store.Domain.Products.VariantEntity", "Variant")
+                        .WithMany("ProductVariants")
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
                 {
                     b.HasOne("Store.Domain.Accounts.UserEntity", "User")
@@ -851,6 +1164,11 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Store.Domain.Accounts.DiscountCodeEntity", b =>
+                {
+                    b.Navigation("UserDiscountCodes");
+                });
+
             modelBuilder.Entity("Store.Domain.Accounts.RoleEntity", b =>
                 {
                     b.Navigation("RoleAccess");
@@ -860,15 +1178,17 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             modelBuilder.Entity("Store.Domain.Accounts.UserEntity", b =>
                 {
-                    b.Navigation("Invoices");
+                    b.Navigation("Cards");
 
-                    b.Navigation("PreInvoices");
+                    b.Navigation("Invoices");
 
                     b.Navigation("ProductBookmarks");
 
                     b.Navigation("ProductComments");
 
                     b.Navigation("Sellers");
+
+                    b.Navigation("UserDiscountCodes");
 
                     b.Navigation("UserRoles");
                 });
@@ -889,6 +1209,13 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("Store.Domain.Invoices.InvoiceEntity", b =>
+                {
+                    b.Navigation("InvoiceItems");
+
+                    b.Navigation("Payments");
+                });
+
             modelBuilder.Entity("Store.Domain.Products.ProductBrandEntity", b =>
                 {
                     b.Navigation("Products");
@@ -896,15 +1223,20 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
             modelBuilder.Entity("Store.Domain.Products.ProductEntity", b =>
                 {
-                    b.Navigation("Invoices");
-
-                    b.Navigation("PreInvoices");
+                    b.Navigation("Cards");
 
                     b.Navigation("ProductAttributes");
 
                     b.Navigation("ProductBookmarks");
 
                     b.Navigation("ProductComments");
+
+                    b.Navigation("ProductVariants");
+                });
+
+            modelBuilder.Entity("Store.Domain.Products.VariantEntity", b =>
+                {
+                    b.Navigation("ProductVariants");
                 });
 
             modelBuilder.Entity("Store.Domain.Sellers.SellerEntity", b =>
