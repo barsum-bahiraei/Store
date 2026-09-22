@@ -101,7 +101,14 @@ export default function SellersPage() {
   const save = async (event: FormEvent) => {
     event.preventDefault();
     setFormError(null);
-    if (!name.trim() || !address.trim()) return;
+    if (!name.trim()) {
+      setFormError("نام فروشنده را وارد کنید.");
+      return;
+    }
+    if (!address.trim()) {
+      setFormError("آدرس فروشنده الزامی است.");
+      return;
+    }
     if (!validLatitude || !validLongitude || latitudeNumber === null || longitudeNumber === null) {
       setFormError("مکان معتبری روی نقشه انتخاب کنید یا عرض و طول جغرافیایی معتبر وارد کنید.");
       return;
