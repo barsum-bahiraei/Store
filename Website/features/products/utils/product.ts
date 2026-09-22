@@ -70,14 +70,5 @@ export function formatProductAttributeValue(value: string, type: ProductAttribut
     return trimmedValue.replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
   }
 
-  if (type === ProductAttributeType.MultiSelect) {
-    try {
-      const values: unknown = JSON.parse(trimmedValue);
-      if (Array.isArray(values) && values.every((item) => typeof item === "string")) return values.join("، ");
-    } catch {
-      return trimmedValue.split(",").map((item) => item.trim()).filter(Boolean).join("، ");
-    }
-  }
-
   return trimmedValue;
 }

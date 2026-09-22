@@ -9,8 +9,6 @@ public enum AttributeTypeEnum
     Date,
     DateTime,
     Time,
-    Select,
-    MultiSelect,
     Url,
     Email,
     Phone,

@@ -70,8 +70,6 @@ export enum ProductAttributeType {
   Date,
   DateTime,
   Time,
-  Select,
-  MultiSelect,
   Url,
   Email,
   Phone,

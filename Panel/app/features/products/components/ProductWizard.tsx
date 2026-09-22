@@ -57,10 +57,10 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
     return <select value={value} onChange={(event) => onChange(event.target.value)} className={inputClasses}><option value="">انتخاب کنید</option><option value="true">بله</option><option value="false">خیر</option></select>;
   }
 
-  if (attribute.attributeType === AttributeType.LongText || attribute.attributeType === AttributeType.MultiSelect) {
+  if (attribute.attributeType === AttributeType.LongText) {
     return (
       <div>
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} min-h-24 resize-y`} placeholder={attribute.attributeType === AttributeType.MultiSelect ? " مقادیر را با کاما جدا کنید" : "مقدار را وارد کنید"} />
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClasses} min-h-24 resize-y`} placeholder="مقدار را وارد کنید" />
         {unit && <span className="mt-1 block text-xs text-gray-400">واحد: {unit}</span>}
       </div>
     );
@@ -82,8 +82,6 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
         return { type: "email", inputMode: "email" as const, placeholder: "name@example.com" };
       case AttributeType.Phone:
         return { type: "tel", inputMode: "tel" as const, placeholder: "+98 912 000 0000" };
-      case AttributeType.Select:
-        return { type: "text", placeholder: "مقدار انتخابی را وارد کنید" };
       default:
         return { type: "text" };
     }

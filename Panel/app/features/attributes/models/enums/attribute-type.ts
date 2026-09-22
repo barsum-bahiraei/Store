@@ -6,11 +6,9 @@ export enum AttributeType {
   Date = 4,
   DateTime = 5,
   Time = 6,
-  Select = 7,
-  MultiSelect = 8,
-  Url = 9,
-  Email = 10,
-  Phone = 11,
+  Url = 7,
+  Email = 8,
+  Phone = 9,
 }
 
 export const ATTRIBUTE_TYPE_OPTIONS: { value: AttributeType; label: string }[] = [
@@ -21,8 +19,6 @@ export const ATTRIBUTE_TYPE_OPTIONS: { value: AttributeType; label: string }[] =
   { value: AttributeType.Date, label: "تاریخ" },
   { value: AttributeType.DateTime, label: "تاریخ و زمان" },
   { value: AttributeType.Time, label: "زمان" },
-  { value: AttributeType.Select, label: "انتخابی" },
-  { value: AttributeType.MultiSelect, label: "چندانتخابی" },
   { value: AttributeType.Url, label: "آدرس اینترنتی" },
   { value: AttributeType.Email, label: "ایمیل" },
   { value: AttributeType.Phone, label: "تلفن" },
