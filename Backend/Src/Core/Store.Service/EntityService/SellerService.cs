@@ -102,8 +102,8 @@ public class SellerService(ISellerRepository sellerRepository, FileService fileS
             Name = input.Name,
             Description = input.Description,
             Address = input.Address,
-            Latitude = input.Latitude.Value,
-            Longitude = input.Longitude.Value,
+            Latitude = input.Latitude,
+            Longitude = input.Longitude,
             Status = SellerStatusEnum.Active,
             UserId = userId
         };

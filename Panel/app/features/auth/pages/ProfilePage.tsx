@@ -17,8 +17,8 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState(currentUser?.lastName ?? "");
   const [email, setEmail] = useState(currentUser?.email ?? "");
   const [address, setAddress] = useState(currentUser?.address ?? "");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState(currentUser?.latitude != null ? String(currentUser.latitude) : "");
+  const [longitude, setLongitude] = useState(currentUser?.longitude != null ? String(currentUser.longitude) : "");
   const [gender, setGender] = useState(currentUser?.gender ?? 2);
   const [nationalCode, setNationalCode] = useState(currentUser?.nationalCode ?? "");
   const [birthDate, setBirthDate] = useState(currentUser?.birthDate ?? "");
