@@ -23,6 +23,7 @@ public class KavenegarSmsService(HttpClient httpClient, IOptions<KavenegarOption
         {
             ["receptor"] = phoneNumber,
             ["token"] = code,
+            ["token2"] = code,
             ["template"] = settings.Template
         });
 
