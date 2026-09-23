@@ -29,8 +29,7 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     }
 
     [HttpPost("UserOtpSend")]
-    // TODO: uncomment
-    //[EnableRateLimiting("otp-send")]
+    [EnableRateLimiting("otp-send")]
     public async Task<IActionResult> UserOtpSendPost(UserOtpSendInput input, CancellationToken cancellation = default)
     {
         var result = await accountService.UserOtpSendAsync(input, cancellation);
@@ -38,8 +37,7 @@ public class AccountController(AccountService accountService, ControllerAccessPr
     }
 
     [HttpPost("UserOtpVerify")]
-    // TODO: uncomment
-    //[EnableRateLimiting("otp-verify")]
+    [EnableRateLimiting("otp-verify")]
     public async Task<IActionResult> UserOtpVerifyPost(UserOtpVerifyInput input,
         CancellationToken cancellation = default)
     {
