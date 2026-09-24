@@ -8,4 +8,5 @@ public interface IFileRepository
     Task<FileEntity> CreateAsync(FileEntity input, CancellationToken cancellationToken);
     Task<FileEntity> UpdateAsync(FileEntity input, CancellationToken cancellationToken);
     Task DeleteAsync(FileEntity entity, CancellationToken cancellationToken);
+    Task<int?> GetOwnerUserIdAsync(TableNameEnum tableName, int targetId, CancellationToken cancellationToken);
 }

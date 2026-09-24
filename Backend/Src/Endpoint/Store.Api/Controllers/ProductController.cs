@@ -130,46 +130,6 @@ public class ProductController(ProductService productService) : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("Variant")]
-    public async Task<IActionResult> VariantGet(CancellationToken cancellation = default)
-    {
-        var result = await productService.VariantListAsync(cancellation);
-        return Ok(result);
-    }
-
-    [HttpGet("Variant/{id}")]
-    public async Task<IActionResult> VariantGet(int id, CancellationToken cancellation = default)
-    {
-        var result = await productService.VariantGetAsync(id, cancellation);
-        return Ok(result);
-    }
-
-    [HasAccess]
-    [HttpPost("Variant")]
-    public async Task<IActionResult> VariantPost(ProductVariantCreateInput input,
-        CancellationToken cancellation = default)
-    {
-        var result = await productService.VariantCreateAsync(input, cancellation);
-        return Ok(result);
-    }
-
-    [HasAccess]
-    [HttpPut("Variant/{id}")]
-    public async Task<IActionResult> VariantPut(int id, ProductVariantUpdateInput input,
-        CancellationToken cancellation = default)
-    {
-        var result = await productService.VariantUpdateAsync(id, input, cancellation);
-        return Ok(result);
-    }
-
-    [HasAccess]
-    [HttpDelete("Variant/{id}")]
-    public async Task<IActionResult> VariantDelete(int id, CancellationToken cancellation = default)
-    {
-        var result = await productService.VariantDeleteAsync(id, cancellation);
-        return Ok(result);
-    }
-
     [HasAccess]
     [HttpGet("Bookmark")]
     public async Task<IActionResult> BookmarkGet(CancellationToken cancellation = default)

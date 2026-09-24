@@ -300,7 +300,7 @@ export default function DiscountCodesPage() {
           <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 sm:grid sm:grid-cols-[1fr_100px_100px_100px_120px_100px] sm:gap-4">
             <span>کد</span>
             <span className="text-center">درصد</span>
-            <span className="text-center">تعداد</span>
+            <span className="text-center">تعداد کاربران</span>
             <span className="text-center">استفاده</span>
             <span className="text-center">وضعیت</span>
             <span className="text-center">عملیات</span>

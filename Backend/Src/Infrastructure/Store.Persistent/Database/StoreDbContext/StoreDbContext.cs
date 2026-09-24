@@ -22,7 +22,7 @@ public class StoreDbContext : DbContext
     public DbSet<ProductCommentEntity> ProductComments { get; set; }
     public DbSet<ProductBrandEntity> ProductBrands { get; set; }
     public DbSet<ProductVariantEntity> ProductVariants { get; set; }
-    public DbSet<VariantEntity> Variants { get; set; }
+    public DbSet<ProductVariantAttributeValueEntity> ProductVariantAttributeValues { get; set; }
     public DbSet<CategoryEntity> Categoryies { get; set; }
     public DbSet<CategoryAttributeEntity> CategoryAttributes { get; set; }
     public DbSet<AttributeEntity> Attributes { get; set; }

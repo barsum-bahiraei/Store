@@ -22,18 +22,21 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         if (input.SellerId.HasValue)
             query = query.Where(x => x.SellerId == input.SellerId.Value);
 
-        if (input.MinPrice.HasValue)
-            query = query.Where(x => x.Price >= input.MinPrice.Value);
-
-        if (input.MaxPrice.HasValue)
-            query = query.Where(x => x.Price <= input.MaxPrice.Value);
+        if (input.MinPrice.HasValue || input.MaxPrice.HasValue)
+            query = query.Where(x => x.ProductVariants.Any(v =>
+                (x.ProductVariants.Any(available => available.Stock > 0) ? v.Stock > 0 : true) &&
+                (!input.MinPrice.HasValue || v.Price >= input.MinPrice.Value) &&
+                (!input.MaxPrice.HasValue || v.Price <= input.MaxPrice.Value)));
 
         if (input.IsAvailable.HasValue)
-            query = query.Where(x => x.IsAvailable == input.IsAvailable.Value);
+            query = input.IsAvailable.Value
+                ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
+                : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
 
         var result = await query
             .Include(x => x.Category)
             .Include(x => x.Seller)
+            .Include(x => x.ProductVariants)
             .OrderByDescending(x => x.Id)
             .ToListAsync(cancellation);
         return result;
@@ -56,14 +59,16 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         if (input.HasDiscount)
             query = query.Where(x => x.Discount > 0);
 
-        if (input.MinPrice.HasValue)
-            query = query.Where(x => x.Price >= input.MinPrice.Value);
-
-        if (input.MaxPrice.HasValue)
-            query = query.Where(x => x.Price <= input.MaxPrice.Value);
+        if (input.MinPrice.HasValue || input.MaxPrice.HasValue)
+            query = query.Where(x => x.ProductVariants.Any(v =>
+                (x.ProductVariants.Any(available => available.Stock > 0) ? v.Stock > 0 : true) &&
+                (!input.MinPrice.HasValue || v.Price >= input.MinPrice.Value) &&
+                (!input.MaxPrice.HasValue || v.Price <= input.MaxPrice.Value)));
 
         if (input.IsAvailable.HasValue)
-            query = query.Where(x => x.IsAvailable == input.IsAvailable.Value);
+            query = input.IsAvailable.Value
+                ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
+                : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
 
         var totalCount = await query.CountAsync(cancellation);
         var page = input.Page < 1 ? 1 : input.Page;
@@ -71,15 +76,22 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
 
         query = input.IsIdDec
             ? input.IsPriceDec
-                ? query.OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Price)
-                : query.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Price)
+                ? query.OrderByDescending(x => x.CreatedAt)
+                    .ThenByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
+                        .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
+                : query.OrderByDescending(x => x.CreatedAt)
+                    .ThenBy(x => x.ProductVariants.Where(v => v.Stock > 0)
+                        .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
             : input.IsPriceDec
-                ? query.OrderByDescending(x => x.Price)
-                : query.OrderBy(x => x.Price);
+                ? query.OrderByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
+                    .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
+                : query.OrderBy(x => x.ProductVariants.Where(v => v.Stock > 0)
+                    .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0);
 
         var result = await query
             .Include(x => x.Category)
             .Include(x => x.ProductComments)
+            .Include(x => x.ProductVariants)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellation);
@@ -100,6 +112,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Include(x => x.Seller)
             .Include(x => x.ProductAttributes)
             .ThenInclude(x => x.Attribute)
+            .Include(x => x.ProductVariants)
             .AsQueryable();
 
         if (input.ProductIds != null)
@@ -154,7 +167,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Include(x => x.Category)
             .Include(x => x.ProductBrand)
             .Include(x => x.ProductVariants)
-            .ThenInclude(x => x.Variant)
+            .ThenInclude(x => x.AttributeValues)
             .Include(x => x.ProductAttributes)
             .ThenInclude(x => x.Attribute)
             .FirstOrDefaultAsync(x => x.Id == id && x.Seller.UserId == userId, cancellation);
@@ -168,7 +181,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Include(x => x.Category)
             .Include(x => x.ProductBrand)
             .Include(x => x.ProductVariants)
-            .ThenInclude(x => x.Variant)
+            .ThenInclude(x => x.AttributeValues)
             .Include(x => x.ProductComments)
             .ThenInclude(x => x.User)
             .Include(x => x.ProductAttributes)
@@ -184,6 +197,7 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .Where(x => x.Id != id && x.CategoryId == categoryId)
             .Include(x => x.Category)
             .Include(x => x.ProductComments)
+            .Include(x => x.ProductVariants)
             .OrderByDescending(x => x.ProductComments
                 .Where(comment => comment.IsShow == true && comment.Rating.HasValue)
                 .Average(comment => (decimal?)comment.Rating) ?? 0)
@@ -229,52 +243,6 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         await context.SaveChangesAsync(cancellation);
     }
 
-    public async Task<List<VariantEntity>> VariantListAsync(CancellationToken cancellation)
-    {
-        var result = await context.Variants
-            .OrderBy(x => x.Id)
-            .ToListAsync(cancellation);
-        return result;
-    }
-
-    public async Task<List<VariantEntity>> VariantListAsync(List<int> ids, CancellationToken cancellation)
-    {
-        var result = await context.Variants
-            .Where(x => ids.Contains(x.Id))
-            .ToListAsync(cancellation);
-        return result;
-    }
-
-    public async Task<VariantEntity?> VariantGetAsync(int id, CancellationToken cancellation)
-    {
-        var result = await context.Variants
-            .Include(x => x.ProductVariants)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellation);
-        return result;
-    }
-
-    public async Task<VariantEntity> VariantCreateAsync(VariantEntity input,
-        CancellationToken cancellation)
-    {
-        await context.Variants.AddAsync(input, cancellation);
-        await context.SaveChangesAsync(cancellation);
-        return input;
-    }
-
-    public async Task<VariantEntity> VariantUpdateAsync(VariantEntity input,
-        CancellationToken cancellation)
-    {
-        context.Variants.Update(input);
-        await context.SaveChangesAsync(cancellation);
-        return input;
-    }
-
-    public async Task VariantDeleteAsync(VariantEntity input, CancellationToken cancellation)
-    {
-        context.Variants.Remove(input);
-        await context.SaveChangesAsync(cancellation);
-    }
-
     public async Task<ProductEntity> CreateAsync(ProductEntity input, CancellationToken cancellation)
     {
         await context.Products.AddAsync(input, cancellation);
@@ -282,17 +250,50 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         return input;
     }
 
-    public async Task<ProductEntity> UpdateAsync(ProductEntity input, CancellationToken cancellation)
+    public async Task<ProductEntity?> UpdateAsync(ProductEntity input, CancellationToken cancellation)
     {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
+        var productLockKey = $"product:{input.Id}";
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({productLockKey}, 0))",
+            cancellation);
+
+        foreach (var variant in input.ProductVariants.Where(x => x.Id > 0).OrderBy(x => x.Id))
+        {
+            var lockKey = $"product-variant:{variant.Id}";
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({lockKey}, 0))",
+                cancellation);
+            var databaseStock = await context.ProductVariants
+                .AsNoTracking()
+                .Where(x => x.Id == variant.Id)
+                .Select(x => (int?)x.Stock)
+                .FirstOrDefaultAsync(cancellation);
+            var originalStock = context.Entry(variant).Property(x => x.Stock).OriginalValue;
+            if (databaseStock.HasValue && databaseStock.Value != originalStock)
+                return null;
+        }
+
         context.Products.Update(input);
+        var temporaryKeyPrefix = $"__updating__{Guid.NewGuid():N}:";
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE \"ProductVariants\" SET \"CombinationKey\" = {temporaryKeyPrefix} || \"Id\"::text WHERE \"ProductId\" = {input.Id}",
+            cancellation);
         await context.SaveChangesAsync(cancellation);
+        await transaction.CommitAsync(cancellation);
         var entity = await context.Products
             .Include(x => x.Category)
             .Include(x => x.ProductBrand)
             .Include(x => x.ProductVariants)
-            .ThenInclude(x => x.Variant)
+            .ThenInclude(x => x.AttributeValues)
             .FirstOrDefaultAsync(x => x.Id == input.Id, cancellation);
         return entity;
+    }
+
+    public async Task<bool> ProductVariantIsInUseAsync(int id, CancellationToken cancellation)
+    {
+        return await context.Carts.AnyAsync(x => x.ProductVariantId == id, cancellation) ||
+               await context.InvoiceItems.AnyAsync(x => x.ProductVariantId == id, cancellation);
     }
 
     public async Task DeleteAsync(ProductEntity input, CancellationToken cancellation)
@@ -317,6 +318,8 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             .ThenInclude(x => x.Category)
             .Include(x => x.Product)
             .ThenInclude(x => x.Seller)
+            .Include(x => x.Product)
+            .ThenInclude(x => x.ProductVariants)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellation);
         return result;

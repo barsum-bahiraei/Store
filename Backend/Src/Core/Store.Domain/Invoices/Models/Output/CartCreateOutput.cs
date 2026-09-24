@@ -6,6 +6,8 @@ public class CartCreateOutput
 {
     public int Id { get; set; }
     public int ProductCount { get; set; }
+    public int ProductVariantId { get; set; }
+    public CartProductVariantOutput Variant { get; set; }
     public CartProductCreateOutput Product { get; set; }
 }
 

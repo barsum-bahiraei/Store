@@ -77,7 +77,7 @@ export function StoreHeader() {
         </form>
 
         <nav aria-label="عملیات حساب کاربری" className="mr-auto flex items-center gap-1 sm:mr-0">
-          <Link href={user ? "/account" : "/login"} aria-label={user ? `حساب ${user.firstName}` : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+          <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">person</span>
             <span className="hidden max-w-20 truncate text-xs font-bold lg:block">{user?.firstName ?? "ورود"}</span>
           </Link>

@@ -84,7 +84,7 @@ export function useCartItemActions({ productId, productVariantId, productName, v
       if (item) {
         updated = await updateCartItem(item.id, { productCount: (productCount ?? item.productCount) + (action === "increase" ? 1 : -1) });
       } else {
-        if (productVariantId == null) throw new Error("ابتدا تنوع محصول را انتخاب کنید.");
+        if (productVariantId == null) throw new Error("لطفاً سایز محصول را انتخاب کنید");
         updated = await createCartItem({ productId, productVariantId, productCount: 1 });
       }
       if (productVariantId != null) {

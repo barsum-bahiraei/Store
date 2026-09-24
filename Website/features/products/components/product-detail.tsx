@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { A11y, FreeMode, Keyboard, Thumbs } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperInstance } from "swiper";
@@ -13,7 +13,7 @@ import { useCart, useCartItemActions } from "@/features/cart/hooks/use-cart";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { isUserRole } from "@/features/auth/types/account";
 import { useProductDetail } from "../hooks/use-products";
-import { formatProductAttributeValue, formatToman, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice } from "../utils/product";
+import { buildVariantGroups, createDefaultVariantSelection, formatProductAttributeValue, formatToman, formatVariantLabel, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice, getVariantOptionStatus, matchVariantBySelection } from "../utils/product";
 import { ProductCard } from "./product-card";
 import { ProductComments } from "./product-comments";
 
@@ -22,17 +22,36 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const { data: cartItems, guestItems, isAuthenticated } = useCart();
   const { data: userProfile } = useUserProfile();
   const canPurchase = isUserRole(userProfile);
-  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
-  const effectiveVariantId = product?.variants.length === 1 ? product.variants[0].id : selectedVariantId;
-  const selectedVariant = product?.variants.find((variant) => variant.id === effectiveVariantId);
-  const serverItem = isAuthenticated && product?.variants.length === 1
-    ? cartItems?.find((item) => item.product.id === productId)
+  const blockedByRole = isAuthenticated && !canPurchase;
+  const [userSelection, setUserSelection] = useState<Record<string, string> | null>(null);
+  const optionGroups = useMemo(() => (product ? buildVariantGroups(product.variants) : []), [product]);
+  const defaultSelection = useMemo(
+    () => (product ? createDefaultVariantSelection(product.variants, optionGroups) : {}),
+    [product, optionGroups],
+  );
+  const selection = userSelection ?? defaultSelection;
+
+  function selectVariantOption(size: string, option: string) {
+    setUserSelection((current) => ({ ...(current ?? defaultSelection), [size]: option }));
+  }
+
+  const selectedVariant = useMemo(() => {
+    if (!product) return undefined;
+    if (product.variants.length === 1) return product.variants[0];
+    if (optionGroups.length === 0) return undefined;
+    if (optionGroups.some((group) => selection[group.size] == null)) return undefined;
+    return matchVariantBySelection(product.variants, selection);
+  }, [product, optionGroups, selection]);
+
+  const effectiveVariantId = selectedVariant?.id ?? null;
+  const serverItem = isAuthenticated && effectiveVariantId != null
+    ? cartItems?.find((item) => item.product.id === productId && item.productVariantId === effectiveVariantId)
     : undefined;
   const { change, productCount: serverQuantity, isPending: isAdding, error: cartError } = useCartItemActions({
     productId,
     productVariantId: effectiveVariantId ?? undefined,
     productName: product?.name,
-    variantName: selectedVariant?.colorName,
+    variantName: selectedVariant ? formatVariantLabel(selectedVariant.values) : undefined,
     cartItemId: serverItem?.id,
     productCount: serverItem?.productCount,
   });
@@ -50,7 +69,11 @@ export function ProductDetailContent({ productId }: { productId: number }) {
     : effectiveVariantId != null
       ? guestItems.find((item) => item.productId === product.id && item.productVariantId === effectiveVariantId)?.count ?? 0
       : 0;
-  const salePrice = getSalePrice(product.price, product.discount);
+  const basePrice = selectedVariant?.price ?? product.price;
+  const salePrice = getSalePrice(basePrice, product.discount);
+  const stock = selectedVariant?.stock ?? 0;
+  const addToCartDisabled = isAdding || selectedVariant == null || stock <= 0 || quantity >= stock;
+  const needsSelection = optionGroups.length > 0 && selectedVariant == null;
   const averageRating = product.comments.reduce((total, comment) => total + (comment.rating ?? 0), 0) / (product.comments.filter((comment) => comment.rating).length || 1);
 
   return (
@@ -162,60 +185,70 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             </div>
           )}
           {product.shortDescription && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.shortDescription}</p>}
-          {product.variants.length > 0 && (
-            <div className="mt-6" aria-labelledby="product-colors-title">
-              <h2 id="product-colors-title" className="text-sm font-black">انتخاب رنگ</h2>
-              <div className="mt-3 flex flex-wrap gap-3" role="radiogroup" aria-labelledby="product-colors-title">
-                {product.variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={effectiveVariantId === variant.id}
-                    onClick={() => setSelectedVariantId(variant.id)}
-                    className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${effectiveVariantId === variant.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface hover:bg-muted"}`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      style={{ backgroundColor: variant.colorCode }}
-                      className="block size-6 shrink-0 rounded-full border-2 border-surface shadow-[0_0_0_1px_var(--border)]"
-                    />
-                    <span>{variant.colorName}</span>
-                    {effectiveVariantId === variant.id && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
-                  </button>
-                ))}
-              </div>
-              {product.variants.length > 1 && effectiveVariantId == null && <p className="mt-2 text-sm text-warning">برای افزودن به سبد، یک رنگ را انتخاب کنید.</p>}
+          {optionGroups.length > 0 && (
+            <div className="mt-6 space-y-5">
+              {optionGroups.map((group, groupIndex) => {
+                const groupId = `variant-group-${groupIndex}`;
+                return (
+                  <div key={group.size} aria-labelledby={groupId}>
+                    <h2 id={groupId} className="text-sm font-black">انتخاب {group.size}</h2>
+                    <div role="radiogroup" aria-labelledby={groupId} className="mt-3 flex flex-wrap gap-3">
+                      {group.options.map((option) => {
+                        const optionValue = option.name || option.code;
+                        const status = getVariantOptionStatus(product.variants, selection, group.size, optionValue);
+                        const isSelected = selection[group.size] === optionValue;
+                        return (
+                          <button
+                            key={optionValue}
+                            type="button"
+                            role="radio"
+                            aria-checked={isSelected}
+                            disabled={status.disabled}
+                            onClick={() => selectVariantOption(group.size, optionValue)}
+                            className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary bg-primary/10 text-primary" : status.disabled ? "border-border bg-muted text-muted-foreground" : "border-border bg-surface hover:bg-muted"}`}
+                          >
+                            <span>{optionValue}</span>
+                            {status.outOfStock && <span className="text-xs font-black text-error">ناموجود</span>}
+                            {isSelected && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              {needsSelection && <p role="alert" className="text-sm text-warning">لطفاً سایز محصول را انتخاب کنید</p>}
             </div>
           )}
           <div className="mt-7 flex flex-wrap items-baseline gap-3">
             <span className="text-3xl font-black text-primary">{formatToman(salePrice)}</span>
             {product.discount > 0 && (
               <>
-                <span className="text-lg text-muted-foreground line-through">{formatToman(product.price)}</span>
+                <span className="text-lg text-muted-foreground line-through">{formatToman(basePrice)}</span>
                 <span className="rounded-lg bg-accent px-2 py-1 text-xs font-black text-accent-foreground">تخفیف {formatToman(product.discount)}</span>
               </>
             )}
           </div>
           {product.isAvailable ? (
             <>
-              {canPurchase ? (
-                <div className="mt-7 flex items-center gap-3">
-                  <button type="button" onClick={() => change("decrease")} disabled={isAdding || quantity === 0} aria-label="کاهش تعداد" className="grid size-12 place-items-center rounded-xl border border-border bg-surface text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-40">
-                    <span className="material-symbols-rounded" aria-hidden="true">remove</span>
-                  </button><span className="min-w-12 text-center text-lg font-black tabular-nums" aria-live="polite">{quantity.toLocaleString("fa-IR")}</span>
-                  <button type="button" onClick={() => change("increase")} disabled={isAdding || effectiveVariantId == null} aria-label="افزودن تنوع انتخاب‌شده به سبد" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
-                    <span className="material-symbols-rounded" aria-hidden="true">add_shopping_cart</span>
-                    {isAdding ? "در حال افزودن…" : "افزودن به سبد"}
-                  </button>
-                </div>
-              ) : (
+              {blockedByRole ? (
                 <div className="mt-7 flex items-center gap-3 rounded-xl border border-border bg-muted p-4">
                   <span className="material-symbols-rounded text-2xl text-muted-foreground" aria-hidden="true">block</span>
                   <span className="text-sm font-bold text-muted-foreground">امکان خرید برای نقش شما فعال نیست.</span>
                 </div>
+              ) : (
+                <div className="mt-7 flex items-center gap-3">
+                  <button type="button" onClick={() => change("decrease")} disabled={isAdding || quantity === 0} aria-label="کاهش تعداد" className="grid size-12 place-items-center rounded-xl border border-border bg-surface text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-40">
+                    <span className="material-symbols-rounded" aria-hidden="true">remove</span>
+                  </button><span className="min-w-12 text-center text-lg font-black tabular-nums" aria-live="polite">{quantity.toLocaleString("fa-IR")}</span>
+                  <button type="button" onClick={() => change("increase")} disabled={addToCartDisabled} aria-label="افزودن تنوع انتخاب‌شده به سبد" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span className="material-symbols-rounded" aria-hidden="true">add_shopping_cart</span>
+                    {isAdding ? "در حال افزودن…" : "افزودن به سبد"}
+                  </button>
+                </div>
               )}
               {product.variants.length === 0 && <p role="alert" className="mt-2 text-sm text-error">برای این محصول تنوع قابل سفارشی ثبت نشده است.</p>}
+              {selectedVariant != null && stock > 0 && quantity >= stock && <p role="status" className="mt-2 text-sm text-warning">حداکثر موجودی این تنوع به سبد اضافه شده است.</p>}
               {cartError && <p role="alert" className="mt-2 text-sm text-error">{cartError.message}</p>}
             </>
           ) : (

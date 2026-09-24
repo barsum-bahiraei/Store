@@ -11,5 +11,5 @@ public class CartEntity : BaseEntity
     public UserEntity User { get; set; }
     public ProductEntity Product { get; set; }
     public int ProductVariantId { get; set; }
-    public ProductVariantEntity ProductVariants { get; set; }
+    public ProductVariantEntity ProductVariant { get; set; }
 }

@@ -1,6 +1,6 @@
 import { UserRole, type AccountUser } from "~/features/auth/models/account";
 
-const ownerRoutes = ["/attributes", "/categories", "/roles", "/users", "/discount-codes", "/brands", "/variants"];
+const ownerRoutes = ["/attributes", "/categories", "/roles", "/users", "/discount-codes", "/brands"];
 const sellerRoutes = ["/products", "/sellers"];
 const sharedRoutes = ["/profile"];
 

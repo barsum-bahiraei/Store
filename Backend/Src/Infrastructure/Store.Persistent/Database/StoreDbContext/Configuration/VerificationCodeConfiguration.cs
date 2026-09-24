@@ -10,7 +10,7 @@ public class VerificationCodeConfiguration : IEntityTypeConfiguration<Verificati
     {
         builder.ToTable("VerificationCodes");
         builder.Property(x => x.PhoneNumber).IsRequired().HasMaxLength(32);
-        builder.Property(x => x.CodeHash).IsRequired().HasMaxLength(64);
+        builder.Property(x => x.Code).IsRequired().HasMaxLength(32);
         builder.Property(x => x.IsUsed).HasDefaultValue(false);
         builder.HasIndex(x => new { x.PhoneNumber, x.IsUsed, x.ExpiresAt });
     }

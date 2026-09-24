@@ -162,7 +162,7 @@ public class AccountService(
         var entity = new VerificationCodeEntity
         {
             PhoneNumber = phoneNumber,
-            CodeHash = HashVerificationCode(phoneNumber, code),
+            Code = code,
             ExpiresAt = DateTime.UtcNow.AddMinutes(5),
             IsUsed = false
         };
@@ -171,7 +171,7 @@ public class AccountService(
         if (created == null)
             return Result<UserOtpSendOutput>.Failure("Please wait before requesting another verification code");
 
-        await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
+        //await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
 
         return Result<UserOtpSendOutput>.Success(new UserOtpSendOutput
         {
@@ -179,7 +179,8 @@ public class AccountService(
         });
     }
 
-    public async Task<Result<UserOtpVerifyOutput>> UserOtpVerifyAsync(UserOtpVerifyInput input,
+    public async Task<Result<UserOtpVerifyOutput>> UserOtpVerifyAsync(
+        UserOtpVerifyInput input,
         CancellationToken cancellation)
     {
         var phoneNumber = NormalizePhoneNumber(input.PhoneNumber);
@@ -189,9 +190,7 @@ public class AccountService(
 
         var verificationCode = await accountRepository.VerificationCodeGetAsync(phoneNumber, cancellation);
         if (verificationCode == null || verificationCode.ExpiresAt <= DateTime.UtcNow ||
-            !CryptographicOperations.FixedTimeEquals(
-                Convert.FromHexString(verificationCode.CodeHash),
-                Convert.FromHexString(HashVerificationCode(phoneNumber, input.Code))))
+            verificationCode.Code != input.Code)
             return Result<UserOtpVerifyOutput>.Failure("Verification code is invalid or expired");
 
         var authentication = await accountRepository.VerificationCodeUseAsync(
@@ -199,6 +198,7 @@ public class AccountService(
             phoneNumber,
             "User",
             cancellation);
+
         if (authentication == null)
             return Result<UserOtpVerifyOutput>.Failure("Verification code is invalid or expired");
 

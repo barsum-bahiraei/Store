@@ -1,6 +1,10 @@
+import type { ProductVariant } from "@/features/products/types/product";
+
 export type CartItem = {
   id: number;
   productCount: number;
+  productVariantId: number;
+  variant: ProductVariant;
   product: {
     id: number;
     name: string;

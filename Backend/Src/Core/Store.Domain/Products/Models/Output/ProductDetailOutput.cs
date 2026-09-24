@@ -21,7 +21,7 @@ public class ProductDetailOutput
     public List<ProductImageDetailOutput> Images { get; set; }
     public List<ProductAttributeDetailOutput> Attributes { get; set; }
     public List<ProductCommentDetailOutput> Comments { get; set; }
-    public List<ProductVariantDetailOutput> Variants { get; set; }
+    public List<ProductCombinationOutput> Variants { get; set; }
     public List<ProductSimilarDetailOutput> SimilarProducts { get; set; }
 }
 
@@ -52,13 +52,6 @@ public class ProductBrandImageDetailOutput
     public string Name { get; set; }
     public string Url { get; set; }
     public FileTypeEnum FileType { get; set; }
-}
-
-public class ProductVariantDetailOutput
-{
-    public int Id { get; set; }
-    public string ColorName { get; set; }
-    public string ColorCode { get; set; }
 }
 
 public class ProductCategoryDetailOutput

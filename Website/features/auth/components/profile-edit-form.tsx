@@ -17,6 +17,8 @@ export function ProfileEditForm({ user, returnTo }: ProfileEditFormProps) {
   const router = useRouter();
   const updateProfile = useUpdateUserProfile();
   const [form, setForm] = useState({
+    firstName: user.firstName ?? "",
+    lastName: user.lastName ?? "",
     email: user.email ?? "",
     address: user.address ?? "",
     latitude: user.latitude?.toString() ?? "",
@@ -50,6 +52,8 @@ export function ProfileEditForm({ user, returnTo }: ProfileEditFormProps) {
 
     try {
       await updateProfile.mutateAsync({
+        firstName: form.firstName.trim() || null,
+        lastName: form.lastName.trim() || null,
         email: form.email.trim() || null,
         address: form.address.trim(),
         latitude,
@@ -68,11 +72,19 @@ export function ProfileEditForm({ user, returnTo }: ProfileEditFormProps) {
   return (
     <section aria-labelledby="edit-profile-title" className="rounded-2xl border border-border bg-surface p-5 sm:p-7">
       <div className="mb-6">
-        <h2 id="edit-profile-title" className="text-xl font-black">ویرایش اطلاعات تکمیلی</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">نشانی را وارد کنید و نقطه دقیق تحویل را روی نقشه انتخاب کنید.</p>
+        <h2 id="edit-profile-title" className="text-xl font-black">ویرایش اطلاعات پروفایل</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">نام و نشانی خود را ویرایش کنید و نقطه دقیق تحویل را روی نقشه انتخاب کنید.</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="profile-first-name" className="text-sm font-bold">نام</label>
+            <input id="profile-first-name" value={form.firstName} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} disabled={updateProfile.isPending} maxLength={100} autoComplete="given-name" placeholder="نام خود را وارد کنید" className={inputClassName} />
+          </div>
+          <div>
+            <label htmlFor="profile-last-name" className="text-sm font-bold">نام خانوادگی</label>
+            <input id="profile-last-name" value={form.lastName} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} disabled={updateProfile.isPending} maxLength={100} autoComplete="family-name" placeholder="نام خانوادگی خود را وارد کنید" className={inputClassName} />
+          </div>
           <div className="sm:col-span-2">
             <label htmlFor="profile-email" className="text-sm font-bold">ایمیل</label>
             <input id="profile-email" type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} disabled={updateProfile.isPending} dir="ltr" placeholder="example@email.com" className={inputClassName} />

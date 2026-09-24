@@ -114,9 +114,9 @@ public class ProductService(
                 ProductGroupId = null,
                 Title = entity.Name,
                 Subtitle = null,
-                CurrentPrice = (long)decimal.Truncate(Math.Max(0, entity.Price - entity.Discount)),
-                OldPrice = entity.Discount > 0 ? (long)decimal.Truncate(entity.Price) : null,
-                Availability = entity.IsAvailable,
+                CurrentPrice = (long)decimal.Truncate(GetDiscountedPrice(GetDisplayPrice(entity), entity.Discount)),
+                OldPrice = entity.Discount > 0 ? (long)decimal.Truncate(GetDisplayPrice(entity)) : null,
+                Availability = IsAvailable(entity),
                 CategoryName = entity.Category.Name,
                 ImageLinks = imageLinks,
                 Spec = entity.ProductAttributes
@@ -185,11 +185,11 @@ public class ProductService(
                 Id = entity.Id,
                 Name = entity.Name,
                 ShortDescription = entity.ShortDescription,
-                Price = entity.Price,
+                Price = GetDisplayPrice(entity),
                 Discount = entity.Discount,
                 CategoryId = entity.CategoryId,
                 CategoryTitle = entity.Category.Name,
-                IsAvailable = entity.IsAvailable,
+                IsAvailable = IsAvailable(entity),
                 Image = image,
                 Seller = new ProductSellerListOutput
                 {
@@ -236,14 +236,14 @@ public class ProductService(
                 Id = entity.Id,
                 Name = entity.Name,
                 ShortDescription = entity.ShortDescription,
-                Price = entity.Price,
+                Price = GetDisplayPrice(entity),
                 Discount = entity.Discount,
                 AverageRating = ratings.Count != 0
                     ? ratings.Average(x => (decimal)x.Rating!.Value)
                     : 0,
                 CategoryId = entity.CategoryId,
                 CategoryTitle = entity.Category.Name,
-                IsAvailable = entity.IsAvailable,
+                IsAvailable = IsAvailable(entity),
                 Image = image
             });
         }
@@ -350,14 +350,14 @@ public class ProductService(
                 Id = similarEntity.Id,
                 Name = similarEntity.Name,
                 ShortDescription = similarEntity.ShortDescription,
-                Price = similarEntity.Price,
+                Price = GetDisplayPrice(similarEntity),
                 Discount = similarEntity.Discount,
                 AverageRating = ratings.Count != 0
                     ? ratings.Average(x => (decimal)x.Rating!.Value)
                     : 0,
                 CategoryId = similarEntity.CategoryId,
                 CategoryTitle = similarEntity.Category.Name,
-                IsAvailable = similarEntity.IsAvailable,
+                IsAvailable = IsAvailable(similarEntity),
                 Image = imageResult.Data == null
                     ? null
                     : new ProductImageDetailOutput
@@ -377,11 +377,11 @@ public class ProductService(
             Name = entity.Name,
             ShortDescription = entity.ShortDescription,
             LongDescription = entity.LongDescription,
-            Price = entity.Price,
+            Price = GetDisplayPrice(entity),
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
-            IsAvailable = entity.IsAvailable,
+            IsAvailable = IsAvailable(entity),
             Categories = categories,
             Brand = brand,
             Images = images,
@@ -415,12 +415,7 @@ public class ProductService(
                         LastName = x.User.LastName
                     }
                 }).ToList(),
-            Variants = entity.ProductVariants.Select(x => new ProductVariantDetailOutput
-            {
-                Id = x.Id,
-                ColorName = x.Variant.Name,
-                ColorCode = x.Variant.Code
-            }).ToList(),
+            Variants = entity.ProductVariants.Select(MapCombination).ToList(),
             SimilarProducts = similarProducts
         };
 
@@ -520,12 +515,12 @@ public class ProductService(
             Name = entity.Name,
             ShortDescription = entity.ShortDescription,
             LongDescription = entity.LongDescription,
-            Price = entity.Price,
+            Price = GetDisplayPrice(entity),
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,
             Brand = brand,
-            IsAvailable = entity.IsAvailable,
+            IsAvailable = IsAvailable(entity),
             Images = images,
             Seller = new ProductSellerGetOutput
             {
@@ -541,12 +536,7 @@ public class ProductService(
                 AttributeType = x.Attribute.Type,
                 AttributeUnit = x.Attribute.Unit
             }).ToList(),
-            Variants = entity.ProductVariants.Select(x => new ProductVariantGetOutput
-            {
-                Id = x.Id,
-                ColorName = x.Variant.Name,
-                ColorCode = x.Variant.Code
-            }).ToList()
+            Variants = entity.ProductVariants.Select(MapCombination).ToList()
         };
 
         return Result<ProductGetOutput?>.Success(result);
@@ -560,31 +550,46 @@ public class ProductService(
         if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
             return Result<ProductCreateOutput>.Failure("Product brand not found");
 
-        var variantIds = input.ProductVariantIds.Distinct().ToList();
-        var variants = await productRepository.VariantListAsync(variantIds, cancellation);
-        if (variants.Count != variantIds.Count)
-            return Result<ProductCreateOutput>.Failure("Product variant not found");
+        var combinations = input.Variants?.Select(x => new ProductCombinationData(
+            null,
+            x.Price,
+            x.Stock,
+            x.Values?.Select(value => new ProductVariantAttributeValueData(
+                value.Size,
+                value.Name,
+                value.Code)).ToList() ?? [])).ToList() ?? [];
+        var validationError = ValidateCombinations(combinations);
+        if (validationError != null)
+            return Result<ProductCreateOutput>.Failure(validationError);
+
+        if (input.Discount < 0 || combinations.Any(x => input.Discount > x.Price))
+            return Result<ProductCreateOutput>.Failure("Product discount is invalid");
 
         var entity = new ProductEntity
         {
             Name = input.Name,
             ShortDescription = input.ShortDescription,
             LongDescription = input.LongDescription,
-            Price = input.Price,
             Discount = input.Discount,
             CategoryId = input.CategoryId,
             SellerId = input.SellerId,
             ProductBrandId = input.ProductBrandId,
-            IsAvailable = input.IsAvailable,
             ProductAttributes = input.Attributes.Select(x => new ProductAttributeEntity
             {
                 AttributeId = x.AttributeId,
                 Value = x.Value
             }).ToList(),
-            ProductVariants = variants.Select(x => new ProductVariantEntity
+            ProductVariants = combinations.Select(x => new ProductVariantEntity
             {
-                VariantId = x.Id,
-                Variant = x
+                Price = x.Price,
+                Stock = x.Stock,
+                CombinationKey = CreateCombinationKey(x.Values),
+                AttributeValues = x.Values.Select(value => new ProductVariantAttributeValueEntity
+                {
+                    Size = value.Size.Trim(),
+                    Name = value.Name.Trim(),
+                    Code = value.Code.Trim()
+                }).ToList()
             }).ToList()
         };
 
@@ -596,24 +601,19 @@ public class ProductService(
             Name = created.Name,
             ShortDescription = created.ShortDescription,
             LongDescription = created.LongDescription,
-            Price = created.Price,
+            Price = GetDisplayPrice(created),
             Discount = created.Discount,
             CategoryId = created.CategoryId,
             SellerId = created.SellerId,
             ProductBrandId = created.ProductBrandId,
-            IsAvailable = created.IsAvailable,
+            IsAvailable = IsAvailable(created),
             Attributes = created.ProductAttributes.Select(x => new ProductAttributeOutput
             {
                 Id = x.Id,
                 AttributeId = x.AttributeId,
                 Value = x.Value
             }).ToList(),
-            Variants = created.ProductVariants.Select(x => new ProductVariantCreateOutput
-            {
-                Id = x.Id,
-                ColorName = x.Variant.Name,
-                ColorCode = x.Variant.Code
-            }).ToList()
+            Variants = created.ProductVariants.Select(MapCombination).ToList()
         });
     }
 
@@ -630,20 +630,33 @@ public class ProductService(
         if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
             return Result<ProductUpdateOutput>.Failure("Product brand not found");
 
-        var variantIds = input.ProductVariantIds.Distinct().ToList();
-        var variants = await productRepository.VariantListAsync(variantIds, cancellation);
-        if (variants.Count != variantIds.Count)
-            return Result<ProductUpdateOutput>.Failure("Product variant not found");
+        var combinations = input.Variants?.Select(x => new ProductCombinationData(
+            x.Id,
+            x.Price,
+            x.Stock,
+            x.Values?.Select(value => new ProductVariantAttributeValueData(
+                value.Size,
+                value.Name,
+                value.Code)).ToList() ?? [])).ToList() ?? [];
+        var validationError = ValidateCombinations(combinations);
+        if (validationError != null)
+            return Result<ProductUpdateOutput>.Failure(validationError);
+
+        if (input.Discount < 0 || combinations.Any(x => input.Discount > x.Price))
+            return Result<ProductUpdateOutput>.Failure("Product discount is invalid");
+
+        var inputIds = combinations.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToList();
+        if (inputIds.Count != inputIds.Distinct().Count() ||
+            inputIds.Any(inputId => entity.ProductVariants.All(x => x.Id != inputId)))
+            return Result<ProductUpdateOutput>.Failure("Product variant is invalid");
 
         entity.Name = input.Name;
         entity.ShortDescription = input.ShortDescription;
         entity.LongDescription = input.LongDescription;
-        entity.Price = input.Price;
         entity.Discount = input.Discount;
         entity.CategoryId = input.CategoryId;
         entity.SellerId = input.SellerId;
         entity.ProductBrandId = input.ProductBrandId;
-        entity.IsAvailable = input.IsAvailable;
 
         foreach (var item in input.Attributes)
         {
@@ -653,15 +666,53 @@ public class ProductService(
                 attribute.Value = item.Value;
         }
 
-        entity.ProductVariants.Clear();
-        foreach (var item in variants)
+        foreach (var existing in entity.ProductVariants.ToList())
+        {
+            var item = combinations.FirstOrDefault(x => x.Id == existing.Id);
+            if (item == null)
+            {
+                if (await productRepository.ProductVariantIsInUseAsync(existing.Id, cancellation))
+                    return Result<ProductUpdateOutput>.Failure("An in-use product variant cannot be removed");
+
+                entity.ProductVariants.Remove(existing);
+                continue;
+            }
+
+            var newKey = CreateCombinationKey(item.Values);
+            if (newKey != existing.CombinationKey &&
+                await productRepository.ProductVariantIsInUseAsync(existing.Id, cancellation))
+                return Result<ProductUpdateOutput>.Failure("The values of an in-use product variant cannot be changed");
+
+            existing.Price = item.Price;
+            existing.Stock = item.Stock;
+            existing.CombinationKey = newKey;
+            existing.AttributeValues.Clear();
+            foreach (var value in item.Values)
+                existing.AttributeValues.Add(new ProductVariantAttributeValueEntity
+                {
+                    Size = value.Size.Trim(),
+                    Name = value.Name.Trim(),
+                    Code = value.Code.Trim()
+                });
+        }
+
+        foreach (var item in combinations.Where(x => !x.Id.HasValue))
             entity.ProductVariants.Add(new ProductVariantEntity
             {
-                VariantId = item.Id,
-                Variant = item
+                Price = item.Price,
+                Stock = item.Stock,
+                CombinationKey = CreateCombinationKey(item.Values),
+                AttributeValues = item.Values.Select(value => new ProductVariantAttributeValueEntity
+                {
+                    Size = value.Size.Trim(),
+                    Name = value.Name.Trim(),
+                    Code = value.Code.Trim()
+                }).ToList()
             });
 
         var updated = await productRepository.UpdateAsync(entity, cancellation);
+        if (updated == null)
+            return Result<ProductUpdateOutput>.Failure("Product variant stock changed; reload the product and try again");
 
         return Result<ProductUpdateOutput>.Success(new ProductUpdateOutput
         {
@@ -669,25 +720,20 @@ public class ProductService(
             Name = updated.Name,
             ShortDescription = updated.ShortDescription,
             LongDescription = updated.LongDescription,
-            Price = updated.Price,
+            Price = GetDisplayPrice(updated),
             Discount = updated.Discount,
             CategoryId = updated.CategoryId,
             CategoryTitle = updated.Category.Name,
             SellerId = updated.SellerId,
             ProductBrandId = updated.ProductBrandId,
-            IsAvailable = updated.IsAvailable,
+            IsAvailable = IsAvailable(updated),
             Attributes = updated.ProductAttributes.Select(x => new ProductAttributeUpdateOutput
             {
                 Id = x.Id,
                 AttributeId = x.AttributeId,
                 Value = x.Value
             }).ToList(),
-            Variants = updated.ProductVariants.Select(x => new ProductVariantUpdateOutput
-            {
-                Id = x.Id,
-                ColorName = x.Variant.Name,
-                ColorCode = x.Variant.Code
-            }).ToList()
+            Variants = updated.ProductVariants.Select(MapCombination).ToList()
         });
     }
 
@@ -809,80 +855,6 @@ public class ProductService(
         return Result<bool>.Success(true);
     }
 
-    public async Task<Result<List<ProductVariantListOutput>>> VariantListAsync(CancellationToken cancellation)
-    {
-        var entities = await productRepository.VariantListAsync(cancellation);
-        var result = entities.Select(x => new ProductVariantListOutput
-        {
-            Id = x.Id,
-            ColorName = x.Name,
-            ColorCode = x.Code
-        }).ToList();
-        return Result<List<ProductVariantListOutput>>.Success(result);
-    }
-
-    public async Task<Result<ProductVariantGetOutput?>> VariantGetAsync(int id, CancellationToken cancellation)
-    {
-        var entity = await productRepository.VariantGetAsync(id, cancellation);
-        if (entity == null)
-            return Result<ProductVariantGetOutput?>.Failure("Product variant not found");
-
-        return Result<ProductVariantGetOutput?>.Success(new ProductVariantGetOutput
-        {
-            Id = entity.Id,
-            ColorName = entity.Name,
-            ColorCode = entity.Code
-        });
-    }
-
-    public async Task<Result<ProductVariantCreateOutput>> VariantCreateAsync(ProductVariantCreateInput input,
-        CancellationToken cancellation)
-    {
-        var created = await productRepository.VariantCreateAsync(new VariantEntity
-        {
-            Name = input.ColorName,
-            Code = input.ColorCode
-        }, cancellation);
-
-        return Result<ProductVariantCreateOutput>.Success(new ProductVariantCreateOutput
-        {
-            Id = created.Id,
-            ColorName = created.Name,
-            ColorCode = created.Code
-        });
-    }
-
-    public async Task<Result<ProductVariantUpdateOutput>> VariantUpdateAsync(int id, ProductVariantUpdateInput input,
-        CancellationToken cancellation)
-    {
-        var entity = await productRepository.VariantGetAsync(id, cancellation);
-        if (entity == null)
-            return Result<ProductVariantUpdateOutput>.Failure("Product variant not found");
-
-        entity.Name = input.ColorName;
-        entity.Code = input.ColorCode;
-        var updated = await productRepository.VariantUpdateAsync(entity, cancellation);
-        return Result<ProductVariantUpdateOutput>.Success(new ProductVariantUpdateOutput
-        {
-            Id = updated.Id,
-            ColorName = updated.Name,
-            ColorCode = updated.Code
-        });
-    }
-
-    public async Task<Result<bool>> VariantDeleteAsync(int id, CancellationToken cancellation)
-    {
-        var entity = await productRepository.VariantGetAsync(id, cancellation);
-        if (entity == null)
-            return Result<bool>.Failure("Product variant not found");
-
-        if (entity.ProductVariants.Count != 0)
-            return Result<bool>.Failure("Product variant is in use");
-
-        await productRepository.VariantDeleteAsync(entity, cancellation);
-        return Result<bool>.Success(true);
-    }
-
     public async Task<Result<List<ProductBookmarkListOutput>>> BookmarkListAsync(int userId, CancellationToken cancellation)
     {
         var entities = await productRepository.BookmarkListAsync(userId, cancellation);
@@ -921,7 +893,7 @@ public class ProductService(
                     Id = entity.Product.Id,
                     Name = entity.Product.Name,
                     ShortDescription = entity.Product.ShortDescription,
-                    Price = entity.Product.Price,
+                    Price = GetDisplayPrice(entity.Product),
                     Discount = entity.Product.Discount,
                     CategoryId = entity.Product.CategoryId,
                     CategoryTitle = entity.Product.Category.Name,
@@ -961,4 +933,82 @@ public class ProductService(
         await productRepository.BookmarkDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
     }
+
+    private static string? ValidateCombinations(List<ProductCombinationData> combinations)
+    {
+        if (combinations.Count == 0)
+            return "At least one product variant is required";
+
+        if (combinations.Any(x => x.Price < 0))
+            return "Product variant price cannot be negative";
+
+        if (combinations.Any(x => x.Stock < 0))
+            return "Product variant stock cannot be negative";
+
+        if (combinations.Any(x => x.Values.Count == 0 || x.Values.Any(value =>
+                string.IsNullOrWhiteSpace(value.Size) || value.Size.Trim().Length > 50 ||
+                string.IsNullOrWhiteSpace(value.Name) || value.Name.Trim().Length > 100 ||
+                string.IsNullOrWhiteSpace(value.Code) || value.Code.Trim().Length > 32)))
+            return "Product variant values are invalid";
+
+        if (combinations.Any(combination => combination.Values
+                .Select(value => value.Size.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count() != combination.Values.Count))
+            return "A product variant cannot contain multiple values of the same type";
+
+        var keys = combinations.Select(x => CreateCombinationKey(x.Values)).ToList();
+        if (keys.Any(x => x.Length > 500))
+            return "Product variant combination is too long";
+
+        if (keys.Count != keys.Distinct(StringComparer.Ordinal).Count())
+            return "Duplicate product variant combination";
+
+        return null;
+    }
+
+    private static string CreateCombinationKey(IEnumerable<ProductVariantAttributeValueData> values) =>
+        string.Join("\u001e", values
+            .Select(value => string.Join("\u001f",
+                value.Size.Trim().ToLowerInvariant(),
+                value.Name.Trim().ToLowerInvariant(),
+                value.Code.Trim().ToLowerInvariant()))
+            .OrderBy(value => value, StringComparer.Ordinal));
+
+    private static decimal GetDisplayPrice(ProductEntity product)
+    {
+        var availablePrices = product.ProductVariants.Where(x => x.Stock > 0).Select(x => x.Price).ToList();
+        return availablePrices.Count > 0
+            ? availablePrices.Min()
+            : product.ProductVariants.Select(x => x.Price).DefaultIfEmpty(0).Min();
+    }
+
+    private static decimal GetDiscountedPrice(decimal price, decimal discount) => Math.Max(0, price - discount);
+
+    private static bool IsAvailable(ProductEntity product) => product.ProductVariants.Any(x => x.Stock > 0);
+
+    private static ProductCombinationOutput MapCombination(ProductVariantEntity combination) => new()
+    {
+        Id = combination.Id,
+        Price = combination.Price,
+        Stock = combination.Stock,
+        Values = combination.AttributeValues
+            .OrderBy(x => x.Size)
+            .ThenBy(x => x.Id)
+            .Select(x => new ProductVariantAttributeValueOutput
+            {
+                Id = x.Id,
+                Size = x.Size,
+                Name = x.Name,
+                Code = x.Code
+            }).ToList()
+    };
+
+    private sealed record ProductCombinationData(
+        int? Id,
+        decimal Price,
+        int Stock,
+        List<ProductVariantAttributeValueData> Values);
+
+    private sealed record ProductVariantAttributeValueData(string Size, string Name, string Code);
 }

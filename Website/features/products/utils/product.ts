@@ -1,4 +1,14 @@
-import { ProductAttributeType, ProductAttributeUnit } from "../types/product";
+import { ProductAttributeType, ProductAttributeUnit, type ProductVariant, type ProductVariantAttributeValue } from "../types/product";
+
+export type VariantOption = {
+  name: string;
+  code: string;
+};
+
+export type VariantGroup = {
+  size: string;
+  options: VariantOption[];
+};
 
 export const priceFormatter = new Intl.NumberFormat("fa-IR", {
   style: "decimal",
@@ -32,6 +42,65 @@ export function formatToman(price: number) {
 
 export function getSalePrice(price: number, discount: number) {
   return Math.max(0, price - discount);
+}
+
+export function formatVariantLabel(values: ProductVariantAttributeValue[]) {
+  if (values.length === 0) return undefined;
+  return values.map((value) => `${value.size}: ${value.name || value.code}`).join("، ");
+}
+
+function variantOptionKey(value: { name: string; code: string }) {
+  return value.name || value.code;
+}
+
+export function buildVariantGroups(variants: ProductVariant[]): VariantGroup[] {
+  const groups = new Map<string, Map<string, VariantOption>>();
+  for (const variant of variants) {
+    for (const value of variant.values) {
+      const options = groups.get(value.size) ?? new Map<string, VariantOption>();
+      const key = variantOptionKey(value);
+      if (!options.has(key)) options.set(key, { name: value.name, code: value.code });
+      groups.set(value.size, options);
+    }
+  }
+  return [...groups.entries()].map(([size, options]) => ({ size, options: [...options.values()] }));
+}
+
+export function createDefaultVariantSelection(variants: ProductVariant[], groups: VariantGroup[]): Record<string, string> {
+  if (variants.length === 1) {
+    return Object.fromEntries(variants[0].values.map((value) => [value.size, variantOptionKey(value)]));
+  }
+  const selection: Record<string, string> = {};
+  for (const group of groups) {
+    if (group.options.length === 1) selection[group.size] = variantOptionKey(group.options[0]);
+  }
+  return selection;
+}
+
+function variantMatchesSelection(variant: ProductVariant, selection: Record<string, string>) {
+  return Object.entries(selection).every(([size, option]) =>
+    variant.values.some((value) => value.size === size && variantOptionKey(value) === option),
+  );
+}
+
+export function matchVariantBySelection(variants: ProductVariant[], selection: Record<string, string>) {
+  if (Object.keys(selection).length === 0) return undefined;
+  return variants.find((variant) => variantMatchesSelection(variant, selection));
+}
+
+export function getVariantOptionStatus(
+  variants: ProductVariant[],
+  selection: Record<string, string>,
+  size: string,
+  option: string,
+) {
+  const hypothetical = { ...selection, [size]: option };
+  const matching = variants.filter((variant) => variantMatchesSelection(variant, hypothetical));
+  const hasStock = matching.some((variant) => variant.stock > 0);
+  return {
+    disabled: !hasStock,
+    outOfStock: matching.length > 0 && !hasStock,
+  };
 }
 
 export function getProductImageUrl(url?: string | null) {

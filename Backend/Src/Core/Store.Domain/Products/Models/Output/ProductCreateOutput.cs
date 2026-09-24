@@ -13,7 +13,7 @@ public class ProductCreateOutput
     public int? ProductBrandId { get; set; }
     public bool IsAvailable { get; set; }
     public List<ProductAttributeOutput> Attributes { get; set; }
-    public List<ProductVariantCreateOutput> Variants { get; set; }
+    public List<ProductCombinationOutput> Variants { get; set; }
 }
 
 public class ProductAttributeOutput

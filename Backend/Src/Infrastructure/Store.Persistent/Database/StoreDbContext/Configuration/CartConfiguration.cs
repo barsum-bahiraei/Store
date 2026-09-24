@@ -11,7 +11,7 @@ public class CartConfiguration : IEntityTypeConfiguration<CartEntity>
         builder.ToTable("Carts");
 
         builder.HasOne(x => x.Product)
-            .WithMany(x => x.Cards)
+            .WithMany(x => x.Carts)
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -20,7 +20,7 @@ public class CartConfiguration : IEntityTypeConfiguration<CartEntity>
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.ProductVariants)
+        builder.HasOne(x => x.ProductVariant)
             .WithMany()
             .HasForeignKey(x => x.ProductVariantId)
             .OnDelete(DeleteBehavior.Restrict);

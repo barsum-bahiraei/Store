@@ -28,7 +28,6 @@ const navGroups: NavGroup[] = [
     children: [
       { to: "/products", label: "همه محصولات", icon: "inventory_2" },
       { to: "/brands", label: "برندها", icon: "branding_watermark" },
-      { to: "/variants", label: "رنگ‌ها", icon: "palette" },
     ],
   },
 ];

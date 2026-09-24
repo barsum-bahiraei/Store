@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
   const { id } = await params;
-  return <div className="flex min-h-dvh flex-col bg-background text-foreground"><StoreHeader /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-8 lg:px-12"><ProductDetailContent productId={Number(id)} /></main><StoreFooter /></div>;
+  return <div className="flex min-h-dvh flex-col bg-background text-foreground"><StoreHeader /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-8 lg:px-12"><ProductDetailContent key={id} productId={Number(id)} /></main><StoreFooter /></div>;
 }

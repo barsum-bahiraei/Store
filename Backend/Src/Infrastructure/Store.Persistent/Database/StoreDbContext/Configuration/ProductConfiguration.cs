@@ -11,7 +11,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
         builder.ToTable("Products");
         builder.Property(x => x.Name).IsRequired().HasMaxLength(500);
         builder.Property(x => x.ShortDescription).HasMaxLength(500);
-        builder.Property(x => x.Price).HasPrecision(18, 2);
         builder.Property(x => x.Discount).HasPrecision(18, 2);
         builder.Ignore(x => x.Invoices);
         builder.HasOne(x => x.Category)
@@ -26,6 +25,5 @@ public class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
             .WithMany(x => x.Products)
             .HasForeignKey(x => x.ProductBrandId)
             .OnDelete(DeleteBehavior.Restrict);
-        builder.Property(x => x.IsAvailable).HasDefaultValue(true);
     }
 }

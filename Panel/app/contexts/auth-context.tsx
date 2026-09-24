@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "~/features/auth/api/auth-api";
 import type { AccountUser, UserProfileUpdateInput } from "~/features/auth/models/account";
-import { AUTH_TOKEN_KEY } from "~/shared/http/http-client";
+import { clearAuthToken, getAuthToken, setAuthToken } from "~/shared/http/auth-token";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    const token = getAuthToken();
     if (!token) {
       setIsReady(true);
       return;
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(setCurrentUser)
       .catch(() => setCurrentUser(null))
       .finally(() => {
-        setHasToken(Boolean(window.localStorage.getItem(AUTH_TOKEN_KEY)));
+        setHasToken(Boolean(getAuthToken()));
         setIsReady(true);
       });
   }, []);
@@ -43,14 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyOtp = async (phoneNumber: string, code: string) => {
     const { token } = await authApi.verifyOtp({ phoneNumber, code });
-    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+    setAuthToken(token);
     setHasToken(true);
     try {
       const user = await authApi.profile();
       setCurrentUser(user);
       return user;
     } catch (error) {
-      window.localStorage.removeItem(AUTH_TOKEN_KEY);
+      clearAuthToken();
       setHasToken(false);
       setCurrentUser(null);
       throw error;
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    clearAuthToken();
     setCurrentUser(null);
     setHasToken(false);
   };

@@ -6,6 +6,20 @@ export type ProductImage = {
   fileType: number;
 };
 
+export type ProductVariantAttributeValue = {
+  id: number;
+  size: string;
+  name: string;
+  code: string;
+};
+
+export type ProductVariant = {
+  id: number;
+  price: number;
+  stock: number;
+  values: ProductVariantAttributeValue[];
+};
+
 export type ProductSearchItem = {
   id: number;
   name: string;
@@ -17,6 +31,7 @@ export type ProductSearchItem = {
   categoryTitle: string;
   image: ProductImage | null;
   isAvailable: boolean;
+  variants: ProductVariant[];
 };
 
 export type ProductSearchInput = {
@@ -56,12 +71,6 @@ export type ProductBrandListItem = {
   image: ProductImage | null;
 };
 
-export type ProductVariant = {
-  id: number;
-  colorName: string;
-  colorCode: string;
-};
-
 export enum ProductAttributeType {
   String,
   Int,
@@ -98,7 +107,6 @@ export type ProductDetail = Omit<ProductSearchItem, "averageRating" | "image"> &
   brand: ProductBrand | null;
   seller: { id: number; name: string };
   images: ProductImage[];
-  variants: ProductVariant[];
   attributes: Array<{
     id: number;
     attributeId: number;

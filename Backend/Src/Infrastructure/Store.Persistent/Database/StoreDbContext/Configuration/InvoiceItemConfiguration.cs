@@ -21,7 +21,7 @@ public class InvoiceItemConfiguration : IEntityTypeConfiguration<InvoiceItemEnti
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.ProductVariants)
+        builder.HasOne(x => x.ProductVariant)
             .WithMany()
             .HasForeignKey(x => x.ProductVariantId)
             .OnDelete(DeleteBehavior.Restrict);

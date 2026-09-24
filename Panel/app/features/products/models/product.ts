@@ -1,7 +1,6 @@
 import type { AttributeType } from "~/features/attributes/models/enums/attribute-type";
 import type { AttributeUnit } from "~/features/attributes/models/enums/attribute-unit";
 import type { Brand } from "~/features/brands/models/brand";
-import type { ProductVariant } from "~/features/variants/models/variant";
 
 export interface ProductAttributeInput {
   attributeId: number;
@@ -23,35 +22,57 @@ export interface ProductAttributeGetOutput
   extends ProductAttributeOutput,
     ProductAttributeDefinition {}
 
+export interface ProductVariantValueInput {
+  size: string;
+  name: string;
+  code: string;
+}
+
+export interface ProductVariantValueOutput extends ProductVariantValueInput {
+  id: number;
+}
+
+export interface ProductVariantInput {
+  id?: number | null;
+  price: number;
+  stock: number;
+  values: ProductVariantValueInput[];
+}
+
+export interface ProductVariantOutput {
+  id: number;
+  price: number;
+  stock: number;
+  values: ProductVariantValueOutput[];
+}
+
 export interface ProductCreateInput {
   name: string;
   shortDescription: string | null;
   longDescription: string | null;
-  price: number;
   discount: number;
   categoryId: number;
   sellerId: number;
   productBrandId: number;
-  productVariantIds: number[];
   attributes: ProductAttributeInput[];
-  isAvailable: boolean;
+  variants: ProductVariantInput[];
 }
 
 export interface ProductCreateOutput
-  extends Omit<ProductCreateInput, "attributes" | "productVariantIds"> {
+  extends Omit<ProductCreateInput, "attributes" | "variants"> {
   id: number;
   attributes: ProductAttributeOutput[];
-  variants: ProductVariant[];
+  variants: ProductVariantOutput[];
 }
 
 export interface ProductUpdateInput extends ProductCreateInput {}
 
 export interface ProductUpdateOutput
-  extends Omit<ProductUpdateInput, "attributes" | "productVariantIds"> {
+  extends Omit<ProductUpdateInput, "attributes" | "variants"> {
   id: number;
   categoryTitle: string;
   attributes: ProductAttributeOutput[];
-  variants: ProductVariant[];
+  variants: ProductVariantOutput[];
 }
 
 export interface ProductListOutput {
@@ -83,7 +104,7 @@ export interface ProductImage {
 export interface ProductGetOutput extends Omit<ProductListOutput, "image"> {
   longDescription: string | null;
   brand: Brand | null;
-  variants: ProductVariant[];
+  variants: ProductVariantOutput[];
   attributes: ProductAttributeGetOutput[];
   images: ProductImage[];
 }

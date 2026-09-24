@@ -40,11 +40,13 @@ public class InvoiceService(
             {
                 Id = entity.Id,
                 ProductCount = entity.ProductCount,
+                ProductVariantId = entity.ProductVariantId,
+                Variant = MapCartVariant(entity.ProductVariant),
                 Product = new CartProductListOutput
                 {
                     Id = entity.Product.Id,
                     Name = entity.Product.Name,
-                    Price = entity.Product.Price,
+                    Price = entity.ProductVariant.Price,
                     Discount = entity.Product.Discount,
                     Image = image,
                 }
@@ -64,20 +66,22 @@ public class InvoiceService(
         if (product == null)
             return Result<CartCreateOutput>.Failure("Product not found");
 
-        if (!product.IsAvailable)
-            return Result<CartCreateOutput>.Failure("Product is not available");
-
-        if (product.ProductVariants.All(x => x.Id != input.ProductVariantId))
+        var productVariant = product.ProductVariants.FirstOrDefault(x => x.Id == input.ProductVariantId);
+        if (productVariant == null)
             return Result<CartCreateOutput>.Failure("Product variant is invalid");
 
-        var entity = new CartEntity
+        if (productVariant.Stock < input.ProductCount)
+            return Result<CartCreateOutput>.Failure("Product variant stock is insufficient");
+
+        var created = await invoiceRepository.CartAddAsync(new CartEntity
         {
             UserId = userId,
             ProductId = input.ProductId,
             ProductVariantId = input.ProductVariantId,
             ProductCount = input.ProductCount,
-        };
-        var created = await invoiceRepository.CartCreateAsync(entity, cancellation);
+        }, cancellation);
+        if (created == null)
+            return Result<CartCreateOutput>.Failure("Product variant stock is insufficient");
         var imageResult =
             await fileService.GetAsync(TableNameEnum.Products, TargetNameEnum.ProductId, created.Product.Id,
                 cancellation);
@@ -98,11 +102,13 @@ public class InvoiceService(
         {
             Id = created.Id,
             ProductCount = created.ProductCount,
+            ProductVariantId = created.ProductVariantId,
+            Variant = MapCartVariant(created.ProductVariant),
             Product = new CartProductCreateOutput
             {
                 Id = created.Product.Id,
                 Name = created.Product.Name,
-                Price = created.Product.Price,
+                Price = created.ProductVariant.Price,
                 Discount = created.Product.Discount,
                 Image = image,
             }
@@ -119,6 +125,12 @@ public class InvoiceService(
         var entity = await invoiceRepository.CartGetAsync(id, userId, cancellation);
         if (entity == null)
             return Result<CartUpdateOutput>.Failure("Cart not found");
+
+        if (entity.ProductVariant.ProductId != entity.ProductId)
+            return Result<CartUpdateOutput>.Failure("Product variant is invalid");
+
+        if (entity.ProductVariant.Stock < input.ProductCount)
+            return Result<CartUpdateOutput>.Failure("Product variant stock is insufficient");
 
         entity.ProductCount = input.ProductCount;
 
@@ -143,11 +155,13 @@ public class InvoiceService(
         {
             Id = updated.Id,
             ProductCount = updated.ProductCount,
+            ProductVariantId = updated.ProductVariantId,
+            Variant = MapCartVariant(updated.ProductVariant),
             Product = new CartProductUpdateOutput
             {
                 Id = updated.Product.Id,
                 Name = updated.Product.Name,
-                Price = updated.Product.Price,
+                Price = updated.ProductVariant.Price,
                 Discount = updated.Product.Discount,
                 Image = image,
             }
@@ -212,16 +226,16 @@ public class InvoiceService(
         if (carts.Any(x => x.ProductCount <= 0))
             return Result<CheckoutOutput>.Failure("Cart contains an invalid product count");
 
-        if (carts.Any(x => !x.Product.IsAvailable))
-            return Result<CheckoutOutput>.Failure("Cart contains an unavailable product");
-
-        if (carts.Any(x => x.Product.Price < 0))
+        if (carts.Any(x => x.ProductVariant.Price < 0))
             return Result<CheckoutOutput>.Failure("Cart contains an invalid product price");
 
-        if (carts.Any(x => x.ProductVariants.ProductId != x.ProductId))
+        if (carts.Any(x => x.ProductVariant.ProductId != x.ProductId))
             return Result<CheckoutOutput>.Failure("Cart contains an invalid product variant");
 
-        var subtotal = carts.Sum(x => x.Product.Price * x.ProductCount);
+        if (carts.Any(x => x.ProductVariant.Stock < x.ProductCount))
+            return Result<CheckoutOutput>.Failure("Cart contains a product variant with insufficient stock");
+
+        var subtotal = carts.Sum(x => GetUnitPrice(x.ProductVariant, x.Product) * x.ProductCount);
         decimal discountAmount = 0;
         int? discountCodeId = null;
 
@@ -266,7 +280,7 @@ public class InvoiceService(
                 ProductId = x.ProductId,
                 ProductVariantId = x.ProductVariantId,
                 ProductCount = x.ProductCount,
-                ProductPrice = x.Product.Price
+                ProductPrice = GetUnitPrice(x.ProductVariant, x.Product)
             }).ToList()
         };
         var payment = new PaymentEntity
@@ -288,5 +302,25 @@ public class InvoiceService(
             PaymentStatus = created.Payment.PaymentStatus
         });
     }
+
+    private static decimal GetUnitPrice(ProductVariantEntity variant, ProductEntity product) =>
+        Math.Max(0, variant.Price - product.Discount);
+
+    private static CartProductVariantOutput MapCartVariant(ProductVariantEntity variant) => new()
+    {
+        Id = variant.Id,
+        Price = variant.Price,
+        Stock = variant.Stock,
+        Values = variant.AttributeValues
+            .OrderBy(x => x.Size)
+            .ThenBy(x => x.Id)
+            .Select(x => new CartVariantValueOutput
+            {
+                Id = x.Id,
+                Size = x.Size,
+                Name = x.Name,
+                Code = x.Code
+            }).ToList()
+    };
 
 }

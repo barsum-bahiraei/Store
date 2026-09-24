@@ -11,7 +11,8 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     {
         var result = await context.Carts
             .Include(x => x.Product)
-            .Include(x => x.ProductVariants)
+            .Include(x => x.ProductVariant)
+            .ThenInclude(x => x.AttributeValues)
             .Where(x => x.UserId == userId)
             .ToListAsync(cancellation);
         return result;
@@ -21,22 +22,46 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     {
         var result = await context.Carts
             .Include(x => x.Product)
-            .Include(x => x.ProductVariants)
+            .Include(x => x.ProductVariant)
+            .ThenInclude(x => x.AttributeValues)
             .Where(x => x.Id == id && x.UserId == userId)
             .FirstOrDefaultAsync(cancellation);
         return result;
     }
 
-    public async Task<CartEntity> CartCreateAsync(CartEntity input, CancellationToken cancellation)
+    public async Task<CartEntity?> CartAddAsync(CartEntity input, CancellationToken cancellation)
     {
-        await context.Carts.AddAsync(input, cancellation);
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
+        var lockKey = $"cart:{input.UserId}:{input.ProductVariantId}";
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({lockKey}, 0))",
+            cancellation);
+
+        var variant = await context.ProductVariants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == input.ProductVariantId && x.ProductId == input.ProductId,
+                cancellation);
+        if (variant == null)
+            return null;
+
+        var existing = await context.Carts.FirstOrDefaultAsync(
+            x => x.UserId == input.UserId &&
+                 x.ProductId == input.ProductId &&
+                 x.ProductVariantId == input.ProductVariantId,
+            cancellation);
+        var requestedCount = input.ProductCount + (existing?.ProductCount ?? 0);
+        if (variant.Stock < requestedCount)
+            return null;
+
+        if (existing == null)
+            await context.Carts.AddAsync(input, cancellation);
+        else
+            existing.ProductCount = requestedCount;
+
         await context.SaveChangesAsync(cancellation);
-        var result = await context.Carts
-            .Include(x => x.Product)
-            .Include(x => x.ProductVariants)
-            .Where(x => x.Id == input.Id && x.UserId == input.UserId)
-            .FirstAsync(cancellation);
-        return result;
+        await transaction.CommitAsync(cancellation);
+        var cartId = existing?.Id ?? input.Id;
+        return await CartGetAsync(cartId, input.UserId, cancellation);
     }
 
     public async Task<CartEntity> CartUpdateAsync(CartEntity input, CancellationToken cancellation)
@@ -45,7 +70,8 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
         await context.SaveChangesAsync(cancellation);
         var result = await context.Carts
             .Include(x => x.Product)
-            .Include(x => x.ProductVariants)
+            .Include(x => x.ProductVariant)
+            .ThenInclude(x => x.AttributeValues)
             .Where(x => x.Id == input.Id && x.UserId == input.UserId)
             .FirstAsync(cancellation);
         return result;

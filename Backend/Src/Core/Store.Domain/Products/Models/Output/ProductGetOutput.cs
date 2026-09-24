@@ -19,7 +19,7 @@ public class ProductGetOutput
     public ProductSellerGetOutput Seller { get; set; }
     public List<ProductImageGetOutput>? Images { get; set; }
     public List<ProductAttributeGetOutput> Attributes { get; set; }
-    public List<ProductVariantGetOutput> Variants { get; set; }
+    public List<ProductCombinationOutput> Variants { get; set; }
 }
 
 public class ProductAttributeGetOutput

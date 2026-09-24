@@ -20,5 +20,8 @@ export function useCheckout() {
         queryClient.invalidateQueries({ queryKey: invoiceKeys.list(token), exact: true }),
       ]);
     },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: cartKeys.detail(token), exact: true });
+    },
   });
 }

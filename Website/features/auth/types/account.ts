@@ -7,8 +7,8 @@ export enum Role {
 }
 
 export type AccountUser = {
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
   email: string;
   phoneNumber: string | null;
   nationalCode: string | null;
@@ -22,6 +22,8 @@ export type AccountUser = {
 };
 
 export type UpdateUserProfileInput = {
+  firstName: string | null;
+  lastName: string | null;
   email: string | null;
   address: string | null;
   latitude: number | null;

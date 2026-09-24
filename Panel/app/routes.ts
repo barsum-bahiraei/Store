@@ -6,7 +6,6 @@ export default [
   layout("components/layout/DashboardLayout.tsx", [
     route("products", "features/products/pages/ProductsPage.tsx"),
     route("brands", "features/brands/pages/BrandsPage.tsx"),
-    route("variants", "features/variants/pages/VariantsPage.tsx"),
     route("sellers", "features/sellers/pages/SellersPage.tsx"),
     route("attributes", "features/attributes/pages/AttributesPage.tsx"),
     route("categories", "features/categories/pages/CategoriesPage.tsx"),

@@ -150,22 +150,6 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Variants",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Variants", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "VerificationCodes",
                 columns: table => new
                 {
@@ -383,12 +367,10 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     Name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ShortDescription = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     LongDescription = table.Column<string>(type: "text", nullable: true),
-                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Discount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
                     SellerId = table.Column<int>(type: "integer", nullable: false),
                     ProductBrandId = table.Column<int>(type: "integer", nullable: true),
-                    IsAvailable = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -510,25 +492,23 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ProductId = table.Column<int>(type: "integer", nullable: false),
-                    VariantId = table.Column<int>(type: "integer", nullable: false),
+                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Stock = table.Column<int>(type: "integer", nullable: false),
+                    CombinationKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ProductVariants", x => x.Id);
+                    table.CheckConstraint("CK_ProductVariants_Price", "\"Price\" >= 0");
+                    table.CheckConstraint("CK_ProductVariants_Stock", "\"Stock\" >= 0");
                     table.ForeignKey(
                         name: "FK_ProductVariants_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductVariants_Variants_VariantId",
-                        column: x => x.VariantId,
-                        principalTable: "Variants",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -602,6 +582,30 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductVariantAttributeValues",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProductVariantId = table.Column<int>(type: "integer", nullable: false),
+                    Size = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductVariantAttributeValues", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductVariantAttributeValues_ProductVariants_ProductVarian~",
+                        column: x => x.ProductVariantId,
+                        principalTable: "ProductVariants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -725,15 +729,16 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductVariants_ProductId_VariantId",
-                table: "ProductVariants",
-                columns: new[] { "ProductId", "VariantId" },
+                name: "IX_ProductVariantAttributeValues_ProductVariantId_Size",
+                table: "ProductVariantAttributeValues",
+                columns: new[] { "ProductVariantId", "Size" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductVariants_VariantId",
+                name: "IX_ProductVariants_ProductId_CombinationKey",
                 table: "ProductVariants",
-                column: "VariantId");
+                columns: new[] { "ProductId", "CombinationKey" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoleAccess_RoleId_ControllerName_ActionName",
@@ -820,6 +825,9 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                 name: "ProductsAttributes");
 
             migrationBuilder.DropTable(
+                name: "ProductVariantAttributeValues");
+
+            migrationBuilder.DropTable(
                 name: "RoleAccess");
 
             migrationBuilder.DropTable(
@@ -832,25 +840,22 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                 name: "VerificationCodes");
 
             migrationBuilder.DropTable(
-                name: "ProductVariants");
-
-            migrationBuilder.DropTable(
                 name: "Invoices");
 
             migrationBuilder.DropTable(
                 name: "Attributes");
 
             migrationBuilder.DropTable(
+                name: "ProductVariants");
+
+            migrationBuilder.DropTable(
                 name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "Products");
-
-            migrationBuilder.DropTable(
-                name: "Variants");
-
-            migrationBuilder.DropTable(
                 name: "DiscountCodes");
+
+            migrationBuilder.DropTable(
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Categories");

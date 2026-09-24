@@ -48,4 +48,20 @@ public class FileRepository(StoreDbContext context) : IFileRepository
         context.Files.Remove(entity);
         await context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<int?> GetOwnerUserIdAsync(TableNameEnum tableName, int targetId, CancellationToken cancellationToken)
+    {
+        return tableName switch
+        {
+            TableNameEnum.Products => await context.Products
+                .Where(x => x.Id == targetId)
+                .Select(x => (int?)x.Seller.UserId)
+                .FirstOrDefaultAsync(cancellationToken),
+            TableNameEnum.Sellers => await context.Sellers
+                .Where(x => x.Id == targetId)
+                .Select(x => (int?)x.UserId)
+                .FirstOrDefaultAsync(cancellationToken),
+            _ => null
+        };
+    }
 }

@@ -1,16 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
+import {
+  canAccessPanel,
+  getDefaultPanelPath,
+} from "~/features/auth/utils/authorization";
 import loginImage from "~/assets/images/login.png";
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { sendOtp } = useAuth();
+  const { sendOtp, isReady, isAuthenticated, currentUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isReady || !isAuthenticated || !currentUser) return;
+    if (!canAccessPanel(currentUser)) return;
+    navigate(getDefaultPanelPath(currentUser), { replace: true });
+  }, [isReady, isAuthenticated, currentUser, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +47,28 @@ export default function LoginPage() {
       setSubmitting(false);
     }
   };
+
+  if (!isReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary-600">progress_activity</span>
+      </div>
+    );
+  }
+
+  if (isAuthenticated && currentUser && !canAccessPanel(currentUser)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white p-4 dark:bg-gray-950">
+        <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <span className="material-symbols-outlined text-5xl text-red-500">lock</span>
+          <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">دسترسی غیرمجاز</h1>
+          <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            شما دسترسی لازم برای ورود به پنل مدیریت را ندارید.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">

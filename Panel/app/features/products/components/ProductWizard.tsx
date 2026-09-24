@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { AttributeType } from "~/features/attributes/models/enums/attribute-type";
 import { AttributeUnit, getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
 import { categoryApi } from "~/features/categories/api/category-api";
@@ -7,13 +8,12 @@ import { brandApi } from "~/features/brands/api/brand-api";
 import type { Brand } from "~/features/brands/models/brand";
 import { sellerApi } from "~/features/sellers/api/seller-api";
 import type { SellerListOutput } from "~/features/sellers/models/seller";
-import { variantApi } from "~/features/variants/api/variant-api";
-import type { ProductVariant } from "~/features/variants/models/variant";
 import { createClientId } from "~/shared/utils/create-client-id";
 import { unescapeHtmlEntities } from "~/shared/utils/unescape-html-entities";
 import { RichTextEditor } from "~/components/common/rich-text-editor";
 import type {
   ProductAttributeDefinition,
+  ProductCreateInput,
   ProductImage,
   ProductListOutput,
 } from "../models/product";
@@ -33,6 +33,42 @@ interface SelectedImage {
   previewUrl: string;
 }
 
+interface VariantValueDraft {
+  key: string;
+  id?: number;
+  size: string;
+  name: string;
+  code: string;
+}
+
+interface VariantDraft {
+  key: string;
+  id?: number | null;
+  price: string;
+  stock: string;
+  values: VariantValueDraft[];
+}
+
+interface VariantValueErrors {
+  size?: string;
+  name?: string;
+  code?: string;
+}
+
+interface VariantErrors {
+  price?: string;
+  stock?: string;
+  values?: string;
+  combo?: string;
+  valueErrors: Record<string, VariantValueErrors>;
+}
+
+interface WizardValidation {
+  discount?: string;
+  variants?: string;
+  variantErrors: Record<string, VariantErrors>;
+}
+
 const steps = [
   { title: "دسته‌بندی", icon: "category" },
   { title: "جزئیات", icon: "tune" },
@@ -41,6 +77,40 @@ const steps = [
 
 const inputClasses =
   "block min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder-gray-500";
+
+const errorTextClasses = "mt-1 block text-xs text-red-600 dark:text-red-400";
+
+function formatPrice(value: number): string {
+  return new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 }).format(value);
+}
+
+function createEmptyValue(): VariantValueDraft {
+  return { key: createClientId(), size: "", name: "", code: "" };
+}
+
+function createEmptyVariant(): VariantDraft {
+  return { key: createClientId(), id: null, price: "", stock: "", values: [createEmptyValue()] };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error && error.message ? error.message : "خطای غیرمنتظره‌ای رخ داد.";
+}
+
+function parseNonNegative(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function variantComboKey(values: VariantValueDraft[]): string {
+  return values
+    .map((value) =>
+      [value.size.trim().toLowerCase(), value.name.trim().toLowerCase(), value.code.trim().toLowerCase()].join("|"),
+    )
+    .sort()
+    .join(";;");
+}
 
 interface AttributeValueFieldProps {
   attribute: ProductAttributeDefinition;
@@ -95,10 +165,6 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
   );
 }
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error && error.message ? error.message : "خطای غیرمنتظره‌ای رخ داد.";
-}
-
 export function ProductWizard({ product, onClose, onComplete }: ProductWizardProps) {
   const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, submitting } =
     useProductStore();
@@ -108,19 +174,19 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [categories, setCategories] = useState<CategoryListOutput[]>([]);
   const [sellers, setSellers] = useState<SellerListOutput[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [attributes, setAttributes] = useState<ProductAttributeDefinition[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [sellerId, setSellerId] = useState<number | null>(null);
   const [productBrandId, setProductBrandId] = useState<number | null>(null);
-  const [productVariantIds, setProductVariantIds] = useState<number[]>([]);
-  const [isAvailable, setIsAvailable] = useState(true);
   const [title, setTitle] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
-  const [price, setPrice] = useState("");
   const [discount, setDiscount] = useState("0");
   const [attributeValues, setAttributeValues] = useState<Record<number, string>>({});
+  const [productVariants, setProductVariants] = useState<VariantDraft[]>(() =>
+    isEditing ? [] : [createEmptyVariant()],
+  );
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
@@ -132,6 +198,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [error, setError] = useState<string | null>(null);
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number>>(new Set());
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
+  const [variantConfirmIndex, setVariantConfirmIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -140,37 +207,46 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           categoryApi.list(),
           sellerApi.list(),
           brandApi.list(),
-          variantApi.list(),
           getProduct(editingProductId),
-        ]).then(([list, sellerList, brandList, variantList, details]) => {
+        ]).then(([list, sellerList, brandList, details]) => {
           if (!active) return;
           setCategories(list);
           setSellers(sellerList);
           setBrands(brandList);
-          setVariants(variantList);
           setCategoryId(details.categoryId);
           setSellerId(details.seller.id);
           setProductBrandId(details.brand?.id ?? null);
-          setProductVariantIds((details.variants ?? []).map((variant) => variant.id));
-          setIsAvailable(details.isAvailable);
           setTitle(details.name);
           setShortDescription(details.shortDescription ?? "");
           setLongDescription(unescapeHtmlEntities(details.longDescription) ?? "");
-          setPrice(String(details.price));
           setDiscount(String(details.discount));
           setAttributes(details.attributes ?? []);
           setAttributeValues(
             Object.fromEntries((details.attributes ?? []).map((item) => [item.attributeId, item.value]))
           );
+          setProductVariants(
+            (details.variants ?? []).map((variant) => ({
+              key: createClientId(),
+              id: variant.id,
+              price: String(variant.price),
+              stock: String(variant.stock),
+              values: variant.values.map((value) => ({
+                key: createClientId(),
+                id: value.id,
+                size: value.size,
+                name: value.name,
+                code: value.code,
+              })),
+            }))
+          );
           setExistingImages(details.images ?? []);
         })
-      : Promise.all([categoryApi.list(), sellerApi.list(), brandApi.list(), variantApi.list()]).then(
-          ([list, sellerList, brandList, variantList]) => {
+      : Promise.all([categoryApi.list(), sellerApi.list(), brandApi.list()]).then(
+          ([list, sellerList, brandList]) => {
           if (!active) return;
           setCategories(list);
           setSellers(sellerList);
           setBrands(brandList);
-          setVariants(variantList);
           setSellerId(sellerList[0]?.id ?? null);
           setProductBrandId(brandList[0]?.id ?? null);
         }
@@ -208,26 +284,136 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     }
   };
 
+  const validation = useMemo<WizardValidation>(() => {
+    const result: WizardValidation = { variantErrors: {} };
+
+    if (productVariants.length === 0) {
+      result.variants = "حداقل یک تنوع برای محصول لازم است.";
+    }
+
+    const seenCombos = new Map<string, string>();
+
+    productVariants.forEach((variant) => {
+      const variantErrors: VariantErrors = { valueErrors: {} };
+
+      const price = parseNonNegative(variant.price);
+      if (price === null) {
+        variantErrors.price =
+          variant.price.trim() === "" ? "قیمت را وارد کنید." : "قیمت نمی‌تواند منفی باشد.";
+      }
+
+      const stock = parseNonNegative(variant.stock);
+      if (stock === null) {
+        variantErrors.stock =
+          variant.stock.trim() === "" ? "موجودی را وارد کنید." : "موجودی نمی‌تواند منفی باشد.";
+      }
+
+      if (variant.values.length === 0) {
+        variantErrors.values = "حداقل یک مقدار برای این تنوع لازم است.";
+      }
+
+      const seenSizes = new Set<string>();
+      variant.values.forEach((value) => {
+        const valueErrors: VariantValueErrors = {};
+        const size = value.size.trim();
+        const name = value.name.trim();
+        const code = value.code.trim();
+
+        if (!size) {
+          valueErrors.size = "سایز را وارد کنید.";
+        } else {
+          const normalizedSize = size.toLowerCase();
+          if (seenSizes.has(normalizedSize)) {
+            valueErrors.size = "سایز تکراری است.";
+          } else {
+            seenSizes.add(normalizedSize);
+          }
+        }
+        if (!name) valueErrors.name = "نام را وارد کنید.";
+        if (!code) valueErrors.code = "کد را وارد کنید.";
+
+        if (valueErrors.size || valueErrors.name || valueErrors.code) {
+          variantErrors.valueErrors[value.key] = valueErrors;
+        }
+      });
+
+      if (variant.values.length > 0) {
+        const comboKey = variantComboKey(variant.values);
+        const existingOwner = seenCombos.get(comboKey);
+        if (existingOwner !== undefined && existingOwner !== variant.key) {
+          variantErrors.combo = "ترکیب مقادیر این تنوع با تنوع دیگر تکراری است.";
+        } else {
+          seenCombos.set(comboKey, variant.key);
+        }
+      }
+
+      if (
+        variantErrors.price ||
+        variantErrors.stock ||
+        variantErrors.values ||
+        variantErrors.combo ||
+        Object.keys(variantErrors.valueErrors).length > 0
+      ) {
+        result.variantErrors[variant.key] = variantErrors;
+      }
+    });
+
+    const discountValue = discount.trim() === "" ? 0 : Number(discount);
+    if (!Number.isFinite(discountValue)) {
+      result.discount = "تخفیف را به درستی وارد کنید.";
+    } else if (discountValue < 0) {
+      result.discount = "تخفیف نمی‌تواند منفی باشد.";
+    } else {
+      const variantPrices = productVariants
+        .map((variant) => parseNonNegative(variant.price))
+        .filter((price): price is number => price !== null);
+      if (variantPrices.some((price) => discountValue > price)) {
+        result.discount = "تخفیف نمی‌تواند از قیمت هیچ تنوعی بیشتر باشد.";
+      }
+    }
+
+    return result;
+  }, [productVariants, discount]);
+
+  const hasValidationErrors =
+    !!validation.discount ||
+    !!validation.variants ||
+    Object.keys(validation.variantErrors).length > 0;
+
+  const buildVariantsPayload = (): ProductCreateInput["variants"] =>
+    productVariants.map((variant) => {
+      const base = {
+        price: parseNonNegative(variant.price) ?? 0,
+        stock: parseNonNegative(variant.stock) ?? 0,
+        values: variant.values.map((value) => ({
+          size: value.size.trim(),
+          name: value.name.trim(),
+          code: value.code.trim(),
+        })),
+      };
+      return isEditing ? { id: variant.id ?? null, ...base } : base;
+    });
+
   const saveDetails = async (event: FormEvent) => {
     event.preventDefault();
-    if (categoryId === null || sellerId === null || productBrandId === null || !title.trim() || !price) return;
+    setAttemptedSubmit(true);
+    if (categoryId === null || sellerId === null || productBrandId === null || !title.trim()) return;
+    if (hasValidationErrors) return;
     setError(null);
     try {
-      const input = {
+      const input: ProductCreateInput = {
         name: title.trim(),
         shortDescription: shortDescription.trim() || null,
         longDescription: longDescription.trim() || null,
-        price: Number(price),
-        discount: Number(discount || 0),
+        discount: discount.trim() === "" ? 0 : Number(discount),
         categoryId,
         sellerId,
         productBrandId,
-        productVariantIds,
-        isAvailable,
         attributes: attributes.map((attribute) => ({
           attributeId: attribute.attributeId,
           value: attributeValues[attribute.attributeId]?.trim() ?? "",
         })),
+        variants: buildVariantsPayload(),
       };
       if (editingProductId !== undefined) {
         await updateProduct(editingProductId, input);
@@ -239,6 +425,69 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     } catch (reason) {
       setError(errorMessage(reason));
     }
+  };
+
+  const addVariant = () => {
+    setProductVariants((current) => [...current, createEmptyVariant()]);
+  };
+
+  const requestRemoveVariant = (index: number) => {
+    if (productVariants[index]?.id != null) {
+      setVariantConfirmIndex(index);
+    } else {
+      setProductVariants((current) => current.filter((_, i) => i !== index));
+    }
+  };
+
+  const confirmRemoveVariant = () => {
+    if (variantConfirmIndex === null) return;
+    const index = variantConfirmIndex;
+    setVariantConfirmIndex(null);
+    setProductVariants((current) => current.filter((_, i) => i !== index));
+  };
+
+  const updateVariantField = (index: number, field: "price" | "stock", value: string) => {
+    setProductVariants((current) =>
+      current.map((variant, i) => (i === index ? { ...variant, [field]: value } : variant))
+    );
+  };
+
+  const addVariantValue = (index: number) => {
+    setProductVariants((current) =>
+      current.map((variant, i) =>
+        i === index ? { ...variant, values: [...variant.values, createEmptyValue()] } : variant
+      )
+    );
+  };
+
+  const removeVariantValue = (variantIndex: number, valueKey: string) => {
+    setProductVariants((current) =>
+      current.map((variant, i) =>
+        i === variantIndex
+          ? { ...variant, values: variant.values.filter((value) => value.key !== valueKey) }
+          : variant
+      )
+    );
+  };
+
+  const updateVariantValue = (
+    variantIndex: number,
+    valueKey: string,
+    field: "size" | "name" | "code",
+    value: string
+  ) => {
+    setProductVariants((current) =>
+      current.map((variant, i) =>
+        i === variantIndex
+          ? {
+              ...variant,
+              values: variant.values.map((item) =>
+                item.key === valueKey ? { ...item, [field]: value } : item
+              ),
+            }
+          : variant
+      )
+    );
   };
 
   const selectImages = (event: ChangeEvent<HTMLInputElement>) => {
@@ -316,12 +565,6 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     }
   };
 
-  const toggleVariant = (variantId: number) => {
-    setProductVariantIds((ids) =>
-      ids.includes(variantId) ? ids.filter((id) => id !== variantId) : [...ids, variantId]
-    );
-  };
-
   const toggleCategoryExpand = (id: number) => {
     setExpandedCategoryIds((current) => {
       const next = new Set(current);
@@ -334,15 +577,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const canSubmitDetails =
     title.trim().length > 0 &&
     sellerId !== null &&
-    productBrandId !== null &&
-    Number(price) > 0 &&
-    Number(discount || 0) >= 0;
+    productBrandId !== null;
   const hasRetainedMainImage = existingImages.some(
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   );
   const canSaveImages = hasRetainedMainImage || (images.length > 0 && mainImageId !== null);
 
   const selectedSeller = sellers.find((s) => s.id === sellerId);
+  const showErrors = attemptedSubmit;
+  const discountNumber = discount.trim() === "" ? 0 : Number(discount);
 
   const renderCategoryTree = (items: CategoryListOutput[], depth = 0) => (
     <ul className={depth > 0 ? "mr-5 border-r border-gray-200 pr-2 dark:border-gray-700" : "space-y-1"}>
@@ -421,9 +664,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           )}
 
           {step === 1 && (
-            <form id="product-details-form" onSubmit={saveDetails}>
+            <form id="product-details-form" noValidate onSubmit={saveDetails}>
               <h3 className="text-lg font-semibold text-gray-950 dark:text-white">جزئیات محصول</h3>
-               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">قیمت، برند، رنگ‌های موجود و مشخصات دسته‌بندی را اضافه کنید.</p>
+               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">توضیحات، برند و تنوع‌های محصول را اضافه کنید.</p>
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
                   <label className="sm:col-span-2">
                     <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">فروشنده <span className="text-red-500">*</span></span>
@@ -435,8 +678,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                   </label>
                   <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">برند <span className="text-red-500">*</span></span><select value={productBrandId ?? ""} onChange={(event) => setProductBrandId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">انتخاب برند</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select>{brands.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">قبل از ذخیره محصول، یک برند ایجاد کنید.</p>}</label>
                   <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">عنوان <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="مثلاً هدفون بی‌سیم" required autoFocus /></label>
-                <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">قیمت <span className="text-red-500">*</span></span><input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className={inputClasses} placeholder="0.00" required /></label>
-                <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تخفیف</span><input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0.00" /></label>
+                <label>
+                  <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تخفیف</span>
+                  <input type="number" inputMode="decimal" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} className={inputClasses} placeholder="0" />
+                  {Number.isFinite(discountNumber) && discountNumber >= 0 && (
+                    <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{formatPrice(discountNumber)} تومان</span>
+                  )}
+                  {showErrors && validation.discount && <span className={errorTextClasses}>{validation.discount}</span>}
+                </label>
+                <div />
                 <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">توضیحات کوتاه</span><textarea value={shortDescription} onChange={(event) => setShortDescription(event.target.value)} className={`${inputClasses} min-h-20 resize-y`} placeholder="خلاصه کوتاه محصول" /></label>
                  <div className="sm:col-span-2">
                   <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">توضیحات کامل</span>
@@ -446,34 +696,111 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                     placeholder="توضیحات تفصیلی محصول (پشتیبانی از فرمت HTML)"
                    />
                  </div>
-                 <fieldset className="sm:col-span-2">
-                   <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">رنگ‌های موجود</legend>
-                   {variants.length === 0 ? (
-                     <p className="mt-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">هنوز رنگی ایجاد نشده است. می‌توانید این محصول را بدون رنگ ذخیره کنید.</p>
-                   ) : (
-                     <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                       {variants.map((variant) => {
-                         const selected = productVariantIds.includes(variant.id);
-                         return (
-                           <label key={variant.id} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors ${selected ? "border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950/40 dark:text-primary-200" : "border-gray-200 text-gray-700 hover:border-primary-300 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-700"}`}>
-                             <input type="checkbox" checked={selected} onChange={() => toggleVariant(variant.id)} className="size-4 accent-primary-600" />
-                             <span className="size-6 shrink-0 rounded-full border border-gray-300 dark:border-gray-600" style={{ backgroundColor: variant.colorCode }} aria-hidden="true" />
-                             <span className="min-w-0 truncate text-sm font-medium">{variant.colorName}</span>
-                           </label>
-                         );
-                       })}
+
+                 <div className="sm:col-span-2 mt-2 border-t border-gray-200 pt-6 dark:border-gray-800">
+                   <div className="flex flex-wrap items-center justify-between gap-3">
+                     <div className="flex items-center gap-2">
+                       <span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span>
+                       <h4 className="font-semibold text-gray-900 dark:text-white">تنوع‌های محصول</h4>
                      </div>
+                     <button type="button" onClick={addVariant} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-primary-600 px-4 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-500 dark:text-primary-300 dark:hover:bg-primary-950/40">
+                       <span className="material-symbols-outlined text-xl">add</span>
+                       افزودن تنوع
+                     </button>
+                   </div>
+                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و مقادیر (سایز، نام، کد) هر تنوع را وارد کنید. حداقل یک تنوع با حداقل یک مقدار لازم است.</p>
+
+                   {showErrors && validation.variants && (
+                     <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">{validation.variants}</p>
                    )}
-                  </fieldset>
-                  <label className="sm:col-span-2 flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={isAvailable} onChange={(event) => setIsAvailable(event.target.checked)} className="size-4 accent-primary-600" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">موجود برای فروش</span>
-                  </label>
-                </div>
-              {attributes.length > 0 && (
-                <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
-                  <div className="flex items-center gap-2"><span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span><h4 className="font-semibold text-gray-900 dark:text-white">مشخصات</h4></div>
-                  <div className="mt-4 grid gap-5 sm:grid-cols-2">
+
+                   <div className="mt-4 space-y-4">
+                     {productVariants.length === 0 && !showErrors && (
+                       <div className="rounded-xl border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">هنوز تنوعی اضافه نشده است.</div>
+                     )}
+
+                     {productVariants.map((variant, variantIndex) => {
+                       const variantErrors = showErrors ? validation.variantErrors[variant.key] : undefined;
+                       const priceNumber = parseNonNegative(variant.price);
+                       return (
+                         <div key={variant.key} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
+                           <div className="flex items-center justify-between gap-3">
+                             <h5 className="text-sm font-semibold text-gray-900 dark:text-white">تنوع {variantIndex + 1}</h5>
+                             <button type="button" onClick={() => requestRemoveVariant(variantIndex)} disabled={submitting} className="flex size-9 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف تنوع ${variantIndex + 1}`}>
+                               <span className="material-symbols-outlined text-xl">delete</span>
+                             </button>
+                           </div>
+
+                           <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                             <div>
+                               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">قیمت (تومان) <span className="text-red-500">*</span></span>
+                               <input type="number" inputMode="decimal" min="0" step="0.01" value={variant.price} onChange={(event) => updateVariantField(variantIndex, "price", event.target.value)} className={inputClasses} placeholder="مثلاً 2500000" disabled={submitting} />
+                               {priceNumber !== null && priceNumber >= 0 && (
+                                 <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{formatPrice(priceNumber)} تومان</span>
+                               )}
+                               {variantErrors?.price && <span role="alert" className={errorTextClasses}>{variantErrors.price}</span>}
+                             </div>
+                             <div>
+                               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">موجودی <span className="text-red-500">*</span></span>
+                               <input type="number" inputMode="numeric" min="0" step="1" value={variant.stock} onChange={(event) => updateVariantField(variantIndex, "stock", event.target.value)} className={inputClasses} placeholder="مثلاً 10" disabled={submitting} />
+                               {variantErrors?.stock && <span role="alert" className={errorTextClasses}>{variantErrors.stock}</span>}
+                             </div>
+                           </div>
+
+                           {variantErrors?.combo && (
+                             <p role="alert" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">{variantErrors.combo}</p>
+                           )}
+
+                           <div className="mt-4">
+                             <div className="flex flex-wrap items-center justify-between gap-2">
+                               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">مقادیر <span className="text-red-500">*</span></span>
+                               <button type="button" onClick={() => addVariantValue(variantIndex)} disabled={submitting} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-200">
+                                 <span className="material-symbols-outlined text-base">add</span>
+                                 افزودن مقدار
+                               </button>
+                             </div>
+                             {variantErrors?.values && <span role="alert" className={errorTextClasses}>{variantErrors.values}</span>}
+
+                             {variant.values.length === 0 ? (
+                               <p className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-center text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400">حداقل یک مقدار اضافه کنید.</p>
+                             ) : (
+                               <div className="mt-2 space-y-2">
+                                 {variant.values.map((value, valueIndex) => {
+                                   const valueErrors = variantErrors?.valueErrors[value.key];
+                                   return (
+                                     <div key={value.key} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-950 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-start">
+                                       <div>
+                                         <input value={value.size} onChange={(event) => updateVariantValue(variantIndex, value.key, "size", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="سایز (مثلاً Size)" aria-label={`سایز مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                         {valueErrors?.size && <span role="alert" className={errorTextClasses}>{valueErrors.size}</span>}
+                                       </div>
+                                       <div>
+                                         <input value={value.name} onChange={(event) => updateVariantValue(variantIndex, value.key, "name", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="نام (مثلاً 40)" aria-label={`نام مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                         {valueErrors?.name && <span role="alert" className={errorTextClasses}>{valueErrors.name}</span>}
+                                       </div>
+                                       <div>
+                                         <input value={value.code} onChange={(event) => updateVariantValue(variantIndex, value.key, "code", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="کد (مثلاً 40)" aria-label={`کد مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                         {valueErrors?.code && <span role="alert" className={errorTextClasses}>{valueErrors.code}</span>}
+                                       </div>
+                                       <button type="button" onClick={() => removeVariantValue(variantIndex, value.key)} disabled={submitting} className="flex size-10 shrink-0 items-center justify-center justify-self-end rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف مقدار ${valueIndex + 1}`}>
+                                         <span className="material-symbols-outlined text-xl">close</span>
+                                       </button>
+                                     </div>
+                                   );
+                                 })}
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                       );
+                     })}
+                     </div>
+                   </div>
+                 </div>
+
+               {attributes.length > 0 && (
+                 <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
+                   <div className="flex items-center gap-2"><span className="material-symbols-outlined text-primary-600 dark:text-primary-400">tune</span><h4 className="font-semibold text-gray-900 dark:text-white">مشخصات</h4></div>
+                   <div className="mt-4 grid gap-5 sm:grid-cols-2">
                      {attributes.map((attribute) => (
                        <label key={attribute.attributeId}><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{attribute.attributeTitle ?? `ویژگی ${attribute.attributeId}`}</span>
                          <AttributeValueField attribute={attribute} value={attributeValues[attribute.attributeId] ?? ""} onChange={(value) => setAttributeValues((values) => ({ ...values, [attribute.attributeId]: value }))} />
@@ -540,6 +867,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       </div>
 
       <SellerPickerModal open={sellerModalOpen} selectedId={sellerId} onSelect={setSellerId} onClose={() => setSellerModalOpen(false)} />
+
+      <ConfirmDialog
+        open={variantConfirmIndex !== null}
+        title="حذف تنوع"
+        message="آیا از حذف این تنوع اطمینان دارید؟ پس از ذخیره محصول، این تنوع حذف خواهد شد."
+        confirmLabel="حذف"
+        onConfirm={confirmRemoveVariant}
+        onCancel={() => setVariantConfirmIndex(null)}
+      />
     </div>
   );
 }

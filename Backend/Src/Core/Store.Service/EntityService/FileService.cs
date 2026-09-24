@@ -9,10 +9,14 @@ namespace Store.Service.EntityService;
 public class FileService(IFileRepository fileRepository, IMinioStorage minioStorage)
 {
     public async Task<Result<FileCreateOutput>> CreateAsync(
+        int userId,
         FileCreateInput input,
         IFormFile file,
         CancellationToken cancellation)
     {
+        if (!await IsOwnedByAsync(input.TableName, input.TargetId, userId, cancellation))
+            return Result<FileCreateOutput>.Failure("File target is invalid");
+
         var folder = input.TableName.ToString().Trim('/');
         var extension = Path.GetExtension(file.FileName);
         var fileName = $"{input.Name}{extension}";
@@ -137,6 +141,7 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
 
     public async Task<Result<FileUpdateOutput>> UpdateAsync(
         int id,
+        int userId,
         FileUpdateInput input,
         IFormFile file,
         CancellationToken cancellation)
@@ -145,6 +150,12 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
 
         if (entity == null)
             return Result<FileUpdateOutput>.Failure("File not found");
+
+        if (!await IsOwnedByAsync(entity.TableName, entity.TargetId, userId, cancellation))
+            return Result<FileUpdateOutput>.Failure("File not found");
+
+        if (!await IsOwnedByAsync(input.TableName, input.TargetId, userId, cancellation))
+            return Result<FileUpdateOutput>.Failure("File target is invalid");
 
         var folder = input.TableName.ToString().Trim('/');
         var extension = Path.GetExtension(file.FileName);
@@ -188,6 +199,7 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
 
     public async Task<Result<bool>> DeleteAsync(
         int id,
+        int userId,
         CancellationToken cancellation)
     {
         var entity = await fileRepository.GetAsync(id, cancellation);
@@ -195,9 +207,21 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         if (entity == null)
             return Result<bool>.Failure("File not found");
 
+        if (!await IsOwnedByAsync(entity.TableName, entity.TargetId, userId, cancellation))
+            return Result<bool>.Failure("File not found");
+
         await minioStorage.DeleteAsync(entity.Url, cancellation);
         await fileRepository.DeleteAsync(entity, cancellation);
 
         return Result<bool>.Success(true);
+    }
+
+    private async Task<bool> IsOwnedByAsync(TableNameEnum tableName, int targetId, int userId, CancellationToken cancellation)
+    {
+        if (tableName == TableNameEnum.ProductBrands)
+            return true;
+
+        var ownerUserId = await fileRepository.GetOwnerUserIdAsync(tableName, targetId, cancellation);
+        return ownerUserId == userId;
     }
 }
