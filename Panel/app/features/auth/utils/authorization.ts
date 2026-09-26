@@ -1,8 +1,8 @@
 import { UserRole, type AccountUser } from "~/features/auth/models/account";
 
 const ownerRoutes = ["/attributes", "/categories", "/roles", "/users", "/discount-codes", "/brands"];
-const sellerRoutes = ["/products", "/sellers", "/dashboard"];
-const sharedRoutes = ["/profile"];
+const sellerRoutes = ["/products", "/sellers"];
+const sharedRoutes = ["/dashboard", "/profile"];
 
 function matchesRoute(pathname: string, routes: string[]) {
   return routes.some(

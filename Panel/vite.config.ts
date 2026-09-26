@@ -4,6 +4,9 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
+  optimizeDeps: {
+    needsInterop: ["moment-jalali"],
+  },
   server: {
     proxy: {
       "/api": {
@@ -13,6 +16,9 @@ export default defineConfig({
     },
   },
   resolve: {
+    alias: {
+      moment: "moment/moment.js",
+    },
     tsconfigPaths: true,
   },
 });

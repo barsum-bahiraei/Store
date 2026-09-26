@@ -1,7 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "~/features/auth/api/auth-api";
 import type { AccountUser, UserProfileUpdateInput } from "~/features/auth/models/account";
-import { clearAuthToken, getAuthToken, setAuthToken } from "~/shared/http/auth-token";
+import {
+  clearAuthToken,
+  getAuthToken,
+  onAuthTokenCleared,
+  setAuthToken,
+} from "~/shared/http/auth-token";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -17,8 +22,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AccountUser | null>(null);
-  const [hasToken, setHasToken] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  useEffect(
+    () =>
+      onAuthTokenCleared(() => {
+        setCurrentUser(null);
+        setIsReady(true);
+      }),
+    [],
+  );
 
   useEffect(() => {
     const token = getAuthToken();
@@ -27,12 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setHasToken(true);
     void authApi.profile()
       .then(setCurrentUser)
-      .catch(() => setCurrentUser(null))
+      .catch(() => {
+        clearAuthToken();
+        setCurrentUser(null);
+      })
       .finally(() => {
-        setHasToken(Boolean(getAuthToken()));
         setIsReady(true);
       });
   }, []);
@@ -44,14 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyOtp = async (phoneNumber: string, code: string) => {
     const { token } = await authApi.verifyOtp({ phoneNumber, code });
     setAuthToken(token);
-    setHasToken(true);
     try {
       const user = await authApi.profile();
       setCurrentUser(user);
       return user;
     } catch (error) {
       clearAuthToken();
-      setHasToken(false);
       setCurrentUser(null);
       throw error;
     }
@@ -60,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     clearAuthToken();
     setCurrentUser(null);
-    setHasToken(false);
   };
 
   const updateProfile = async (input: UserProfileUpdateInput) => {
@@ -72,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: hasToken, isReady, currentUser, sendOtp, verifyOtp, updateProfile, logout }}
+      value={{ isAuthenticated: currentUser !== null, isReady, currentUser, sendOtp, verifyOtp, updateProfile, logout }}
     >
       {children}
     </AuthContext.Provider>

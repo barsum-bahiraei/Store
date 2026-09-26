@@ -4,7 +4,6 @@ import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
 import {
   canAccessPanel,
-  getDefaultPanelPath,
 } from "~/features/auth/utils/authorization";
 import loginImage from "~/assets/images/login.png";
 
@@ -14,7 +13,13 @@ const RESEND_COOLDOWN = 300;
 export default function VerifyPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { sendOtp, verifyOtp } = useAuth();
+  const {
+    sendOtp,
+    verifyOtp,
+    isReady,
+    isAuthenticated,
+    currentUser,
+  } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const phoneNumber = (location.state as { phoneNumber?: string } | null)?.phoneNumber;
@@ -25,10 +30,18 @@ export default function VerifyPage() {
   const [remainingSeconds, setRemainingSeconds] = useState(RESEND_COOLDOWN);
 
   useEffect(() => {
-    if (!phoneNumber) {
-      navigate("/", { replace: true });
+    if (!isReady) return;
+
+    if (isAuthenticated && currentUser) {
+      navigate(
+        canAccessPanel(currentUser) ? "/dashboard" : "/404",
+        { replace: true },
+      );
+      return;
     }
-  }, [phoneNumber, navigate]);
+
+    if (!isAuthenticated && !phoneNumber) navigate("/login", { replace: true });
+  }, [isReady, isAuthenticated, currentUser, phoneNumber, navigate]);
 
   useEffect(() => {
     if (remainingSeconds <= 0) return;
@@ -62,7 +75,7 @@ export default function VerifyPage() {
         navigate("/404", { replace: true });
         return;
       }
-      navigate(getDefaultPanelPath(user), { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "کد تأیید نامعتبر است.");
     } finally {
@@ -84,6 +97,16 @@ export default function VerifyPage() {
   const maskedPhone = phoneNumber
     ? phoneNumber.slice(0, 4) + "***" + phoneNumber.slice(-2)
     : "";
+
+  if (!isReady || isAuthenticated || !phoneNumber) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary-600">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -166,7 +189,7 @@ export default function VerifyPage() {
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
             <button
               type="button"
-              onClick={() => navigate("/", { replace: true })}
+              onClick={() => navigate("/login", { replace: true })}
               className="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
             >
               تغییر شماره تماس

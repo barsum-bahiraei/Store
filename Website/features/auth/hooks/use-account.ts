@@ -17,16 +17,28 @@ export const accountKeys = {
 };
 
 function subscribeToAuthToken(onStoreChange: () => void) {
+  let currentToken = getAuthToken();
+  const checkCookie = () => {
+    const nextToken = getAuthToken();
+    if (nextToken === currentToken) return;
+    currentToken = nextToken;
+    onStoreChange();
+  };
+
   function handleStorage(event: StorageEvent) {
     if (event.key === AUTH_TOKEN_KEY) onStoreChange();
   }
 
   window.addEventListener("storage", handleStorage);
   window.addEventListener(AUTH_TOKEN_EVENT, onStoreChange);
+  window.addEventListener("focus", checkCookie);
+  const interval = window.setInterval(checkCookie, 1000);
 
   return () => {
     window.removeEventListener("storage", handleStorage);
     window.removeEventListener(AUTH_TOKEN_EVENT, onStoreChange);
+    window.removeEventListener("focus", checkCookie);
+    window.clearInterval(interval);
   };
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { Sidebar } from "~/components/layout/Sidebar";
@@ -13,14 +13,8 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (isReady && !isAuthenticated) {
-      navigate("/", { replace: true });
-      return;
-    }
-  }, [isAuthenticated, isReady, navigate]);
-
-  if (!isReady || !isAuthenticated) return null;
+  if (!isReady) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   if (!currentUser) {
     return (
@@ -37,7 +31,7 @@ export default function DashboardLayout() {
             type="button"
             onClick={() => {
               logout();
-              navigate("/", { replace: true });
+              navigate("/login", { replace: true });
             }}
             className="mt-6 min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
           >
