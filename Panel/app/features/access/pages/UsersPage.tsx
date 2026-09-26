@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
+import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { accessApi } from "../api/access-api";
 import type { Role, UserDetails, UserListParams, UserSummary } from "../models/access";
 
@@ -187,7 +188,7 @@ export default function UsersPage() {
             </label>
             <label>
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ تولد</span>
-              <input value={filterBirthDate} onChange={(e) => setFilterBirthDate(e.target.value)} placeholder="مثال: 1370/01/01" className={inputClasses} />
+              <PersianDateTimePicker mode="date" value={filterBirthDate} onChange={setFilterBirthDate} className={inputClasses} ariaLabel="تاریخ تولد" placeholder="انتخاب تاریخ تولد" />
             </label>
             <label>
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">جنسیت</span>

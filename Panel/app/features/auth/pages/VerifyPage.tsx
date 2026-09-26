@@ -130,7 +130,7 @@ export default function VerifyPage() {
                   const value = e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH);
                   setCode(value);
                 }}
-                placeholder="------"
+                placeholder="-----"
                 dir="ltr"
                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-lg tracking-[0.5em] text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
               />

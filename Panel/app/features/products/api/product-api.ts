@@ -1,4 +1,5 @@
 import { httpClient } from "~/shared/http/http-client";
+import { dedupe } from "~/shared/http/dedupe";
 import { resolveResult } from "~/shared/http/resolve-result";
 import type { ApiResult } from "~/shared/models/api-result";
 import type {
@@ -25,8 +26,11 @@ export const productApi = {
     if (params?.minPrice != null) query.minPrice = String(params.minPrice);
     if (params?.maxPrice != null) query.maxPrice = String(params.maxPrice);
     if (params?.isAvailable != null) query.isAvailable = String(params.isAvailable);
-    const { data } = await httpClient.get<ApiResult<ProductListOutput[]>>("/api/Product", { params: query });
-    return resolveResult(data, "Failed to load products");
+    const key = `products:${JSON.stringify(query)}`;
+    return dedupe(key, async () => {
+      const { data } = await httpClient.get<ApiResult<ProductListOutput[]>>("/api/Product", { params: query });
+      return resolveResult(data, "Failed to load products");
+    });
   },
 
   async create(input: ProductCreateInput): Promise<ProductCreateOutput> {

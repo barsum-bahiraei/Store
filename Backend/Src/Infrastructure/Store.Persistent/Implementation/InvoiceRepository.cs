@@ -118,4 +118,57 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
             .ToListAsync(cancellation);
         return result;
     }
+
+    public async Task<List<InvoiceEntity>> SellerListAsync(int userId, DateTime? from, DateTime? to,
+        CancellationToken cancellation)
+    {
+        var query = context.Invoices
+            .Include(x => x.User)
+            .Include(x => x.InvoiceItems)
+            .ThenInclude(x => x.Product)
+            .ThenInclude(x => x.Category)
+            .Include(x => x.InvoiceItems)
+            .ThenInclude(x => x.ProductVariant)
+            .ThenInclude(x => x.AttributeValues)
+            .Include(x => x.Payments)
+            .Include(x => x.DiscountCode)
+            .Where(x => x.InvoiceItems.Any(item => item.Product.Seller.UserId == userId))
+            .AsQueryable();
+
+        if (from.HasValue)
+            query = query.Where(x => x.CreatedAt >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(x => x.CreatedAt <= to.Value);
+
+        var result = await query
+            .OrderBy(x => x.Id)
+            .ToListAsync(cancellation);
+        return result;
+    }
+
+    public async Task<InvoiceEntity?> SellerGetAsync(int id, int userId, CancellationToken cancellation)
+    {
+        var result = await context.Invoices
+            .Include(x => x.User)
+            .Include(x => x.InvoiceItems)
+            .ThenInclude(x => x.Product)
+            .ThenInclude(x => x.Category)
+            .Include(x => x.InvoiceItems)
+            .ThenInclude(x => x.ProductVariant)
+            .ThenInclude(x => x.AttributeValues)
+            .Include(x => x.Payments)
+            .Include(x => x.DiscountCode)
+            .FirstOrDefaultAsync(x => x.Id == id &&
+                                      x.InvoiceItems.Any(item => item.Product.Seller.UserId == userId),
+                cancellation);
+        return result;
+    }
+
+    public async Task<InvoiceEntity> UpdateAsync(InvoiceEntity input, CancellationToken cancellation)
+    {
+        context.Invoices.Update(input);
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
 }

@@ -42,6 +42,18 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         return result;
     }
 
+    public async Task<List<ProductEntity>> SellerProductListAsync(int userId, CancellationToken cancellation)
+    {
+        var result = await context.Products
+            .Where(x => x.Seller.UserId == userId)
+            .Include(x => x.Category)
+            .Include(x => x.ProductVariants)
+            .ThenInclude(x => x.AttributeValues)
+            .OrderByDescending(x => x.Id)
+            .ToListAsync(cancellation);
+        return result;
+    }
+
     public async Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation)
     {

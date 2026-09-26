@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
+import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { accessApi } from "~/features/access/api/access-api";
 import type { UserSummary } from "~/features/access/models/access";
 import { discountCodeApi } from "../api/discount-code-api";
@@ -405,11 +406,11 @@ export default function DiscountCodesPage() {
                     <div />
                     <label>
                       <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ شروع</span>
-                      <input type="datetime-local" value={form.startDate} onChange={(e) => setFormField("startDate", e.target.value)} className={inputClasses} />
+                      <PersianDateTimePicker mode="datetime" value={form.startDate} onChange={(value) => setFormField("startDate", value)} className={inputClasses} ariaLabel="تاریخ شروع" />
                     </label>
                     <label>
                       <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ پایان</span>
-                      <input type="datetime-local" value={form.endDate} onChange={(e) => setFormField("endDate", e.target.value)} className={inputClasses} />
+                      <PersianDateTimePicker mode="datetime" value={form.endDate} onChange={(value) => setFormField("endDate", value)} className={inputClasses} ariaLabel="تاریخ پایان" />
                     </label>
                     <label className="sm:col-span-2 flex items-center gap-3 cursor-pointer">
                       <input type="checkbox" checked={form.isActive} onChange={(e) => setFormField("isActive", e.target.checked)} className="size-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />

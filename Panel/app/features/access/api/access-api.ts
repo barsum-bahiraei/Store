@@ -1,4 +1,5 @@
 import { httpClient } from "~/shared/http/http-client";
+import { dedupe } from "~/shared/http/dedupe";
 import { resolveResult } from "~/shared/http/resolve-result";
 import type { ApiResult } from "~/shared/models/api-result";
 import type {
@@ -9,19 +10,6 @@ import type {
   UserListParams,
   UserSummary,
 } from "../models/access";
-
-const pendingRequests = new Map<string, Promise<unknown>>();
-
-function dedupe<T>(key: string, request: () => Promise<T>): Promise<T> {
-  const pending = pendingRequests.get(key) as Promise<T> | undefined;
-  if (pending) return pending;
-
-  const next = request().finally(() => {
-    if (pendingRequests.get(key) === next) pendingRequests.delete(key);
-  });
-  pendingRequests.set(key, next);
-  return next;
-}
 
 export const accessApi = {
   async listRoles(): Promise<Role[]> {

@@ -41,6 +41,12 @@ const navItems: NavItem[] = [
   { to: "/discount-codes", label: "کدهای تخفیف", icon: "local_offer" },
 ];
 
+const dashboardNavItem: NavItem = {
+  to: "/dashboard",
+  label: "داشبورد فروشنده",
+  icon: "space_dashboard",
+};
+
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation();
   const { currentUser, logout } = useAuth();
@@ -82,6 +88,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const visibleItems = navItems.filter((item) =>
     canAccessRoute(currentUser, item.to),
   );
+  const showDashboard = canAccessRoute(currentUser, dashboardNavItem.to);
 
   return (
     <>
@@ -111,6 +118,17 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {showDashboard && (
+            <Link
+              to={dashboardNavItem.to}
+              onClick={onMobileClose}
+              className={linkClasses(location.pathname === dashboardNavItem.to)}
+            >
+              <span className="material-symbols-outlined text-[20px]">{dashboardNavItem.icon}</span>
+              {dashboardNavItem.label}
+            </Link>
+          )}
+
           {visibleGroups.map((group) => {
             const isExpanded = expandedGroups.has(group.label);
             const isGroupActive = group.children.some(

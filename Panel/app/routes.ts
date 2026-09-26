@@ -5,6 +5,7 @@ export default [
   route("verify", "features/auth/pages/VerifyPage.tsx"),
   layout("components/layout/DashboardLayout.tsx", [
     route("products", "features/products/pages/ProductsPage.tsx"),
+    route("dashboard", "features/seller-dashboard/pages/SellerDashboardPage.tsx"),
     route("brands", "features/brands/pages/BrandsPage.tsx"),
     route("sellers", "features/sellers/pages/SellersPage.tsx"),
     route("attributes", "features/attributes/pages/AttributesPage.tsx"),

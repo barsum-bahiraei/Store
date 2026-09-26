@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { useAuth } from "~/contexts/auth-context";
 import { SellerLocationMap } from "~/features/sellers/components/SellerLocationMap";
 
@@ -134,7 +135,7 @@ export default function ProfilePage() {
 
             <label>
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ تولد</span>
-              <input type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} className={inputClasses} />
+              <PersianDateTimePicker mode="date" value={birthDate} onChange={setBirthDate} className={inputClasses} ariaLabel="تاریخ تولد" />
             </label>
 
             <label>

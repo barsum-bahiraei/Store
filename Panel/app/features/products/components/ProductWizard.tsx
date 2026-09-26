@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
+import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { AttributeType } from "~/features/attributes/models/enums/attribute-type";
 import { AttributeUnit, getAttributeUnitLabel } from "~/features/attributes/models/enums/attribute-unit";
 import { categoryApi } from "~/features/categories/api/category-api";
@@ -136,16 +137,34 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
     );
   }
 
+  const dateMode =
+    attribute.attributeType === AttributeType.Date
+      ? "date"
+      : attribute.attributeType === AttributeType.DateTime
+        ? "datetime"
+        : attribute.attributeType === AttributeType.Time
+          ? "time"
+          : null;
+
+  if (dateMode) {
+    return (
+      <div>
+        <PersianDateTimePicker
+          mode={dateMode}
+          value={value}
+          onChange={onChange}
+          className={inputClasses}
+          ariaLabel={attribute.attributeTitle ?? "مقدار ویژگی"}
+        />
+        {unit && <span className="mt-1 block text-xs text-gray-400">واحد: {unit}</span>}
+      </div>
+    );
+  }
+
   const inputProps = (() => {
     switch (attribute.attributeType) {
       case AttributeType.Int:
         return { type: "number", inputMode: "numeric" as const, step: "1" };
-      case AttributeType.Date:
-        return { type: "date" };
-      case AttributeType.DateTime:
-        return { type: "datetime-local" };
-      case AttributeType.Time:
-        return { type: "time" };
       case AttributeType.Url:
         return { type: "url", inputMode: "url" as const, placeholder: "https://example.com" };
       case AttributeType.Email:

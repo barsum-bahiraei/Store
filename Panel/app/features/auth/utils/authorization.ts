@@ -1,7 +1,7 @@
 import { UserRole, type AccountUser } from "~/features/auth/models/account";
 
 const ownerRoutes = ["/attributes", "/categories", "/roles", "/users", "/discount-codes", "/brands"];
-const sellerRoutes = ["/products", "/sellers"];
+const sellerRoutes = ["/products", "/sellers", "/dashboard"];
 const sharedRoutes = ["/profile"];
 
 function matchesRoute(pathname: string, routes: string[]) {
@@ -29,7 +29,7 @@ export function canAccessRoute(user: AccountUser | null, pathname: string) {
 }
 
 export function getDefaultPanelPath(user: AccountUser | null) {
-  if (hasRole(user, UserRole.Seller)) return "/products";
+  if (hasRole(user, UserRole.Seller)) return "/dashboard";
   if (hasRole(user, UserRole.Owner)) return "/attributes";
   return "/404";
 }
