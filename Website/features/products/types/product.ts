@@ -31,7 +31,7 @@ export type ProductSearchItem = {
   categoryTitle: string;
   image: ProductImage | null;
   isAvailable: boolean;
-  variants: ProductVariant[];
+  variants?: ProductVariant[];
 };
 
 export type ProductSearchInput = {
@@ -101,12 +101,13 @@ export enum ProductAttributeUnit {
   Set,
 }
 
-export type ProductDetail = Omit<ProductSearchItem, "averageRating" | "image"> & {
+export type ProductDetail = Omit<ProductSearchItem, "averageRating" | "image" | "variants"> & {
   longDescription: string | null;
   categories: ProductCategory[];
   brand: ProductBrand | null;
   seller: { id: number; name: string };
   images: ProductImage[];
+  variants: ProductVariant[];
   attributes: Array<{
     id: number;
     attributeId: number;

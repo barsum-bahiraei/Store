@@ -2,6 +2,12 @@ using Store.Domain.Files;
 
 namespace Store.Domain.Products.Models.Output;
 
+public class ProductListPageOutput
+{
+    public int TotalCount { get; set; }
+    public List<ProductListOutput> Items { get; set; }
+}
+
 public class ProductListOutput
 {
     public int Id { get; set; }

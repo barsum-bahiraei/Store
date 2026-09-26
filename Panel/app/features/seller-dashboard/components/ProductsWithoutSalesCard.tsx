@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
+import { Pagination } from "~/components/common/Pagination";
 import { sellerDashboardApi } from "../api/seller-dashboard-api";
 import type { PagedResult, ProductWithoutSalesItem, SellerDateRange } from "../models/seller-dashboard";
 import { errorMessage } from "../utils/format";
 import { EmptyState } from "./EmptyState";
 import { ErrorBanner } from "./ErrorBanner";
 import { LoadingState } from "./LoadingState";
-import { Pagination } from "./Pagination";
 import { SectionCard } from "./SectionCard";
 
 interface ProductsWithoutSalesCardProps {

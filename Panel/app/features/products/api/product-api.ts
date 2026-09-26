@@ -8,7 +8,7 @@ import type {
   ProductGetOutput,
   ProductImageOutput,
   ProductImageUploadInput,
-  ProductListOutput,
+  ProductListPage,
   ProductListParams,
   ProductUpdateInput,
   ProductUpdateOutput,
@@ -18,8 +18,11 @@ const productRequests = new Map<number, Promise<ProductGetOutput>>();
 const productCache = new Map<number, ProductGetOutput>();
 
 export const productApi = {
-  async list(params?: ProductListParams): Promise<ProductListOutput[]> {
-    const query: Record<string, string> = {};
+  async list(params?: ProductListParams): Promise<ProductListPage> {
+    const query: Record<string, string> = {
+      page: String(params?.page ?? 1),
+      pageSize: String(params?.pageSize ?? 10),
+    };
     if (params?.name) query.name = params.name;
     if (params?.categoryId) query.categoryId = String(params.categoryId);
     if (params?.sellerId) query.sellerId = String(params.sellerId);
@@ -28,7 +31,7 @@ export const productApi = {
     if (params?.isAvailable != null) query.isAvailable = String(params.isAvailable);
     const key = `products:${JSON.stringify(query)}`;
     return dedupe(key, async () => {
-      const { data } = await httpClient.get<ApiResult<ProductListOutput[]>>("/api/Product", { params: query });
+      const { data } = await httpClient.get<ApiResult<ProductListPage>>("/api/Product", { params: query });
       return resolveResult(data, "Failed to load products");
     });
   },

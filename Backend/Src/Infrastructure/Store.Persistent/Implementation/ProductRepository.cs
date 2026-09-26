@@ -7,7 +7,8 @@ namespace Store.Persistent.Implementation;
 
 public class ProductRepository(StoreDbContext context) : IProductRepository
 {
-    public async Task<List<ProductEntity>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation)
+    public async Task<(List<ProductEntity> Items, int TotalCount)> ListAsync(int userId, ProductListInput input,
+        CancellationToken cancellation)
     {
         var query = context.Products
             .Where(x => x.Seller.UserId == userId)
@@ -33,13 +34,19 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
                 ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
                 : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
 
+        var totalCount = await query.CountAsync(cancellation);
+        var page = input.Page < 1 ? 1 : input.Page;
+        var pageSize = Math.Clamp(input.PageSize, 1, 100);
+
         var result = await query
             .Include(x => x.Category)
             .Include(x => x.Seller)
             .Include(x => x.ProductVariants)
             .OrderByDescending(x => x.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellation);
-        return result;
+        return (result, totalCount);
     }
 
     public async Task<List<ProductEntity>> SellerProductListAsync(int userId, CancellationToken cancellation)

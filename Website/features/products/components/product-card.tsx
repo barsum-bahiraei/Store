@@ -15,7 +15,7 @@ export function ProductCard({ product }: { product: ProductSearchItem }) {
   const token = useAuthToken();
   const { data: userProfile } = useUserProfile();
   const canQuickAdd = !token || isUserRole(userProfile);
-  const purchasableVariants = product.variants.filter((variant) => variant.stock > 0);
+  const purchasableVariants = (product.variants ?? []).filter((variant) => variant.stock > 0);
   const quickBuyVariant = product.isAvailable && purchasableVariants.length === 1 ? purchasableVariants[0] : undefined;
   const { change, isPending, error } = useCartItemActions({
     productId: product.id,

@@ -153,12 +153,13 @@ public class ProductService(
         return utcValue.ToString("O");
     }
 
-    public async Task<Result<List<ProductListOutput>>> ListAsync(int userId, ProductListInput input, CancellationToken cancellation)
+    public async Task<Result<ProductListPageOutput>> ListAsync(int userId, ProductListInput input,
+        CancellationToken cancellation)
     {
         var entities = await productRepository.ListAsync(userId, input, cancellation);
         var result = new List<ProductListOutput>();
 
-        foreach (var entity in entities)
+        foreach (var entity in entities.Items)
         {
             var imageResult = await fileService.GetAsync(
                 TableNameEnum.Products,
@@ -199,7 +200,12 @@ public class ProductService(
             });
         }
 
-        return Result<List<ProductListOutput>>.Success(result);
+        var pageResult = new ProductListPageOutput
+        {
+            TotalCount = entities.TotalCount,
+            Items = result
+        };
+        return Result<ProductListPageOutput>.Success(pageResult);
     }
 
     public async Task<Result<ProductSearchOutput>> SearchAsync(ProductSearchInput input,
@@ -377,7 +383,6 @@ public class ProductService(
             Name = entity.Name,
             ShortDescription = entity.ShortDescription,
             LongDescription = entity.LongDescription,
-            Price = GetDisplayPrice(entity),
             Discount = entity.Discount,
             CategoryId = entity.CategoryId,
             CategoryTitle = entity.Category.Name,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
+import { Pagination } from "~/components/common/Pagination";
 import { categoryApi } from "~/features/categories/api/category-api";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
 import { sellerApi } from "~/features/sellers/api/seller-api";
@@ -17,7 +18,8 @@ function formatPrice(value: number): string {
 }
 
 export default function ProductsPage() {
-  const { products, loading, submitting, error, fetchProducts, deleteProduct } = useProductStore();
+  const { products, totalCount, page, pageSize, loading, submitting, error, fetchProducts, deleteProduct } =
+    useProductStore();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductListOutput | null>(null);
   const [confirmData, setConfirmData] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
@@ -45,7 +47,7 @@ export default function ProductsPage() {
   };
 
   const applyFilters = () => {
-    void fetchProducts(buildParams());
+    void fetchProducts({ ...buildParams(), page: 1 });
   };
 
   const clearFilters = () => {
@@ -55,7 +57,11 @@ export default function ProductsPage() {
     setFilterMinPrice("");
     setFilterMaxPrice("");
     setFilterIsAvailable("");
-    void fetchProducts();
+    void fetchProducts({ page: 1 });
+  };
+
+  const changePage = (nextPage: number) => {
+    void fetchProducts({ ...buildParams(), page: nextPage });
   };
 
   useEffect(() => {
@@ -76,7 +82,7 @@ export default function ProductsPage() {
   const completeWizard = () => {
     setWizardOpen(false);
     setEditingProduct(null);
-    void fetchProducts(buildParams());
+    void fetchProducts({ ...buildParams(), page });
   };
 
   const closeWizard = () => {
@@ -165,7 +171,7 @@ export default function ProductsPage() {
       {error && (
         <div className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300" role="alert">
           <span className="flex items-start gap-2"><span className="material-symbols-outlined text-[20px]">error</span>{error}</span>
-          <button onClick={() => void fetchProducts(buildParams())} className="shrink-0 font-semibold hover:underline">تلاش مجدد</button>
+          <button onClick={() => void fetchProducts({ ...buildParams(), page })} className="shrink-0 font-semibold hover:underline">تلاش مجدد</button>
         </div>
       )}
 
@@ -239,6 +245,14 @@ export default function ProductsPage() {
             ))}
           </ul>
         )}
+
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          loading={loading}
+          onPageChange={changePage}
+        />
       </section>
 
       {wizardOpen && <ProductWizard product={editingProduct ?? undefined} onClose={closeWizard} onComplete={completeWizard} />}

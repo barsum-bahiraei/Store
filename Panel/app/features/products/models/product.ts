@@ -88,6 +88,11 @@ export interface ProductListOutput {
   isAvailable: boolean;
 }
 
+export interface ProductListPage {
+  totalCount: number;
+  items: ProductListOutput[];
+}
+
 export interface ProductSeller {
   id: number;
   name: string;
@@ -110,6 +115,8 @@ export interface ProductGetOutput extends Omit<ProductListOutput, "image"> {
 }
 
 export interface ProductListParams {
+  page?: number;
+  pageSize?: number;
   name?: string;
   categoryId?: number;
   sellerId?: number;
