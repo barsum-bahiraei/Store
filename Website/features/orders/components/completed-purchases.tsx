@@ -2,7 +2,7 @@
 
 import { formatToman } from "@/features/products/utils/product";
 import { useInvoices } from "../hooks/use-invoices";
-import { DeliveryMethod, PaymentMethod } from "../types/invoice";
+import { DeliveryMethod, PaymentMethod, PaymentStatus } from "../types/invoice";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
 const paymentMethodLabels: Record<PaymentMethod, string> = {
@@ -15,6 +15,17 @@ const deliveryMethodLabels: Record<DeliveryMethod, string> = {
   [DeliveryMethod.Chapar]: "ارسال با چاپار",
   [DeliveryMethod.Tipax]: "ارسال با تیپاکس",
   [DeliveryMethod.Post]: "ارسال با پست",
+};
+const paymentStatusDetails: Record<PaymentStatus, { label: string; className: string }> = {
+  [PaymentStatus.New]: { label: "سفارش ثبت شده", className: "bg-muted text-foreground" },
+  [PaymentStatus.ProcessingPayment]: { label: "در حال پرداخت", className: "bg-warning/10 text-warning" },
+  [PaymentStatus.PaymentCompleted]: { label: "پرداخت موفق", className: "bg-success/10 text-success" },
+  [PaymentStatus.Preparing]: { label: "در حال آماده‌سازی", className: "bg-primary/10 text-primary" },
+  [PaymentStatus.ReadyForShipment]: { label: "آماده ارسال", className: "bg-primary/10 text-primary" },
+  [PaymentStatus.Shipping]: { label: "در حال ارسال", className: "bg-primary/10 text-primary" },
+  [PaymentStatus.Delivered]: { label: "تحویل مشتری", className: "bg-success/10 text-success" },
+  [PaymentStatus.Cancelled]: { label: "لغو شده", className: "bg-muted text-muted-foreground" },
+  [PaymentStatus.Failed]: { label: "پرداخت ناموفق", className: "bg-error/10 text-error" },
 };
 
 function formatDate(value: string) {
@@ -60,38 +71,44 @@ export function OrdersList() {
 
   return (
     <ul className="grid gap-4">
-      {invoices.map((invoice) => (
-        <li key={invoice.id}>
-          <article className="overflow-hidden rounded-xl border border-border bg-surface">
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-              <h3 className="font-black">سفارش شماره {invoice.id}</h3>
-              <time dateTime={invoice.createdAt} className="text-xs font-bold text-muted-foreground">{formatDate(invoice.createdAt)}</time>
-            </header>
-            <dl className="grid gap-5 p-5 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <dt className="text-xs font-bold text-muted-foreground">مبلغ کل</dt>
-                <dd className="mt-1 font-black text-primary">{formatToman(invoice.totalPrice)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold text-muted-foreground">تعداد کالا</dt>
-                <dd className="mt-1 font-black">{invoice.totalCount.toLocaleString("fa-IR")}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold text-muted-foreground">روش پرداخت</dt>
-                <dd className="mt-1 font-black">{paymentMethodLabels[invoice.paymentMethod] ?? "نامشخص"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold text-muted-foreground">روش تحویل</dt>
-                <dd className="mt-1 font-black">{deliveryMethodLabels[invoice.deliveryMethod] ?? "نامشخص"}</dd>
-              </div>
-              <div className="sm:col-span-2 lg:col-span-4">
-                <dt className="text-xs font-bold text-muted-foreground">نشانی تحویل</dt>
-                <dd className="mt-1 text-sm font-bold leading-7">{invoice.address || "ثبت نشده"}</dd>
-              </div>
-            </dl>
-          </article>
-        </li>
-      ))}
+      {invoices.map((invoice) => {
+        const status = paymentStatusDetails[invoice.paymentStatus];
+        return (
+          <li key={invoice.id}>
+            <article className="overflow-hidden rounded-xl border border-border bg-surface">
+              <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="font-black">سفارش شماره {invoice.id}</h3>
+                  <span aria-label={`وضعیت سفارش: ${status?.label ?? "نامشخص"}`} className={`rounded-full px-3 py-1 text-xs font-black ${status?.className ?? "bg-muted text-muted-foreground"}`}>{status?.label ?? "نامشخص"}</span>
+                </div>
+                <time dateTime={invoice.createdAt} className="text-xs font-bold text-muted-foreground">{formatDate(invoice.createdAt)}</time>
+              </header>
+              <dl className="grid gap-5 p-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <dt className="text-xs font-bold text-muted-foreground">مبلغ کل</dt>
+                  <dd className="mt-1 font-black text-primary">{formatToman(invoice.totalPrice)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold text-muted-foreground">تعداد کالا</dt>
+                  <dd className="mt-1 font-black">{invoice.totalCount.toLocaleString("fa-IR")}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold text-muted-foreground">روش پرداخت</dt>
+                  <dd className="mt-1 font-black">{paymentMethodLabels[invoice.paymentMethod] ?? "نامشخص"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold text-muted-foreground">روش تحویل</dt>
+                  <dd className="mt-1 font-black">{deliveryMethodLabels[invoice.deliveryMethod] ?? "نامشخص"}</dd>
+                </div>
+                <div className="sm:col-span-2 lg:col-span-4">
+                  <dt className="text-xs font-bold text-muted-foreground">نشانی تحویل</dt>
+                  <dd className="mt-1 text-sm font-bold leading-7">{invoice.address || "ثبت نشده"}</dd>
+                </div>
+              </dl>
+            </article>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -8,4 +8,6 @@ public class CheckoutOutput
     public decimal DiscountAmount { get; set; }
     public decimal Amount { get; set; }
     public PaymentStatusEnum PaymentStatus { get; set; }
+    public string RefId { get; set; } = string.Empty;
+    public string GatewayUrl { get; set; } = string.Empty;
 }

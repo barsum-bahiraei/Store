@@ -1,9 +1,11 @@
+using Microsoft.Extensions.Logging;
 using Store.Domain.Accounts;
 using Store.Domain.Files;
 using Store.Domain.Invoices;
 using Store.Domain.Invoices.Models.Input;
 using Store.Domain.Invoices.Models.Output;
 using Store.Domain.Products;
+using Store.Service.ProviderService;
 
 namespace Store.Service.EntityService;
 
@@ -11,7 +13,9 @@ public class InvoiceService(
     IInvoiceRepository invoiceRepository,
     IAccountRepository accountRepository,
     IProductRepository productRepository,
-    FileService fileService)
+    FileService fileService,
+    MellatPaymentService mellatPaymentService,
+    ILogger<InvoiceService> logger)
 {
     public async Task<Result<List<CartListOutput>>> CartListAsync(int userId,
         CancellationToken cancellation)
@@ -194,6 +198,7 @@ public class InvoiceService(
                 Address = x.User.Address!,
                 PaymentMethod = x.PaymentMethod,
                 DeliveryMethod = x.DeliveryMethod,
+                PaymentStatus = x.PaymentStatus,
             }).ToList();
         return Result<List<InvoiceListOutput>>.Success(result);
     }
@@ -203,6 +208,9 @@ public class InvoiceService(
     {
         if (!Enum.IsDefined(input.PaymentMethod))
             return Result<CheckoutOutput>.Failure("Payment method is invalid");
+
+        if (input.PaymentMethod != PaymentMethodEnum.Online)
+            return Result<CheckoutOutput>.Failure("Only online payment is currently available");
 
         if (!Enum.IsDefined(input.DeliveryMethod))
             return Result<CheckoutOutput>.Failure("Delivery method is invalid");
@@ -268,6 +276,21 @@ public class InvoiceService(
         }
 
         var amount = subtotal - discountAmount;
+        var amountInRials = amount * 10m;
+        if (amount <= 0 || amountInRials != decimal.Truncate(amountInRials) || amountInRials > long.MaxValue)
+            return Result<CheckoutOutput>.Failure("Payment amount is invalid");
+
+        MellatPaymentOptions mellatSettings;
+        try
+        {
+            mellatSettings = mellatPaymentService.Settings;
+        }
+        catch (InvalidOperationException exception)
+        {
+            logger.LogError(exception, "Mellat payment configuration is invalid");
+            return Result<CheckoutOutput>.Failure("Online payment is not available");
+        }
+
         var invoice = new InvoiceEntity
         {
             UserId = userId,
@@ -292,6 +315,35 @@ public class InvoiceService(
         };
 
         var created = await invoiceRepository.CheckoutCreateAsync(invoice, payment, carts, cancellation);
+        created.Payment.OrderId = created.Payment.Id;
+        await invoiceRepository.SavePaymentAsync(created.Payment, cancellation);
+
+        MellatPayResponse payResponse;
+        try
+        {
+            payResponse = await mellatPaymentService.PayAsync(created.Payment.OrderId.Value,
+                decimal.ToInt64(amountInRials), cancellation);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Mellat Pay request failed for payment {PaymentId}", created.Payment.Id);
+            await FailPaymentAsync(created.Payment, cancellation);
+            return Result<CheckoutOutput>.Failure("Payment gateway did not respond");
+        }
+
+        if (payResponse.ResponseCode != "0" || string.IsNullOrWhiteSpace(payResponse.RefId))
+        {
+            created.Payment.PayResponseCode = payResponse.ResponseCode;
+            await FailPaymentAsync(created.Payment, cancellation);
+            return Result<CheckoutOutput>.Failure($"Payment gateway rejected the request ({payResponse.ResponseCode})");
+        }
+
+        created.Payment.PayResponseCode = payResponse.ResponseCode;
+        created.Payment.RefId = payResponse.RefId;
+        created.Payment.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        created.Invoice.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        await invoiceRepository.SavePaymentAsync(created.Payment, cancellation);
+
         return Result<CheckoutOutput>.Success(new CheckoutOutput
         {
             InvoiceId = created.Invoice.Id,
@@ -299,9 +351,192 @@ public class InvoiceService(
             Subtotal = subtotal,
             DiscountAmount = discountAmount,
             Amount = created.Payment.Amount,
-            PaymentStatus = created.Payment.PaymentStatus
+            PaymentStatus = created.Payment.PaymentStatus,
+            RefId = created.Payment.RefId,
+            GatewayUrl = mellatSettings.GatewayUrl
         });
     }
+
+    public async Task<MellatCallbackOutput> MellatCallbackAsync(MellatCallbackInput input,
+        CancellationToken cancellation)
+    {
+        if (!input.SaleOrderId.HasValue || input.SaleOrderId <= 0 || string.IsNullOrWhiteSpace(input.RefId))
+            return FailedCallback();
+
+        var payment = await invoiceRepository.PaymentGetByOrderIdAsync(input.SaleOrderId.Value, cancellation);
+        if (payment == null ||
+            payment.PaymentMethod != PaymentMethodEnum.Online ||
+            !string.Equals(payment.RefId, input.RefId, StringComparison.Ordinal))
+            return FailedCallback(payment?.InvoiceId);
+
+        if (payment.SaleReferenceId.HasValue && payment.VerifiedAt.HasValue &&
+            payment.SaleReferenceId != input.SaleReferenceId)
+            return FailedCallback(payment.InvoiceId);
+
+        if (payment.PaymentStatus == PaymentStatusEnum.PaymentCompleted)
+            return SuccessfulCallback(payment.InvoiceId);
+
+        payment.CallbackResponseCode = input.ResCode;
+        payment.CardHolderPan = input.CardHolderPan;
+        payment.SaleReferenceId = input.SaleReferenceId;
+
+        if (!input.SaleReferenceId.HasValue || input.SaleReferenceId <= 0)
+        {
+            await FailPaymentAsync(payment, cancellation);
+            return FailedCallback(payment.InvoiceId);
+        }
+
+        if (input.FinalAmount is > 0)
+        {
+            if (input.FinalAmount.Value % 10 != 0 || input.FinalAmount.Value / 10m != payment.Amount)
+            {
+                logger.LogWarning("Mellat callback amount mismatch for payment {PaymentId}", payment.Id);
+                await FailPaymentAsync(payment, cancellation);
+                return FailedCallback(payment.InvoiceId);
+            }
+
+            payment.PaidAmount = input.FinalAmount.Value / 10m;
+        }
+
+        payment.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        payment.Invoice.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        await invoiceRepository.SavePaymentAsync(payment, cancellation);
+
+        string verifyCode;
+        try
+        {
+            verifyCode = await mellatPaymentService.VerifyAsync(payment.OrderId!.Value,
+                input.SaleReferenceId.Value, cancellation);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "Mellat Verify response was not received for payment {PaymentId}", payment.Id);
+            return await ResolveUnknownVerifyAsync(payment, input.SaleReferenceId.Value, cancellation);
+        }
+
+        payment.VerifyResponseCode = verifyCode;
+        if (verifyCode == "45")
+            return await CompletePaymentAsync(payment, cancellation);
+
+        if (verifyCode is not ("0" or "43"))
+        {
+            if (IsPendingBankCode(verifyCode))
+            {
+                await invoiceRepository.SavePaymentAsync(payment, cancellation);
+                return PendingCallback(payment.InvoiceId);
+            }
+
+            await FailPaymentAsync(payment, cancellation);
+            return FailedCallback(payment.InvoiceId);
+        }
+
+        payment.VerifiedAt = DateTime.UtcNow;
+        return await SettleAsync(payment, input.SaleReferenceId.Value, cancellation);
+    }
+
+    private async Task<MellatCallbackOutput> ResolveUnknownVerifyAsync(PaymentEntity payment,
+        long saleReferenceId, CancellationToken cancellation)
+    {
+        try
+        {
+            var inquiryCode = await mellatPaymentService.InquiryAsync(payment.OrderId!.Value,
+                saleReferenceId, cancellation);
+            payment.VerifyResponseCode = inquiryCode;
+            if (inquiryCode == "45")
+                return await CompletePaymentAsync(payment, cancellation);
+
+            if (inquiryCode is "0" or "43")
+            {
+                payment.VerifiedAt = DateTime.UtcNow;
+                return await SettleAsync(payment, saleReferenceId, cancellation);
+            }
+
+            if (inquiryCode == "48")
+            {
+                await FailPaymentAsync(payment, cancellation);
+                return FailedCallback(payment.InvoiceId);
+            }
+
+            if (!IsPendingBankCode(inquiryCode))
+            {
+                await FailPaymentAsync(payment, cancellation);
+                return FailedCallback(payment.InvoiceId);
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "Mellat Inquiry failed for payment {PaymentId}", payment.Id);
+        }
+
+        await invoiceRepository.SavePaymentAsync(payment, cancellation);
+        return PendingCallback(payment.InvoiceId);
+    }
+
+    private async Task<MellatCallbackOutput> SettleAsync(PaymentEntity payment, long saleReferenceId,
+        CancellationToken cancellation)
+    {
+        try
+        {
+            payment.SettleResponseCode = await mellatPaymentService.SettleAsync(payment.OrderId!.Value,
+                saleReferenceId, cancellation);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "Mellat Settle response was not received for payment {PaymentId}", payment.Id);
+            await invoiceRepository.SavePaymentAsync(payment, cancellation);
+            return PendingCallback(payment.InvoiceId);
+        }
+
+        if (payment.SettleResponseCode is "0" or "45")
+            return await CompletePaymentAsync(payment, cancellation);
+
+        if (payment.SettleResponseCode == "48")
+        {
+            await FailPaymentAsync(payment, cancellation);
+            return FailedCallback(payment.InvoiceId);
+        }
+
+        await invoiceRepository.SavePaymentAsync(payment, cancellation);
+        return PendingCallback(payment.InvoiceId);
+    }
+
+    private async Task<MellatCallbackOutput> CompletePaymentAsync(PaymentEntity payment,
+        CancellationToken cancellation)
+    {
+        payment.PaidAmount ??= payment.Amount;
+        payment.VerifiedAt ??= DateTime.UtcNow;
+        payment.SettledAt = DateTime.UtcNow;
+        await invoiceRepository.CompletePaymentAsync(payment, cancellation);
+        return SuccessfulCallback(payment.InvoiceId);
+    }
+
+    private async Task FailPaymentAsync(PaymentEntity payment, CancellationToken cancellation)
+    {
+        payment.PaymentStatus = PaymentStatusEnum.Failed;
+        payment.Invoice.PaymentStatus = PaymentStatusEnum.Failed;
+        await invoiceRepository.SavePaymentAsync(payment, cancellation);
+    }
+
+    private static bool IsPendingBankCode(string code) =>
+        code is "28" or "30" or "34" or "36" or "37" or "38" or "39" or "112" or "113" or "116" or "117" or
+            "211" or "997";
+
+    private static MellatCallbackOutput SuccessfulCallback(int invoiceId) => new()
+    {
+        IsSuccessful = true,
+        InvoiceId = invoiceId
+    };
+
+    private static MellatCallbackOutput PendingCallback(int invoiceId) => new()
+    {
+        IsPending = true,
+        InvoiceId = invoiceId
+    };
+
+    private static MellatCallbackOutput FailedCallback(int? invoiceId = null) => new()
+    {
+        InvoiceId = invoiceId
+    };
 
     private static decimal GetUnitPrice(ProductVariantEntity variant, ProductEntity product) =>
         Math.Max(0, variant.Price - product.Discount);

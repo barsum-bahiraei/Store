@@ -17,10 +17,14 @@ type UserWithAddress = AccountUser & { address: string; latitude: number; longit
 
 const paymentStatusLabels: Record<PaymentStatus, string> = {
   [PaymentStatus.New]: "جدید",
-  [PaymentStatus.Processing]: "در حال پردازش",
-  [PaymentStatus.Completed]: "تکمیل‌شده",
-  [PaymentStatus.Failed]: "ناموفق",
+  [PaymentStatus.ProcessingPayment]: "در حال پرداخت",
+  [PaymentStatus.PaymentCompleted]: "پرداخت‌شده",
+  [PaymentStatus.Preparing]: "در حال آماده‌سازی",
+  [PaymentStatus.ReadyForShipment]: "آماده ارسال",
+  [PaymentStatus.Shipping]: "در حال ارسال",
+  [PaymentStatus.Delivered]: "تحویل‌شده",
   [PaymentStatus.Cancelled]: "لغوشده",
+  [PaymentStatus.Failed]: "ناموفق",
 };
 
 function hasCompleteAddress(user?: AccountUser): user is UserWithAddress {
@@ -38,13 +42,29 @@ export function CheckoutContent() {
   const cart = useCart();
   const checkout = useCheckout();
   const [deliveryMethod, setDeliveryMethod] = useState(DeliveryMethod.Chapar);
-  const [paymentMethod, setPaymentMethod] = useState(PaymentMethod.Online);
   const [discountCode, setDiscountCode] = useState("");
   const [itemsError, setItemsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) router.replace("/login");
   }, [router, token]);
+
+  useEffect(() => {
+    if (!checkout.data?.refId || !checkout.data.gatewayUrl) return;
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = checkout.data.gatewayUrl;
+    const refId = document.createElement("input");
+    refId.type = "hidden";
+    refId.name = "RefId";
+    refId.value = checkout.data.refId;
+    form.appendChild(refId);
+    document.body.appendChild(form);
+    form.submit();
+
+    return () => form.remove();
+  }, [checkout.data]);
 
   if (!token || cart.isPending || profile.isLoading) {
     return <div role="status" className="rounded-xl border border-border bg-surface p-10 text-center"><span className="material-symbols-rounded animate-spin text-4xl text-primary motion-reduce:animate-none" aria-hidden="true">progress_activity</span><p className="mt-3 font-bold">در حال آماده‌سازی سفارش…</p></div>;
@@ -60,17 +80,11 @@ export function CheckoutContent() {
 
   if (checkout.data) {
     return (
-      <section aria-labelledby="checkout-success-title" className="mx-auto max-w-2xl rounded-xl border border-border bg-surface p-6 text-center sm:p-10">
-        <span className="material-symbols-rounded text-6xl text-success" aria-hidden="true">check_circle</span>
-        <h1 id="checkout-success-title" className="mt-4 text-2xl font-black sm:text-3xl">سفارش ثبت شد</h1>
-        <p className="mt-2 text-sm leading-7 text-muted-foreground">سفارش ایجاد شده و پرداخت آن هنوز در وضعیت اولیه است. درگاه پرداخت در حال حاضر فعال نیست.</p>
-        <dl className="mt-7 grid gap-4 rounded-xl bg-muted p-5 text-right sm:grid-cols-2 lg:grid-cols-4">
-          <div><dt className="text-xs font-bold text-muted-foreground">شماره سفارش</dt><dd className="mt-1 font-black">{checkout.data.invoiceId.toLocaleString("fa-IR")}</dd></div>
-          <div><dt className="text-xs font-bold text-muted-foreground">مبلغ قطعی</dt><dd className="mt-1 font-black text-primary">{formatToman(checkout.data.amount)}</dd></div>
-          <div><dt className="text-xs font-bold text-muted-foreground">وضعیت پرداخت</dt><dd className="mt-1 font-black">{paymentStatusLabels[checkout.data.paymentStatus] ?? "نامشخص"}</dd></div>
-          <div><dt className="text-xs font-bold text-muted-foreground">شماره پرداخت</dt><dd className="mt-1 font-black">{checkout.data.paymentId.toLocaleString("fa-IR")}</dd></div>
-        </dl>
-        <Link href="/account?tab=orders" className="mt-7 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-sm font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring">مشاهده سفارش‌ها</Link>
+      <section aria-labelledby="gateway-title" className="mx-auto max-w-2xl rounded-xl border border-border bg-surface p-6 text-center sm:p-10">
+        <span className="material-symbols-rounded animate-spin text-6xl text-primary motion-reduce:animate-none" aria-hidden="true">progress_activity</span>
+        <h1 id="gateway-title" className="mt-4 text-2xl font-black sm:text-3xl">در حال انتقال به درگاه پرداخت</h1>
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">برای پرداخت {formatToman(checkout.data.amount)} چند لحظه منتظر بمانید.</p>
+        <p className="mt-5 text-xs text-muted-foreground">وضعیت فعلی: {paymentStatusLabels[checkout.data.paymentStatus] ?? "نامشخص"}</p>
       </section>
     );
   }
@@ -95,7 +109,7 @@ export function CheckoutContent() {
     setItemsError(null);
     const normalizedDiscountCode = discountCode.trim();
     checkout.mutate({
-      paymentMethod,
+      paymentMethod: PaymentMethod.Online,
       deliveryMethod,
       discountCode: normalizedDiscountCode || null,
     });
@@ -129,8 +143,8 @@ export function CheckoutContent() {
 
         <fieldset className="rounded-xl border border-border bg-surface p-5 sm:p-6">
           <legend className="px-2 text-lg font-black">روش پرداخت</legend>
-          <div className="mt-2 grid gap-3 sm:grid-cols-3">
-            {([{ value: PaymentMethod.Online, label: "آنلاین", icon: "credit_card" }, { value: PaymentMethod.Cash, label: "نقدی", icon: "payments" }, { value: PaymentMethod.Check, label: "چک", icon: "account_balance" }] as const).map((method) => <label key={method.value} className={optionClass}><input type="radio" name="paymentMethod" value={method.value} checked={paymentMethod === method.value} onChange={() => setPaymentMethod(method.value)} className="size-4 accent-primary" /><span className="material-symbols-rounded text-primary" aria-hidden="true">{method.icon}</span><span className="font-black">{method.label}</span></label>)}
+          <div className="mt-2">
+            <label className={optionClass}><input type="radio" name="paymentMethod" value={PaymentMethod.Online} checked readOnly className="size-4 accent-primary" /><span className="material-symbols-rounded text-primary" aria-hidden="true">credit_card</span><span><span className="block font-black">پرداخت آنلاین</span><span className="text-xs text-muted-foreground">درگاه امن به‌پرداخت ملت</span></span></label>
           </div>
         </fieldset>
       </div>

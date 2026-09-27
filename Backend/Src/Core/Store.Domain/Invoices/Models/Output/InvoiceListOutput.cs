@@ -9,4 +9,5 @@ public class InvoiceListOutput
     public string Address { get; set; }
     public PaymentMethodEnum PaymentMethod { get; set; }
     public DeliveryMethodEnum DeliveryMethod { get; set; }
+    public PaymentStatusEnum PaymentStatus { get; set; }
 }

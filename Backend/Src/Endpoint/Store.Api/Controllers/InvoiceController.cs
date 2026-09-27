@@ -1,15 +1,17 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Store.Api.Authorization;
 using Store.Domain.Invoices.Models.Input;
 using Store.Service.EntityService;
+using Store.Service.ProviderService;
 
 namespace Store.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class InvoiceController(InvoiceService invoiceService) : ControllerBase
+public class InvoiceController(InvoiceService invoiceService, IOptions<MellatPaymentOptions> mellatOptions) : ControllerBase
 {
     [HasAccess]
     [HttpGet]
@@ -63,5 +65,21 @@ public class InvoiceController(InvoiceService invoiceService) : ControllerBase
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
         var result = await invoiceService.CheckoutAsync(userId, input, cancellation);
         return Ok(result);
+    }
+
+    [AllowAnonymous]
+    [Consumes("application/x-www-form-urlencoded")]
+    [HttpPost("Payment/Mellat/Callback")]
+    public async Task<IActionResult> MellatCallback([FromForm] MellatCallbackInput input)
+    {
+        var result = await invoiceService.MellatCallbackAsync(input, CancellationToken.None);
+        var resultUrl = mellatOptions.Value.ResultUrl;
+        if (string.IsNullOrWhiteSpace(resultUrl) || !Uri.TryCreate(resultUrl, UriKind.Absolute, out _))
+            return Ok(result);
+
+        var status = result.IsSuccessful ? "success" : result.IsPending ? "pending" : "failed";
+        var separator = resultUrl.Contains('?') ? '&' : '?';
+        var invoice = result.InvoiceId.HasValue ? $"&invoiceId={result.InvoiceId.Value}" : string.Empty;
+        return Redirect($"{resultUrl}{separator}status={status}{invoice}");
     }
 }

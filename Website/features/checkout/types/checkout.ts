@@ -1,12 +1,6 @@
-import type { DeliveryMethod, PaymentMethod } from "@/features/orders/types/invoice";
+import { PaymentStatus, type DeliveryMethod, type PaymentMethod } from "@/features/orders/types/invoice";
 
-export enum PaymentStatus {
-  New = 0,
-  Processing = 1,
-  Completed = 2,
-  Failed = 3,
-  Cancelled = 4,
-}
+export { PaymentStatus };
 
 export type CheckoutInput = {
   paymentMethod: PaymentMethod;
@@ -21,4 +15,6 @@ export type CheckoutOutput = {
   discountAmount: number;
   amount: number;
   paymentStatus: PaymentStatus;
+  refId: string;
+  gatewayUrl: string;
 };

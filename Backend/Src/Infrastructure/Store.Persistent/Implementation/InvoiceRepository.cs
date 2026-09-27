@@ -108,6 +108,40 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
         return (invoice, payment);
     }
 
+    public Task<PaymentEntity?> PaymentGetByOrderIdAsync(long orderId, CancellationToken cancellation) =>
+        context.Payments
+            .Include(x => x.Invoice)
+            .FirstOrDefaultAsync(x => x.OrderId == orderId, cancellation);
+
+    public async Task SavePaymentAsync(PaymentEntity payment, CancellationToken cancellation)
+    {
+        context.Payments.Update(payment);
+        context.Invoices.Update(payment.Invoice);
+        await context.SaveChangesAsync(cancellation);
+    }
+
+    public async Task CompletePaymentAsync(PaymentEntity payment, CancellationToken cancellation)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
+        payment.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
+        payment.Invoice.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
+
+        if (payment.Invoice.DiscountCodeId.HasValue)
+        {
+            var userDiscountCode = await context.UserDiscountCodes.FirstOrDefaultAsync(x =>
+                x.UserId == payment.Invoice.UserId &&
+                x.DiscountCodeId == payment.Invoice.DiscountCodeId.Value, cancellation);
+            if (userDiscountCode != null)
+            {
+                userDiscountCode.IsUsed = true;
+                userDiscountCode.UsedAt = DateTime.UtcNow;
+            }
+        }
+
+        await context.SaveChangesAsync(cancellation);
+        await transaction.CommitAsync(cancellation);
+    }
+
     public async Task<List<InvoiceEntity>> ListAsync(int userId, CancellationToken cancellation)
     {
         var result = await context.Invoices

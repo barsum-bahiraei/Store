@@ -11,8 +11,11 @@ public static class Configuration
         IConfiguration configuration)
     {
         services.Configure<KavenegarOptions>(configuration.GetSection(KavenegarOptions.SectionName));
+        services.Configure<MellatPaymentOptions>(configuration.GetSection(MellatPaymentOptions.SectionName));
         services.AddHttpClient<KavenegarSmsService>(client =>
             client.BaseAddress = new Uri("https://api.kavenegar.com/"));
+        services.AddHttpClient<MellatPaymentService>(client =>
+            client.Timeout = TimeSpan.FromSeconds(30));
         services.AddScoped<CategoryService>();
         services.AddScoped<ProductService>();
         services.AddScoped<AttributeService>();
