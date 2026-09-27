@@ -177,7 +177,7 @@ public class AccountService(
         if (created == null)
             return Result<UserOtpSendOutput>.Failure("Please wait before requesting another verification code");
 
-        //await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
+        await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
 
         return Result<UserOtpSendOutput>.Success(new UserOtpSendOutput
         {
