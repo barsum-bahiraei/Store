@@ -172,7 +172,7 @@ export default function DiscountCodesPage() {
     if (allUsers.length === 0) {
       setUsersLoading(true);
       try {
-        setAllUsers(await accessApi.listUsers());
+        setAllUsers((await accessApi.listUsers({ pageSize: 100 })).items);
       } catch (caughtError) {
         setFormError(errorMessage(caughtError));
       } finally {
@@ -195,7 +195,7 @@ export default function DiscountCodesPage() {
   const applyUserFilters = async () => {
     setUsersLoading(true);
     try {
-      setAllUsers(await accessApi.listUsers(buildUserParams()));
+      setAllUsers((await accessApi.listUsers({ ...buildUserParams(), pageSize: 100 })).items);
     } catch (caughtError) {
       setFormError(errorMessage(caughtError));
     } finally {
@@ -208,7 +208,7 @@ export default function DiscountCodesPage() {
     setFilterLastName("");
     setFilterEmail("");
     setFilterPhoneNumber("");
-    void accessApi.listUsers().then(setAllUsers);
+    void accessApi.listUsers({ pageSize: 100 }).then((result) => setAllUsers(result.items));
   };
 
   const toggleUser = (userId: number) => {

@@ -12,7 +12,9 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 };
 const deliveryMethodLabels: Record<DeliveryMethod, string> = {
   [DeliveryMethod.Pickup]: "تحویل حضوری",
-  [DeliveryMethod.Delivery]: "ارسال به نشانی",
+  [DeliveryMethod.Chapar]: "ارسال با چاپار",
+  [DeliveryMethod.Tipax]: "ارسال با تیپاکس",
+  [DeliveryMethod.Post]: "ارسال با پست",
 };
 
 function formatDate(value: string) {

@@ -1,5 +1,11 @@
 namespace Store.Domain.Accounts.Models.Output;
 
+public class UserListPageOutput
+{
+    public int TotalCount { get; set; }
+    public List<UserListOutput> Items { get; set; }
+}
+
 public class UserListOutput
 {
     public int Id { get; set; }

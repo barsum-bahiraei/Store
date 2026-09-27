@@ -7,8 +7,8 @@ import type {
   Role,
   RoleAccess,
   UserDetails,
+  UserListPage,
   UserListParams,
-  UserSummary,
 } from "../models/access";
 
 export const accessApi = {
@@ -72,17 +72,19 @@ export const accessApi = {
     resolveResult(data, "Unable to revoke permission");
   },
 
-  async listUsers(params?: UserListParams): Promise<UserSummary[]> {
+  async listUsers(params?: UserListParams): Promise<UserListPage> {
     const key = `users-${JSON.stringify(params ?? {})}`;
     return dedupe(key, async () => {
       const query: Record<string, string> = {};
+      if (params?.page != null) query.page = String(params.page);
+      if (params?.pageSize != null) query.pageSize = String(params.pageSize);
       if (params?.firstName) query.firstName = params.firstName;
       if (params?.lastName) query.lastName = params.lastName;
       if (params?.email) query.email = params.email;
       if (params?.phoneNumber) query.phoneNumber = params.phoneNumber;
       if (params?.birthDate) query.birthDate = params.birthDate;
       if (params?.gender != null) query.gender = String(params.gender);
-      const { data } = await httpClient.get<ApiResult<UserSummary[]>>("/api/Account/User", { params: query });
+      const { data } = await httpClient.get<ApiResult<UserListPage>>("/api/Account/User", { params: query });
       return resolveResult(data, "Unable to load users");
     });
   },
@@ -95,8 +97,8 @@ export const accessApi = {
   },
 
   async listUsersWithRoles(): Promise<UserDetails[]> {
-    const users = await this.listUsers();
-    return Promise.all(users.map((user) => this.getUser(user.id)));
+    const { items } = await this.listUsers({ pageSize: 100 });
+    return Promise.all(items.map((user) => this.getUser(user.id)));
   },
 
   async assignRole(userId: number, roleId: number): Promise<{ id: number; userId: number; roleId: number }> {

@@ -17,10 +17,11 @@ public class AccountService(
     KavenegarSmsService smsService
 )
 {
-    public async Task<Result<List<UserListOutput>>> UserListAsync(UserListInput input, CancellationToken cancellation)
+    public async Task<Result<UserListPageOutput>> UserListAsync(UserListInput input,
+        CancellationToken cancellation)
     {
         var entities = await accountRepository.UserListAsync(input, cancellation);
-        var result = entities.Select(x => new UserListOutput
+        var items = entities.Items.Select(x => new UserListOutput
         {
             Id = x.Id,
             FirstName = x.FirstName,
@@ -37,7 +38,12 @@ public class AccountService(
             IsPhoneNumberVerified = x.IsPhoneNumberVerified,
             Roles = x.UserRoles.Select(userRole => userRole.Role.Name).ToList()
         }).ToList();
-        return Result<List<UserListOutput>>.Success(result);
+        var result = new UserListPageOutput
+        {
+            TotalCount = entities.TotalCount,
+            Items = items
+        };
+        return Result<UserListPageOutput>.Success(result);
     }
 
     public async Task<Result<UserGetOutput>> UserGetAsync(int id, CancellationToken cancellation)

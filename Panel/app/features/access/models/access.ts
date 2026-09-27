@@ -16,6 +16,8 @@ export interface ControllerActions {
 }
 
 export interface UserListParams {
+  page?: number;
+  pageSize?: number;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -26,13 +28,24 @@ export interface UserListParams {
 
 export interface UserSummary {
   id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
   phoneNumber: string;
-  birthDate: string;
+  nationalCode: string | null;
+  birthDate: string | null;
   gender: number;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   isEmailVerified: boolean;
+  isPhoneNumberVerified: boolean;
+  roles: string[];
+}
+
+export interface UserListPage {
+  totalCount: number;
+  items: UserSummary[];
 }
 
 export interface UserRole {
@@ -42,6 +55,6 @@ export interface UserRole {
   access: RoleAccess[];
 }
 
-export interface UserDetails extends UserSummary {
+export interface UserDetails extends Omit<UserSummary, "roles"> {
   roles: UserRole[];
 }

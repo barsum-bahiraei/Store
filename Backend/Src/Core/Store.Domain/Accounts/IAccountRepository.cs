@@ -4,7 +4,8 @@ namespace Store.Domain.Accounts;
 
 public interface IAccountRepository
 {
-    Task<List<UserEntity>> UserListAsync(UserListInput input, CancellationToken cancellation);
+    Task<(List<UserEntity> Items, int TotalCount)> UserListAsync(UserListInput input,
+        CancellationToken cancellation);
     Task<List<UserEntity>> UserListAsync(IReadOnlyCollection<int> ids, CancellationToken cancellation);
     Task<UserEntity?> UserGetByEmailAsync(string email, CancellationToken cancellation);
     Task<UserEntity?> UserGetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellation);

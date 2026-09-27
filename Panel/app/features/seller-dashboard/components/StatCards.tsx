@@ -1,14 +1,8 @@
-import { useEffect, useState } from "react";
-import { sellerDashboardApi } from "../api/seller-dashboard-api";
-import type { SellerDashboardStats, SellerDateRange } from "../models/seller-dashboard";
-import { errorMessage, formatNumber } from "../utils/format";
-import { EmptyState } from "./EmptyState";
-import { ErrorBanner } from "./ErrorBanner";
-import { LoadingState } from "./LoadingState";
+import type { SellerDashboardStats } from "../models/seller-dashboard";
+import { formatNumber } from "../utils/format";
 
 interface StatCardsProps {
-  range: SellerDateRange;
-  refreshToken: number;
+  stats: SellerDashboardStats;
 }
 
 const cards: { key: keyof SellerDashboardStats; label: string; icon: string; money?: boolean }[] = [
@@ -21,33 +15,7 @@ const cards: { key: keyof SellerDashboardStats; label: string; icon: string; mon
   { key: "discountAmount", label: "مجموع تخفیف", icon: "sell", money: true },
 ];
 
-export function StatCards({ range, refreshToken }: StatCardsProps) {
-  const [stats, setStats] = useState<SellerDashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setStats(await sellerDashboardApi.getDashboard(range));
-    } catch (caughtError) {
-      setError(errorMessage(caughtError));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, [range.from, range.to, refreshToken]);
-
-  if (loading) return <LoadingState message="در حال بارگذاری آمار..." />;
-  if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
-  if (!stats) {
-    return <EmptyState icon="analytics" message="آماری برای نمایش وجود ندارد." />;
-  }
-
+export function StatCards({ stats }: StatCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
       {cards.map((card) => (

@@ -76,6 +76,98 @@ body {
   @apply bg-white dark:bg-gray-950;
 }
 
+/* PersianDateTimePicker (react-multi-date-picker) */
+.rmdp-container .rmdp-week-day {
+  color: #2563eb;
+}
+
+.rmdp-container .rmdp-calendar :focus {
+  outline-color: #2563eb;
+}
+
+.rmdp-container .rmdp-arrow {
+  border-color: #2563eb;
+}
+
+.rmdp-container .rmdp-arrow-container:hover {
+  background-color: #2563eb;
+}
+
+.rmdp-container .rmdp-day.rmdp-today span {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.rmdp-container .rmdp-day:not(.rmdp-disabled, .rmdp-day-hidden) span:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.rmdp-container .rmdp-day.rmdp-selected span:not(.highlight) {
+  background-color: #2563eb;
+  box-shadow: 0 0 3px rgba(37, 99, 235, 0.4);
+  color: #ffffff;
+}
+
+.dark .rmdp-container .rmdp-wrapper,
+.dark .rmdp-container .rmdp-month-picker,
+.dark .rmdp-container .rmdp-year-picker {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.dark .rmdp-container .rmdp-shadow {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+}
+
+.dark .rmdp-container .rmdp-border,
+.dark .rmdp-container .rmdp-border-top,
+.dark .rmdp-container .rmdp-border-bottom,
+.dark .rmdp-container .rmdp-border-left,
+.dark .rmdp-container .rmdp-border-right {
+  border-color: #374151;
+}
+
+.dark .rmdp-container .rmdp-day,
+.dark .rmdp-container .rmdp-header,
+.dark .rmdp-container .rmdp-header-values,
+.dark .rmdp-container .rmdp-month-name {
+  color: #f9fafb;
+}
+
+.dark .rmdp-container .rmdp-week-day {
+  color: #60a5fa;
+}
+
+.dark .rmdp-container .rmdp-day.rmdp-deactive,
+.dark .rmdp-container .rmdp-day.rmdp-disabled {
+  color: #6b7280;
+}
+
+.dark .rmdp-container .rmdp-day.rmdp-today span {
+  background-color: #1e3a8a;
+  color: #93c5fd;
+}
+
+.dark .rmdp-container .rmdp-day:not(.rmdp-disabled, .rmdp-day-hidden) span:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.dark .rmdp-container .rmdp-day.rmdp-selected span:not(.highlight) {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.dark .rmdp-container .rmdp-ep-arrow::after {
+  background-color: #111827;
+}
+
+.dark .rmdp-container .rmdp-time-picker div input {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
 /* CKEditor 5 dark mode overrides */
 .dark .ck {
   --ck-color-base-background: #030712;

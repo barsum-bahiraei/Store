@@ -7,12 +7,10 @@ namespace Store.Persistent.Implementation;
 
 public class AccountRepository(StoreDbContext context) : IAccountRepository
 {
-    public async Task<List<UserEntity>> UserListAsync(UserListInput input, CancellationToken cancellation)
+    public async Task<(List<UserEntity> Items, int TotalCount)> UserListAsync(UserListInput input,
+        CancellationToken cancellation)
     {
-        var query = context.Users
-            .Include(x => x.UserRoles)
-            .ThenInclude(x => x.Role)
-            .AsQueryable();
+        var query = context.Users.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(input.FirstName))
             query = query.Where(x => x.FirstName != null && x.FirstName.Contains(input.FirstName.Trim()));
@@ -32,8 +30,18 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
         if (input.Gender.HasValue)
             query = query.Where(x => x.Gender == input.Gender.Value);
 
-        var result = await query.OrderBy(x => x.Id).ToListAsync(cancellation);
-        return result;
+        var totalCount = await query.CountAsync(cancellation);
+        var page = input.Page < 1 ? 1 : input.Page;
+        var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
+
+        var result = await query
+            .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
+            .OrderBy(x => x.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellation);
+        return (result, totalCount);
     }
 
     public async Task<List<UserEntity>> UserListAsync(IReadOnlyCollection<int> ids,

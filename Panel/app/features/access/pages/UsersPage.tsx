@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
+import { Pagination } from "~/components/common/Pagination";
 import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { accessApi } from "../api/access-api";
 import type { Role, UserDetails, UserListParams, UserSummary } from "../models/access";
 
 const inputClasses =
   "min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder-gray-500";
+const PAGE_SIZE = 10;
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "خطای غیرمنتظره‌ای رخ داد.";
@@ -13,6 +15,8 @@ function errorMessage(error: unknown) {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState<number | "">("");
@@ -45,7 +49,11 @@ export default function UsersPage() {
     setLoading(true);
     setError(null);
     try {
-      setUsers(await accessApi.listUsers(params));
+      const requestedPage = params?.page ?? 1;
+      const result = await accessApi.listUsers({ ...params, page: requestedPage, pageSize: PAGE_SIZE });
+      setUsers(result.items);
+      setTotalCount(result.totalCount);
+      setPage(requestedPage);
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     } finally {
@@ -54,7 +62,7 @@ export default function UsersPage() {
   };
 
   const applyFilters = () => {
-    void load(buildParams());
+    void load({ ...buildParams(), page: 1 });
   };
 
   const clearFilters = () => {
@@ -64,12 +72,16 @@ export default function UsersPage() {
     setFilterPhoneNumber("");
     setFilterBirthDate("");
     setFilterGender("");
-    void load();
+    void load({ page: 1 });
   };
 
   useEffect(() => {
-    void load();
+    void load({ page: 1 });
   }, []);
+
+  const changePage = (nextPage: number) => {
+    void load({ ...buildParams(), page: nextPage });
+  };
 
   const hasActiveFilters = filterFirstName || filterLastName || filterEmail || filterPhoneNumber || filterBirthDate || filterGender !== "";
 
@@ -163,7 +175,7 @@ export default function UsersPage() {
             فیلتر
             {hasActiveFilters && <span className="size-2 rounded-full bg-primary-500"></span>}
           </button>
-          <span className="text-sm text-gray-500 dark:text-gray-400">{users.length} کاربر</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{totalCount} کاربر</span>
         </div>
       </div>
 
@@ -215,7 +227,7 @@ export default function UsersPage() {
       {error && (
         <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
           <span>{error}</span>
-          <button onClick={() => void load(buildParams())} className="font-semibold">تلاش مجدد</button>
+          <button onClick={() => void load({ ...buildParams(), page })} className="font-semibold">تلاش مجدد</button>
         </div>
       )}
 
@@ -260,6 +272,13 @@ export default function UsersPage() {
               );
             })}
           </ul>
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalCount={totalCount}
+            loading={loading}
+            onPageChange={changePage}
+          />
         </div>
       )}
 
