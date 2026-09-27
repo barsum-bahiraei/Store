@@ -207,7 +207,7 @@ public class InvoiceService(
         if (!Enum.IsDefined(input.DeliveryMethod))
             return Result<CheckoutOutput>.Failure("Delivery method is invalid");
 
-        if (input.DeliveryMethod == DeliveryMethodEnum.Delivery)
+        if (input.DeliveryMethod != DeliveryMethodEnum.Pickup)
         {
             var user = await accountRepository.UserGetAsync(userId, cancellation);
             if (user == null)
