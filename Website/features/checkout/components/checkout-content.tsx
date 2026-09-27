@@ -37,7 +37,7 @@ export function CheckoutContent() {
   const profile = useUserProfile();
   const cart = useCart();
   const checkout = useCheckout();
-  const [deliveryMethod, setDeliveryMethod] = useState(DeliveryMethod.Delivery);
+  const [deliveryMethod, setDeliveryMethod] = useState(DeliveryMethod.Chapar);
   const [paymentMethod, setPaymentMethod] = useState(PaymentMethod.Online);
   const [discountCode, setDiscountCode] = useState("");
   const [itemsError, setItemsError] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export function CheckoutContent() {
   }
 
   const estimatedSubtotal = items.reduce((total, item) => total + getSalePrice(item.variant?.price ?? item.product.price, item.product.discount) * item.productCount, 0);
-  const needsAddress = deliveryMethod === DeliveryMethod.Delivery;
+  const needsAddress = deliveryMethod !== DeliveryMethod.Pickup;
   const userWithAddress = hasCompleteAddress(profile.data) ? profile.data : null;
   const submitDisabled = checkout.isPending || (needsAddress && !userWithAddress);
 
@@ -111,8 +111,17 @@ export function CheckoutContent() {
         <fieldset className="rounded-xl border border-border bg-surface p-5 sm:p-6">
           <legend className="px-2 text-lg font-black">روش تحویل</legend>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
-            <label className={optionClass}><input type="radio" name="deliveryMethod" value={DeliveryMethod.Delivery} checked={deliveryMethod === DeliveryMethod.Delivery} onChange={() => setDeliveryMethod(DeliveryMethod.Delivery)} className="size-4 accent-primary" /><span><span className="block font-black">ارسال به نشانی</span><span className="text-xs text-muted-foreground">تحویل در نشانی پروفایل</span></span></label>
-            <label className={optionClass}><input type="radio" name="deliveryMethod" value={DeliveryMethod.Pickup} checked={deliveryMethod === DeliveryMethod.Pickup} onChange={() => setDeliveryMethod(DeliveryMethod.Pickup)} className="size-4 accent-primary" /><span><span className="block font-black">تحویل حضوری</span><span className="text-xs text-muted-foreground">دریافت مستقیم از فروشگاه</span></span></label>
+            {([
+              { value: DeliveryMethod.Pickup, label: "تحویل حضوری", hint: "دریافت مستقیم از فروشگاه" },
+              { value: DeliveryMethod.Chapar, label: "ارسال با چاپار", hint: "تحویل در نشانی پروفایل" },
+              { value: DeliveryMethod.Tipax, label: "ارسال با تیپاکس", hint: "تحویل در نشانی پروفایل" },
+              { value: DeliveryMethod.Post, label: "ارسال با پست", hint: "تحویل در نشانی پروفایل" },
+            ] as const).map((method) => (
+              <label key={method.value} className={optionClass}>
+                <input type="radio" name="deliveryMethod" value={method.value} checked={deliveryMethod === method.value} onChange={() => setDeliveryMethod(method.value)} className="size-4 accent-primary" />
+                <span><span className="block font-black">{method.label}</span><span className="text-xs text-muted-foreground">{method.hint}</span></span>
+              </label>
+            ))}
           </div>
         </fieldset>
 
