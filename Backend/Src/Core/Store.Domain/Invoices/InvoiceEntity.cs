@@ -8,6 +8,7 @@ public class InvoiceEntity : BaseEntity
     public PaymentMethodEnum PaymentMethod { get; set; }
     public DeliveryMethodEnum DeliveryMethod { get; set; }
     public PaymentStatusEnum PaymentStatus { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 
     public int UserId { get; set; }
     public int? DiscountCodeId { get; set; }

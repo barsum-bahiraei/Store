@@ -113,6 +113,18 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
             .Include(x => x.Invoice)
             .FirstOrDefaultAsync(x => x.OrderId == orderId, cancellation);
 
+    public Task<InvoiceEntity?> GetAsync(int id, int userId, CancellationToken cancellation) =>
+        context.Invoices
+            .Include(x => x.Payments)
+            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellation);
+
+    public async Task<PaymentEntity> PaymentCreateAsync(PaymentEntity input, CancellationToken cancellation)
+    {
+        await context.Payments.AddAsync(input, cancellation);
+        await context.SaveChangesAsync(cancellation);
+        return input;
+    }
+
     public async Task SavePaymentAsync(PaymentEntity payment, CancellationToken cancellation)
     {
         context.Payments.Update(payment);
@@ -124,7 +136,12 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
         payment.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
-        payment.Invoice.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
+        if (payment.Invoice.PaymentStatus is not (PaymentStatusEnum.PaymentCompleted
+            or PaymentStatusEnum.Preparing
+            or PaymentStatusEnum.ReadyForShipment
+            or PaymentStatusEnum.Shipping
+            or PaymentStatusEnum.Delivered))
+            payment.Invoice.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
 
         if (payment.Invoice.DiscountCodeId.HasValue)
         {

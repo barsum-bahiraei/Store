@@ -14,6 +14,8 @@ public interface IInvoiceRepository
     Task<(InvoiceEntity Invoice, PaymentEntity Payment)> CheckoutCreateAsync(
         InvoiceEntity invoice, PaymentEntity payment, IReadOnlyCollection<CartEntity> carts,
         CancellationToken cancellation);
+    Task<InvoiceEntity?> GetAsync(int id, int userId, CancellationToken cancellation);
+    Task<PaymentEntity> PaymentCreateAsync(PaymentEntity input, CancellationToken cancellation);
     Task<PaymentEntity?> PaymentGetByOrderIdAsync(long orderId, CancellationToken cancellation);
     Task SavePaymentAsync(PaymentEntity payment, CancellationToken cancellation);
     Task CompletePaymentAsync(PaymentEntity payment, CancellationToken cancellation);

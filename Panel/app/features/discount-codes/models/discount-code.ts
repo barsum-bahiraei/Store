@@ -6,11 +6,10 @@ export enum PaymentMethod {
 
 export interface DiscountCodeUpsertInput {
   code: string;
-  discountPercent: number;
-  maxDiscountAmount?: number | null;
+  maxDiscountAmount: number;
+  minimumPurchaseAmount: number;
   paymentMethod?: PaymentMethod | null;
-  startDate?: string | null;
-  endDate?: string | null;
+  expireAt?: string | null;
   isActive: boolean;
   userIds?: number[] | null;
 }
@@ -18,11 +17,10 @@ export interface DiscountCodeUpsertInput {
 export interface DiscountCodeListOutput {
   id: number;
   code: string;
-  discountPercent: number;
-  maxDiscountAmount: number | null;
+  maxDiscountAmount: number;
+  minimumPurchaseAmount: number;
   paymentMethod: PaymentMethod | null;
-  startDate: string | null;
-  endDate: string | null;
+  expireAt: string | null;
   isActive: boolean;
   assignedUserCount: number;
   usedUserCount: number;
@@ -41,11 +39,10 @@ export interface DiscountCodeUserOutput {
 export interface DiscountCodeOutput {
   id: number;
   code: string;
-  discountPercent: number;
-  maxDiscountAmount: number | null;
+  maxDiscountAmount: number;
+  minimumPurchaseAmount: number;
   paymentMethod: PaymentMethod | null;
-  startDate: string | null;
-  endDate: string | null;
+  expireAt: string | null;
   isActive: boolean;
   users: DiscountCodeUserOutput[];
 }

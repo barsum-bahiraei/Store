@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Store.Domain.Accounts;
 using Store.Domain.Files;
@@ -15,6 +16,7 @@ public class InvoiceService(
     IProductRepository productRepository,
     FileService fileService,
     MellatPaymentService mellatPaymentService,
+    IConfiguration configuration,
     ILogger<InvoiceService> logger)
 {
     public async Task<Result<List<CartListOutput>>> CartListAsync(int userId,
@@ -188,6 +190,7 @@ public class InvoiceService(
     public async Task<Result<List<InvoiceListOutput>>> ListAsync(int userId, CancellationToken cancellation)
     {
         var entities = await invoiceRepository.ListAsync(userId, cancellation);
+        var now = DateTime.UtcNow;
         var result = entities.Select(x => new InvoiceListOutput
             {
                 Id = x.Id,
@@ -195,10 +198,13 @@ public class InvoiceService(
                              ?? x.InvoiceItems.Sum(item => item.ProductPrice * item.ProductCount),
                 TotalCount = x.InvoiceItems.Sum(item => item.ProductCount),
                 CreatedAt = x.CreatedAt,
+                ExpiresAt = x.ExpiresAt,
                 Address = x.User.Address!,
                 PaymentMethod = x.PaymentMethod,
                 DeliveryMethod = x.DeliveryMethod,
                 PaymentStatus = x.PaymentStatus,
+                CanRetryPayment = x.PaymentStatus is PaymentStatusEnum.Failed or PaymentStatusEnum.Cancelled &&
+                                  x.ExpiresAt.HasValue && x.ExpiresAt.Value > now,
             }).ToList();
         return Result<List<InvoiceListOutput>>.Success(result);
     }
@@ -260,17 +266,14 @@ public class InvoiceService(
             var discountCode = userDiscountCode.DiscountCode;
             var now = DateTime.UtcNow;
             if (!discountCode.IsActive || userDiscountCode.IsUsed ||
-                discountCode.StartDate.HasValue && discountCode.StartDate.Value > now ||
-                discountCode.EndDate.HasValue && discountCode.EndDate.Value < now ||
+                discountCode.ExpireAt.HasValue && discountCode.ExpireAt.Value < now ||
                 discountCode.PaymentMethod.HasValue && discountCode.PaymentMethod.Value != input.PaymentMethod ||
-                discountCode.DiscountPercent is <= 0 or > 100 ||
-                discountCode.MaxDiscountAmount is < 0)
+                discountCode.MaxDiscountAmount <= 0 ||
+                discountCode.MinimumPurchaseAmount < 0 ||
+                subtotal < discountCode.MinimumPurchaseAmount)
                 return Result<CheckoutOutput>.Failure("Discount code is not valid");
 
-            discountAmount = decimal.Round(subtotal * discountCode.DiscountPercent / 100m, 2,
-                MidpointRounding.AwayFromZero);
-            if (discountCode.MaxDiscountAmount.HasValue)
-                discountAmount = Math.Min(discountAmount, discountCode.MaxDiscountAmount.Value);
+            discountAmount = discountCode.MaxDiscountAmount;
 
             discountCodeId = discountCode.Id;
         }
@@ -297,6 +300,8 @@ public class InvoiceService(
             PaymentMethod = input.PaymentMethod,
             DeliveryMethod = input.DeliveryMethod,
             PaymentStatus = PaymentStatusEnum.New,
+            ExpiresAt = DateTime.UtcNow.AddHours(
+                Math.Max(1, configuration.GetValue("Invoice:PaymentRetryHours", 12))),
             DiscountCodeId = discountCodeId,
             InvoiceItems = carts.Select(x => new InvoiceItemEntity
             {
@@ -357,6 +362,91 @@ public class InvoiceService(
         });
     }
 
+    public async Task<Result<CheckoutOutput>> PaymentRetryAsync(int invoiceId, int userId,
+        CancellationToken cancellation)
+    {
+        var invoice = await invoiceRepository.GetAsync(invoiceId, userId, cancellation);
+        if (invoice == null)
+            return Result<CheckoutOutput>.Failure("Invoice not found");
+
+        if (invoice.PaymentStatus is not (PaymentStatusEnum.Failed or PaymentStatusEnum.Cancelled))
+            return Result<CheckoutOutput>.Failure("Invoice is not available for payment retry");
+
+        if (!invoice.ExpiresAt.HasValue || invoice.ExpiresAt.Value <= DateTime.UtcNow)
+            return Result<CheckoutOutput>.Failure("Invoice payment time has expired");
+
+        if (invoice.PaymentMethod != PaymentMethodEnum.Online)
+            return Result<CheckoutOutput>.Failure("Only online payment is currently available");
+
+        var amount = invoice.Payments.OrderBy(x => x.Id).FirstOrDefault()?.Amount;
+        if (!amount.HasValue)
+            return Result<CheckoutOutput>.Failure("Payment amount is invalid");
+
+        var amountInRials = amount.Value * 10m;
+        if (amount.Value <= 0 || amountInRials != decimal.Truncate(amountInRials) ||
+            amountInRials > long.MaxValue)
+            return Result<CheckoutOutput>.Failure("Payment amount is invalid");
+
+        MellatPaymentOptions mellatSettings;
+        try
+        {
+            mellatSettings = mellatPaymentService.Settings;
+        }
+        catch (InvalidOperationException exception)
+        {
+            logger.LogError(exception, "Mellat payment configuration is invalid");
+            return Result<CheckoutOutput>.Failure("Online payment is not available");
+        }
+
+        var payment = await invoiceRepository.PaymentCreateAsync(new PaymentEntity
+        {
+            Amount = amount.Value,
+            PaymentMethod = invoice.PaymentMethod,
+            PaymentStatus = PaymentStatusEnum.New,
+            InvoiceId = invoice.Id,
+            Invoice = invoice
+        }, cancellation);
+        payment.OrderId = payment.Id;
+        await invoiceRepository.SavePaymentAsync(payment, cancellation);
+
+        MellatPayResponse payResponse;
+        try
+        {
+            payResponse = await mellatPaymentService.PayAsync(payment.OrderId.Value,
+                decimal.ToInt64(amountInRials), cancellation);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Mellat Pay request failed for payment {PaymentId}", payment.Id);
+            await FailPaymentAsync(payment, cancellation);
+            return Result<CheckoutOutput>.Failure("Payment gateway did not respond");
+        }
+
+        if (payResponse.ResponseCode != "0" || string.IsNullOrWhiteSpace(payResponse.RefId))
+        {
+            payment.PayResponseCode = payResponse.ResponseCode;
+            await FailPaymentAsync(payment, cancellation);
+            return Result<CheckoutOutput>.Failure($"Payment gateway rejected the request ({payResponse.ResponseCode})");
+        }
+
+        payment.PayResponseCode = payResponse.ResponseCode;
+        payment.RefId = payResponse.RefId;
+        payment.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        invoice.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        await invoiceRepository.SavePaymentAsync(payment, cancellation);
+
+        return Result<CheckoutOutput>.Success(new CheckoutOutput
+        {
+            InvoiceId = invoice.Id,
+            PaymentId = payment.Id,
+            Subtotal = amount.Value,
+            Amount = amount.Value,
+            PaymentStatus = payment.PaymentStatus,
+            RefId = payment.RefId,
+            GatewayUrl = mellatSettings.GatewayUrl
+        });
+    }
+
     public async Task<MellatCallbackOutput> MellatCallbackAsync(MellatCallbackInput input,
         CancellationToken cancellation)
     {
@@ -374,6 +464,9 @@ public class InvoiceService(
             return FailedCallback(payment.InvoiceId);
 
         if (payment.PaymentStatus == PaymentStatusEnum.PaymentCompleted)
+            return SuccessfulCallback(payment.InvoiceId);
+
+        if (IsPaidInvoiceStatus(payment.Invoice.PaymentStatus))
             return SuccessfulCallback(payment.InvoiceId);
 
         payment.CallbackResponseCode = input.ResCode;
@@ -399,7 +492,8 @@ public class InvoiceService(
         }
 
         payment.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
-        payment.Invoice.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
+        if (!IsPaidInvoiceStatus(payment.Invoice.PaymentStatus))
+            payment.Invoice.PaymentStatus = PaymentStatusEnum.ProcessingPayment;
         await invoiceRepository.SavePaymentAsync(payment, cancellation);
 
         string verifyCode;
@@ -513,9 +607,17 @@ public class InvoiceService(
     private async Task FailPaymentAsync(PaymentEntity payment, CancellationToken cancellation)
     {
         payment.PaymentStatus = PaymentStatusEnum.Failed;
-        payment.Invoice.PaymentStatus = PaymentStatusEnum.Failed;
+        if (!IsPaidInvoiceStatus(payment.Invoice.PaymentStatus))
+            payment.Invoice.PaymentStatus = PaymentStatusEnum.Failed;
         await invoiceRepository.SavePaymentAsync(payment, cancellation);
     }
+
+    private static bool IsPaidInvoiceStatus(PaymentStatusEnum status) =>
+        status is PaymentStatusEnum.PaymentCompleted
+            or PaymentStatusEnum.Preparing
+            or PaymentStatusEnum.ReadyForShipment
+            or PaymentStatusEnum.Shipping
+            or PaymentStatusEnum.Delivered;
 
     private static bool IsPendingBankCode(string code) =>
         code is "28" or "30" or "34" or "36" or "37" or "38" or "39" or "112" or "113" or "116" or "117" or

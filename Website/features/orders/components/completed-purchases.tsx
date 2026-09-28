@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { formatToman } from "@/features/products/utils/product";
 import { useInvoices } from "../hooks/use-invoices";
+import { useRetryPayment } from "../hooks/use-retry-payment";
 import { DeliveryMethod, PaymentMethod, PaymentStatus } from "../types/invoice";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
@@ -43,6 +45,24 @@ function OrdersSkeleton() {
 
 export function OrdersList() {
   const { data: invoices = [], isLoading, isError, error, refetch, isFetching } = useInvoices();
+  const retryPayment = useRetryPayment();
+
+  useEffect(() => {
+    if (!retryPayment.data?.refId || !retryPayment.data.gatewayUrl) return;
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = retryPayment.data.gatewayUrl;
+    const refId = document.createElement("input");
+    refId.type = "hidden";
+    refId.name = "RefId";
+    refId.value = retryPayment.data.refId;
+    form.appendChild(refId);
+    document.body.appendChild(form);
+    form.submit();
+
+    return () => form.remove();
+  }, [retryPayment.data]);
 
   if (isLoading) return <OrdersSkeleton />;
 
@@ -73,6 +93,7 @@ export function OrdersList() {
     <ul className="grid gap-4">
       {invoices.map((invoice) => {
         const status = paymentStatusDetails[invoice.paymentStatus];
+        const isRetrying = retryPayment.isPending && retryPayment.variables === invoice.id;
         return (
           <li key={invoice.id}>
             <article className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -105,10 +126,20 @@ export function OrdersList() {
                   <dd className="mt-1 text-sm font-bold leading-7">{invoice.address || "ثبت نشده"}</dd>
                 </div>
               </dl>
+              {invoice.canRetryPayment && (
+                <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4">
+                  <p className="text-xs font-bold text-muted-foreground">مهلت پرداخت تا {formatDate(invoice.expiresAt!)}</p>
+                  <button type="button" onClick={() => retryPayment.mutate(invoice.id)} disabled={retryPayment.isPending} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                    <span className={`material-symbols-rounded ${isRetrying ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isRetrying ? "progress_activity" : "credit_card"}</span>
+                    {isRetrying ? "در حال انتقال…" : "پرداخت مجدد"}
+                  </button>
+                </footer>
+              )}
             </article>
           </li>
         );
       })}
+      {retryPayment.isError && <li role="alert" className="rounded-xl bg-error/10 p-4 text-sm font-bold text-error">{retryPayment.error.message}</li>}
     </ul>
   );
 }

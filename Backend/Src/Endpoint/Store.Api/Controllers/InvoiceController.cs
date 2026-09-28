@@ -67,6 +67,15 @@ public class InvoiceController(InvoiceService invoiceService, IOptions<MellatPay
         return Ok(result);
     }
 
+    [Authorize]
+    [HttpPost("{id}/Payment")]
+    public async Task<IActionResult> PaymentRetry(int id, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await invoiceService.PaymentRetryAsync(id, userId, cancellation);
+        return Ok(result);
+    }
+
     [AllowAnonymous]
     [Consumes("application/x-www-form-urlencoded")]
     [HttpPost("Payment/Mellat/Callback")]

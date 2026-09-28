@@ -28,8 +28,10 @@ export type InvoiceListItem = {
   totalPrice: number;
   totalCount: number;
   createdAt: string;
+  expiresAt: string | null;
   address: string;
   paymentMethod: PaymentMethod;
   deliveryMethod: DeliveryMethod;
   paymentStatus: PaymentStatus;
+  canRetryPayment: boolean;
 };
