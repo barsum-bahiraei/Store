@@ -1,8 +1,8 @@
 import { ProductAttributeType, ProductAttributeUnit, type ProductVariant, type ProductVariantAttributeValue } from "../types/product";
 
 export type VariantOption = {
-  name: string;
-  code: string;
+  colorName: string;
+  colorCode: string;
 };
 
 export type VariantGroup = {
@@ -46,11 +46,11 @@ export function getSalePrice(price: number, discount: number) {
 
 export function formatVariantLabel(values: ProductVariantAttributeValue[]) {
   if (values.length === 0) return undefined;
-  return values.map((value) => `${value.size}: ${value.name || value.code}`).join("، ");
+  return values.map((value) => `${value.size}: ${value.colorName || value.colorCode}`).join("، ");
 }
 
-function variantOptionKey(value: { name: string; code: string }) {
-  return value.name || value.code;
+function variantOptionKey(value: { colorName: string; colorCode: string }) {
+  return value.colorName || value.colorCode;
 }
 
 export function buildVariantGroups(variants: ProductVariant[]): VariantGroup[] {
@@ -59,7 +59,7 @@ export function buildVariantGroups(variants: ProductVariant[]): VariantGroup[] {
     for (const value of variant.values) {
       const options = groups.get(value.size) ?? new Map<string, VariantOption>();
       const key = variantOptionKey(value);
-      if (!options.has(key)) options.set(key, { name: value.name, code: value.code });
+      if (!options.has(key)) options.set(key, { colorName: value.colorName, colorCode: value.colorCode });
       groups.set(value.size, options);
     }
   }

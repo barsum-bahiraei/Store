@@ -24,8 +24,8 @@ export interface ProductAttributeGetOutput
 
 export interface ProductVariantValueInput {
   size: string;
-  name: string;
-  code: string;
+  colorName: string;
+  colorCode: string;
 }
 
 export interface ProductVariantValueOutput extends ProductVariantValueInput {

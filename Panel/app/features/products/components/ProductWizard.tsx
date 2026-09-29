@@ -38,8 +38,8 @@ interface VariantValueDraft {
   key: string;
   id?: number;
   size: string;
-  name: string;
-  code: string;
+  colorName: string;
+  colorCode: string;
 }
 
 interface VariantDraft {
@@ -52,8 +52,8 @@ interface VariantDraft {
 
 interface VariantValueErrors {
   size?: string;
-  name?: string;
-  code?: string;
+  colorName?: string;
+  colorCode?: string;
 }
 
 interface VariantErrors {
@@ -86,7 +86,7 @@ function formatPrice(value: number): string {
 }
 
 function createEmptyValue(): VariantValueDraft {
-  return { key: createClientId(), size: "", name: "", code: "" };
+  return { key: createClientId(), size: "", colorName: "", colorCode: "" };
 }
 
 function createEmptyVariant(): VariantDraft {
@@ -104,10 +104,14 @@ function parseNonNegative(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function isValidColorCode(value: string): boolean {
+  return /^#[0-9a-fA-F]{6}$/.test(value.trim());
+}
+
 function variantComboKey(values: VariantValueDraft[]): string {
   return values
     .map((value) =>
-      [value.size.trim().toLowerCase(), value.name.trim().toLowerCase(), value.code.trim().toLowerCase()].join("|"),
+      [value.size.trim().toLowerCase(), value.colorName.trim().toLowerCase(), value.colorCode.trim().toLowerCase()].join("|"),
     )
     .sort()
     .join(";;");
@@ -253,8 +257,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                 key: createClientId(),
                 id: value.id,
                 size: value.size,
-                name: value.name,
-                code: value.code,
+                colorName: value.colorName,
+                colorCode: value.colorCode,
               })),
             }))
           );
@@ -335,11 +339,13 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       variant.values.forEach((value) => {
         const valueErrors: VariantValueErrors = {};
         const size = value.size.trim();
-        const name = value.name.trim();
-        const code = value.code.trim();
+        const colorName = value.colorName.trim();
+        const colorCode = value.colorCode.trim();
 
         if (!size) {
           valueErrors.size = "سایز را وارد کنید.";
+        } else if (size.length > 50) {
+          valueErrors.size = "سایز نمی‌تواند بیشتر از ۵۰ کاراکتر باشد.";
         } else {
           const normalizedSize = size.toLowerCase();
           if (seenSizes.has(normalizedSize)) {
@@ -348,10 +354,12 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             seenSizes.add(normalizedSize);
           }
         }
-        if (!name) valueErrors.name = "نام را وارد کنید.";
-        if (!code) valueErrors.code = "کد را وارد کنید.";
+        if (!colorName) valueErrors.colorName = "نام رنگ را وارد کنید.";
+        else if (colorName.length > 100) valueErrors.colorName = "نام رنگ نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.";
+        if (!colorCode) valueErrors.colorCode = "کد رنگ را وارد کنید.";
+        else if (!isValidColorCode(colorCode)) valueErrors.colorCode = "کد رنگ باید مانند #e11d48 باشد.";
 
-        if (valueErrors.size || valueErrors.name || valueErrors.code) {
+        if (valueErrors.size || valueErrors.colorName || valueErrors.colorCode) {
           variantErrors.valueErrors[value.key] = valueErrors;
         }
       });
@@ -406,8 +414,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         stock: parseNonNegative(variant.stock) ?? 0,
         values: variant.values.map((value) => ({
           size: value.size.trim(),
-          name: value.name.trim(),
-          code: value.code.trim(),
+          colorName: value.colorName.trim(),
+          colorCode: value.colorCode.trim(),
         })),
       };
       return isEditing ? { id: variant.id ?? null, ...base } : base;
@@ -492,7 +500,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const updateVariantValue = (
     variantIndex: number,
     valueKey: string,
-    field: "size" | "name" | "code",
+    field: "size" | "colorName" | "colorCode",
     value: string
   ) => {
     setProductVariants((current) =>
@@ -727,7 +735,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                        افزودن تنوع
                      </button>
                    </div>
-                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و مقادیر (سایز، نام، کد) هر تنوع را وارد کنید. حداقل یک تنوع با حداقل یک مقدار لازم است.</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و مقادیر (سایز، نام رنگ، کد رنگ) هر تنوع را وارد کنید. حداقل یک تنوع با حداقل یک مقدار لازم است. کد رنگ باید مانند #e11d48 باشد.</p>
 
                    {showErrors && validation.variants && (
                      <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">{validation.variants}</p>
@@ -787,19 +795,29 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                  {variant.values.map((value, valueIndex) => {
                                    const valueErrors = variantErrors?.valueErrors[value.key];
                                    return (
-                                     <div key={value.key} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-950 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-start">
-                                       <div>
-                                         <input value={value.size} onChange={(event) => updateVariantValue(variantIndex, value.key, "size", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="سایز (مثلاً Size)" aria-label={`سایز مقدار ${valueIndex + 1}`} disabled={submitting} />
-                                         {valueErrors?.size && <span role="alert" className={errorTextClasses}>{valueErrors.size}</span>}
-                                       </div>
-                                       <div>
-                                         <input value={value.name} onChange={(event) => updateVariantValue(variantIndex, value.key, "name", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="نام (مثلاً 40)" aria-label={`نام مقدار ${valueIndex + 1}`} disabled={submitting} />
-                                         {valueErrors?.name && <span role="alert" className={errorTextClasses}>{valueErrors.name}</span>}
-                                       </div>
-                                       <div>
-                                         <input value={value.code} onChange={(event) => updateVariantValue(variantIndex, value.key, "code", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="کد (مثلاً 40)" aria-label={`کد مقدار ${valueIndex + 1}`} disabled={submitting} />
-                                         {valueErrors?.code && <span role="alert" className={errorTextClasses}>{valueErrors.code}</span>}
-                                       </div>
+                                      <div key={value.key} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-950 sm:grid-cols-[1fr_1.25fr_1fr_auto] sm:items-start">
+                                        <div>
+                                          <input value={value.colorName} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorName", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="نام رنگ (مثلاً قرمز)" aria-label={`نام رنگ مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                          {valueErrors?.colorName && <span role="alert" className={errorTextClasses}>{valueErrors.colorName}</span>}
+                                        </div>
+                                        <div>
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type="color"
+                                              value={isValidColorCode(value.colorCode) ? value.colorCode.trim() : "#000000"}
+                                              onChange={(event) => updateVariantValue(variantIndex, value.key, "colorCode", event.target.value)}
+                                              className="size-10 shrink-0 cursor-pointer rounded-lg border border-gray-300 bg-white p-1 dark:border-gray-700 dark:bg-gray-950"
+                                              aria-label={`انتخاب رنگ مقدار ${valueIndex + 1}`}
+                                              disabled={submitting}
+                                            />
+                                            <input value={value.colorCode} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorCode", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="#e11d48" aria-label={`کد رنگ مقدار ${valueIndex + 1}`} dir="ltr" disabled={submitting} />
+                                          </div>
+                                          {valueErrors?.colorCode && <span role="alert" className={errorTextClasses}>{valueErrors.colorCode}</span>}
+                                        </div>
+                                        <div>
+                                          <input value={value.size} onChange={(event) => updateVariantValue(variantIndex, value.key, "size", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="سایز (مثلاً Size)" aria-label={`سایز مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                          {valueErrors?.size && <span role="alert" className={errorTextClasses}>{valueErrors.size}</span>}
+                                        </div>
                                        <button type="button" onClick={() => removeVariantValue(variantIndex, value.key)} disabled={submitting} className="flex size-10 shrink-0 items-center justify-center justify-self-end rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف مقدار ${valueIndex + 1}`}>
                                          <span className="material-symbols-outlined text-xl">close</span>
                                        </button>

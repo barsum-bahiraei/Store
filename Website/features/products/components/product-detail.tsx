@@ -194,7 +194,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                     <h2 id={groupId} className="text-sm font-black">انتخاب {group.size}</h2>
                     <div role="radiogroup" aria-labelledby={groupId} className="mt-3 flex flex-wrap gap-3">
                       {group.options.map((option) => {
-                        const optionValue = option.name || option.code;
+                        const optionValue = option.colorName || option.colorCode;
                         const status = getVariantOptionStatus(product.variants, selection, group.size, optionValue);
                         const isSelected = selection[group.size] === optionValue;
                         return (

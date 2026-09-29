@@ -655,8 +655,8 @@ public class InvoiceService(
             {
                 Id = x.Id,
                 Size = x.Size,
-                Name = x.Name,
-                Code = x.Code
+                ColorName = x.ColorName,
+                ColorCode = x.ColorCode
             }).ToList()
     };
 

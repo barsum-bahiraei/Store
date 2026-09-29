@@ -64,7 +64,11 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
     public async Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation)
     {
-        var query = context.Products.AsQueryable();
+        var query = context.Products
+            .Where(x => (x.ProductVariants.Where(v => v.Stock > 0)
+                            .Min(v => (decimal?)v.Price) ??
+                        x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0) > 0)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(input.Name))
             query = query.Where(x => x.Name.Contains(input.Name.Trim()));

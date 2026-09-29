@@ -352,8 +352,8 @@ public class SellerService(
                         {
                             Id = x.Id,
                             Size = x.Size,
-                            Name = x.Name,
-                            Code = x.Code
+                            ColorName = x.ColorName,
+                            ColorCode = x.ColorCode
                         }).ToList(),
                     UnitsSold = group.Sum(x => x.ProductCount),
                     SalesAmount = group.Sum(x => x.Sales)
@@ -442,8 +442,8 @@ public class SellerService(
                         {
                             Id = value.Id,
                             Size = value.Size,
-                            Name = value.Name,
-                            Code = value.Code
+                            ColorName = value.ColorName,
+                            ColorCode = value.ColorCode
                         }).ToList(),
                     Stock = x.variant.Stock
                 })

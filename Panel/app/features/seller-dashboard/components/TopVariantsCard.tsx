@@ -17,7 +17,7 @@ const PAGE_SIZE = 10;
 
 export function formatVariantValues(values: VariantValueOutput[]): string {
   if (!values?.length) return "—";
-  return values.map((value) => `${value.size}: ${value.name}`).join(" / ");
+  return values.map((value) => `${value.size}: ${value.colorName || value.colorCode}`).join(" / ");
 }
 
 export function TopVariantsCard({ range, refreshToken }: TopVariantsCardProps) {
