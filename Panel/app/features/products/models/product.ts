@@ -53,7 +53,7 @@ export interface ProductCreateInput {
   discount: number;
   categoryId: number;
   sellerId: number;
-  productBrandId: number;
+  productBrandId: number | null;
   attributes: ProductAttributeInput[];
   variants: ProductVariantInput[];
 }

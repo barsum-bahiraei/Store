@@ -271,7 +271,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           setSellers(sellerList);
           setBrands(brandList);
           setSellerId(sellerList[0]?.id ?? null);
-          setProductBrandId(brandList[0]?.id ?? null);
+          setProductBrandId(null);
         }
       );
 
@@ -424,7 +424,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const saveDetails = async (event: FormEvent) => {
     event.preventDefault();
     setAttemptedSubmit(true);
-    if (categoryId === null || sellerId === null || productBrandId === null || !title.trim()) return;
+    if (categoryId === null || sellerId === null || !title.trim()) return;
     if (hasValidationErrors) return;
     setError(null);
     try {
@@ -603,8 +603,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
   const canSubmitDetails =
     title.trim().length > 0 &&
-    sellerId !== null &&
-    productBrandId !== null;
+    sellerId !== null;
   const hasRetainedMainImage = existingImages.some(
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   );
@@ -703,7 +702,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                     </button>
                     {sellers.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">قبل از ذخیره محصول، یک فروشنده ایجاد کنید.</p>}
                   </label>
-                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">برند <span className="text-red-500">*</span></span><select value={productBrandId ?? ""} onChange={(event) => setProductBrandId(event.target.value ? Number(event.target.value) : null)} className={inputClasses} required><option value="">انتخاب برند</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select>{brands.length === 0 && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">قبل از ذخیره محصول، یک برند ایجاد کنید.</p>}</label>
+                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">برند <span className="text-xs text-gray-400">(اختیاری)</span></span><select value={productBrandId ?? ""} onChange={(event) => setProductBrandId(event.target.value ? Number(event.target.value) : null)} className={inputClasses}><option value="">بدون برند</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
                   <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">عنوان <span className="text-red-500">*</span></span><input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClasses} placeholder="مثلاً هدفون بی‌سیم" required autoFocus /></label>
                 <label>
                   <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تخفیف</span>

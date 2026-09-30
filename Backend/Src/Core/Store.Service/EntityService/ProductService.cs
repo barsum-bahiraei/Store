@@ -553,7 +553,8 @@ public class ProductService(
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
             return Result<ProductCreateOutput>.Failure("Seller not found");
 
-        if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
+        if (input.ProductBrandId is { } createBrandId &&
+            await productRepository.BrandGetAsync(createBrandId, cancellation) == null)
             return Result<ProductCreateOutput>.Failure("Product brand not found");
 
         var combinations = input.Variants?.Select(x => new ProductCombinationData(
@@ -633,7 +634,8 @@ public class ProductService(
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
             return Result<ProductUpdateOutput>.Failure("Seller not found");
 
-        if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
+        if (input.ProductBrandId is { } updateBrandId &&
+            await productRepository.BrandGetAsync(updateBrandId, cancellation) == null)
             return Result<ProductUpdateOutput>.Failure("Product brand not found");
 
         var combinations = input.Variants?.Select(x => new ProductCombinationData(

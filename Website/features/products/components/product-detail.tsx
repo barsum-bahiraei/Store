@@ -13,7 +13,8 @@ import { useCart, useCartItemActions } from "@/features/cart/hooks/use-cart";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { isUserRole } from "@/features/auth/types/account";
 import { useProductDetail } from "../hooks/use-products";
-import { buildVariantGroups, createDefaultVariantSelection, formatProductAttributeValue, formatToman, formatVariantLabel, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice, getVariantOptionStatus, matchVariantBySelection } from "../utils/product";
+import type { ProductVariant } from "../types/product";
+import { formatProductAttributeValue, formatToman, formatVariantLabel, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice } from "../utils/product";
 import { ProductCard } from "./product-card";
 import { ProductComments } from "./product-comments";
 
@@ -23,25 +24,29 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const { data: userProfile } = useUserProfile();
   const canPurchase = isUserRole(userProfile);
   const blockedByRole = isAuthenticated && !canPurchase;
-  const [userSelection, setUserSelection] = useState<Record<string, string> | null>(null);
-  const optionGroups = useMemo(() => (product ? buildVariantGroups(product.variants) : []), [product]);
-  const defaultSelection = useMemo(
-    () => (product ? createDefaultVariantSelection(product.variants, optionGroups) : {}),
-    [product, optionGroups],
-  );
-  const selection = userSelection ?? defaultSelection;
+  const [selectedColorKey, setSelectedColorKey] = useState<string | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const colorGroups = useMemo(() => {
+    const groups = new Map<string, { key: string; colorName: string; colorCode: string; variants: ProductVariant[] }>();
+    for (const variant of product?.variants ?? []) {
+      const value = variant.values[0];
+      if (!value) continue;
+      const key = `${value.colorName.trim().toLocaleLowerCase("fa-IR")}\u001f${value.colorCode.trim().toLowerCase()}`;
+      const group = groups.get(key) ?? { key, colorName: value.colorName, colorCode: value.colorCode, variants: [] };
+      group.variants.push(variant);
+      groups.set(key, group);
+    }
+    return [...groups.values()];
+  }, [product]);
+  const effectiveColorKey = selectedColorKey ?? (colorGroups.length === 1 ? colorGroups[0].key : null);
+  const selectedColorGroup = colorGroups.find((group) => group.key === effectiveColorKey);
+  const selectedVariant = selectedColorGroup?.variants.find((variant) => variant.id === selectedVariantId)
+    ?? (selectedColorGroup?.variants.length === 1 ? selectedColorGroup.variants[0] : undefined);
 
-  function selectVariantOption(size: string, option: string) {
-    setUserSelection((current) => ({ ...(current ?? defaultSelection), [size]: option }));
+  function selectColor(key: string) {
+    setSelectedColorKey(key);
+    setSelectedVariantId(null);
   }
-
-  const selectedVariant = useMemo(() => {
-    if (!product) return undefined;
-    if (product.variants.length === 1) return product.variants[0];
-    if (optionGroups.length === 0) return undefined;
-    if (optionGroups.some((group) => selection[group.size] == null)) return undefined;
-    return matchVariantBySelection(product.variants, selection);
-  }, [product, optionGroups, selection]);
 
   const effectiveVariantId = selectedVariant?.id ?? null;
   const serverItem = isAuthenticated && effectiveVariantId != null
@@ -73,7 +78,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const salePrice = getSalePrice(basePrice, product.discount);
   const stock = selectedVariant?.stock ?? 0;
   const addToCartDisabled = isAdding || selectedVariant == null || stock <= 0 || quantity >= stock;
-  const needsSelection = optionGroups.length > 0 && selectedVariant == null;
+  const needsSelection = product.variants.length > 0 && selectedVariant == null;
   const averageRating = product.comments.reduce((total, comment) => total + (comment.rating ?? 0), 0) / (product.comments.filter((comment) => comment.rating).length || 1);
 
   return (
@@ -185,39 +190,59 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             </div>
           )}
           {product.shortDescription && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.shortDescription}</p>}
-          {optionGroups.length > 0 && (
+          {colorGroups.length > 0 && (
             <div className="mt-6 space-y-5">
-              {optionGroups.map((group, groupIndex) => {
-                const groupId = `variant-group-${groupIndex}`;
-                return (
-                  <div key={group.size} aria-labelledby={groupId}>
-                    <h2 id={groupId} className="text-sm font-black">انتخاب {group.size}</h2>
-                    <div role="radiogroup" aria-labelledby={groupId} className="mt-3 flex flex-wrap gap-3">
-                      {group.options.map((option) => {
-                        const optionValue = option.colorName || option.colorCode;
-                        const status = getVariantOptionStatus(product.variants, selection, group.size, optionValue);
-                        const isSelected = selection[group.size] === optionValue;
-                        return (
-                          <button
-                            key={optionValue}
-                            type="button"
-                            role="radio"
-                            aria-checked={isSelected}
-                            disabled={status.disabled}
-                            onClick={() => selectVariantOption(group.size, optionValue)}
-                            className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary bg-primary/10 text-primary" : status.disabled ? "border-border bg-muted text-muted-foreground" : "border-border bg-surface hover:bg-muted"}`}
-                          >
-                            <span>{optionValue}</span>
-                            {status.outOfStock && <span className="text-xs font-black text-error">ناموجود</span>}
-                            {isSelected && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
+              <div aria-labelledby="variant-color-title">
+                <h2 id="variant-color-title" className="text-sm font-black">انتخاب رنگ</h2>
+                <div role="radiogroup" aria-labelledby="variant-color-title" className="mt-3 flex flex-wrap gap-3">
+                  {colorGroups.map((group) => {
+                    const isSelected = effectiveColorKey === group.key;
+                    const isOutOfStock = group.variants.every((variant) => variant.stock <= 0);
+                    return (
+                      <button
+                        key={group.key}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => selectColor(group.key)}
+                        className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface hover:bg-muted"}`}
+                      >
+                        <span className="size-4 rounded-full border border-border" style={{ backgroundColor: group.colorCode }} aria-hidden="true" />
+                        <span>{group.colorName || group.colorCode}</span>
+                        {isOutOfStock && <span className="text-xs font-black text-error">ناموجود</span>}
+                        {isSelected && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {selectedColorGroup && (
+                <div aria-labelledby="variant-size-title">
+                  <h2 id="variant-size-title" className="text-sm font-black">انتخاب سایز</h2>
+                  <div role="radiogroup" aria-labelledby="variant-size-title" className="mt-3 flex flex-wrap gap-3">
+                    {selectedColorGroup.variants.map((variant) => {
+                      const value = variant.values[0];
+                      if (!value) return null;
+                      const isSelected = selectedVariant?.id === variant.id;
+                      return (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          disabled={variant.stock <= 0}
+                          onClick={() => setSelectedVariantId(variant.id)}
+                          className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface hover:bg-muted"}`}
+                        >
+                          <span>{value.size}</span>
+                          {variant.stock <= 0 && <span className="text-xs font-black text-error">ناموجود</span>}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
-              {needsSelection && <p role="alert" className="text-sm text-warning">لطفاً سایز محصول را انتخاب کنید</p>}
+                </div>
+              )}
+              {needsSelection && <p role="alert" className="text-sm text-warning">{selectedColorGroup ? "لطفاً سایز محصول را انتخاب کنید" : "لطفاً رنگ محصول را انتخاب کنید"}</p>}
             </div>
           )}
           <div className="mt-7 flex flex-wrap items-baseline gap-3">
