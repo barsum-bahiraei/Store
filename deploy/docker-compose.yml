@@ -41,6 +41,9 @@ services:
       ConnectionStrings__StoreDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Cors__AllowedOrigins__0: http://${SERVER_PUBLIC_HOST}:${WEBSITE_PORT:-3000}
       Cors__AllowedOrigins__1: http://${SERVER_PUBLIC_HOST}:${PANEL_PORT:-3001}
+      # TEMP-LOCAL-CORS: delete this block before production
+      Cors__AllowedOrigins__2: http://localhost:3000
+      # /TEMP-LOCAL-CORS
       Minio__Endpoint: ${SERVER_PUBLIC_HOST}:${MINIO_PORT:-9000}
       Minio__AccessKey: ${MINIO_ROOT_USER}
       Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
