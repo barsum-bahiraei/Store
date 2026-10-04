@@ -88,27 +88,28 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
                 (!input.MinPrice.HasValue || v.Price >= input.MinPrice.Value) &&
                 (!input.MaxPrice.HasValue || v.Price <= input.MaxPrice.Value)));
 
-        if (input.IsAvailable.HasValue)
-            query = input.IsAvailable.Value
-                ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
-                : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
+        if (input.IsAvailable == true)
+            query = query.Where(x => x.ProductVariants.Any(v => v.Stock > 0));
 
         var totalCount = await query.CountAsync(cancellation);
         var page = input.Page < 1 ? 1 : input.Page;
         var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
 
+        var orderedQuery = query
+            .OrderByDescending(x => x.ProductVariants.Any(v => v.Stock > 0));
+
         query = input.IsIdDec
             ? input.IsPriceDec
-                ? query.OrderByDescending(x => x.CreatedAt)
+                ? orderedQuery.ThenByDescending(x => x.CreatedAt)
                     .ThenByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
                         .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
-                : query.OrderByDescending(x => x.CreatedAt)
+                : orderedQuery.ThenByDescending(x => x.CreatedAt)
                     .ThenBy(x => x.ProductVariants.Where(v => v.Stock > 0)
                         .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
             : input.IsPriceDec
-                ? query.OrderByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
+                ? orderedQuery.ThenByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
                     .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
-                : query.OrderBy(x => x.ProductVariants.Where(v => v.Stock > 0)
+                : orderedQuery.ThenBy(x => x.ProductVariants.Where(v => v.Stock > 0)
                     .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0);
 
         var result = await query
