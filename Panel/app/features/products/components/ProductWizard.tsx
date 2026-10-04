@@ -520,11 +520,11 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const selectImages = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files ?? []);
     const files = selectedFiles.filter(
-      (file) => file.type.startsWith("image/") || /\.(avif|gif|jpe?g|png|svg|webp)$/i.test(file.name)
+      (file) => file.type === "image/webp" || /\.webp$/i.test(file.name)
     );
 
     if (files.length === 0) {
-      setError("لطفاً تصویر با فرمت JPG، PNG، WebP، GIF، AVIF یا SVG انتخاب کنید.");
+      setError("فقط فایل تصویری WebP (.webp) پذیرفته می‌شود.");
       event.target.value = "";
       return;
     }
@@ -532,7 +532,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     setError(
       files.length === selectedFiles.length
         ? null
-        : "برخی فایل‌های پشتیبانی نشده نادیده گرفته شدند."
+        : "فقط فایل‌های WebP اضافه شدند؛ بقیه فایل‌ها نادیده گرفته شدند."
     );
     const next = files.map((file) => ({
       id: createClientId(),
@@ -570,7 +570,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             name: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
             productId: savedProductId,
             isMain: !hasExistingMain && image.id === mainImageId,
-            fileType: image.file.type === "image/svg+xml" ? 3 : 0,
+            fileType: 0,
           })
         )
       );
@@ -853,8 +853,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "جزئیات محصول به‌روزرسانی شد" : "محصول ایجاد شد"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "تصاویر فعلی را نگه دارید یا حذف کنید و در صورت نیاز تصاویر جدید اضافه کنید." : "حالا گالری آن را اضافه کنید و یک تصویر اصلی انتخاب کنید."}</p></div></div>
               <label className="mt-6 flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/50 focus-within:ring-2 focus-within:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:hover:border-primary-600 dark:hover:bg-primary-950/20">
                 <span className="flex size-12 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400"><span className="material-symbols-outlined">add_photo_alternate</span></span>
-                <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">یک یا چند فایل تصویری انتخاب کنید</span>
-                <input type="file" accept=".avif,.gif,.jpeg,.jpg,.png,.svg,.webp,image/*" multiple onChange={selectImages} className="sr-only" />
+                <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">فقط فایل WebP (.webp) — یک یا چند فایل انتخاب کنید</span>
+                <input type="file" accept=".webp,image/webp" multiple onChange={selectImages} className="sr-only" />
               </label>
               {existingImages.length > 0 && (
                 <div className="mt-6">
