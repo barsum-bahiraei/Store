@@ -7,13 +7,7 @@ import gregorian from "react-date-object/calendars/gregorian";
 import gregorianEn from "react-date-object/locales/gregorian_en";
 import persian from "react-date-object/calendars/persian";
 import persianFa from "react-date-object/locales/persian_fa";
-
-function unwrapDefault<T>(module: T): T {
-  const wrapped = module as T & { default?: T };
-  return typeof module === "object" && module !== null && wrapped.default
-    ? wrapped.default
-    : module;
-}
+import { unwrapDefault } from "~/shared/utils/unwrap-default";
 
 const TimePicker = unwrapDefault(TimePickerModule);
 

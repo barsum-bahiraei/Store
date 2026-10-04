@@ -47,7 +47,7 @@ export function OrderStatusesCard({ range, refreshToken }: OrderStatusesCardProp
   }, [range.from, range.to, refreshToken]);
 
   return (
-    <SectionCard title="وضعیت سفارش‌ها" icon="order_status">
+    <SectionCard title="وضعیت سفارش‌ها" icon="info">
       {loading ? (
         <LoadingState message="در حال بارگذاری وضعیت‌ها..." />
       ) : error ? (
@@ -56,7 +56,7 @@ export function OrderStatusesCard({ range, refreshToken }: OrderStatusesCardProp
         </div>
       ) : items.length === 0 ? (
         <div className="p-4">
-          <EmptyState icon="order_status" message="سفارشی وجود ندارد." />
+          <EmptyState icon="info" message="سفارشی وجود ندارد." />
         </div>
       ) : (
         <ul className="divide-y divide-gray-200 dark:divide-gray-800">
