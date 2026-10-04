@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
-
+ 
 export default function NotFound() {
   return (
     <div className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-background text-foreground">
