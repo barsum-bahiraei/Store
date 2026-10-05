@@ -45,7 +45,7 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <StoreHeader />
-      <main className="relative isolate w-full flex-1 overflow-hidden px-0 py-4 sm:py-6 lg:px-[50px]">
+      <main className="relative isolate w-full flex-1 px-0 py-4 sm:py-6 lg:px-[50px]">
         <h1 className="sr-only">محصولات زریوان</h1>
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(circle_at_top,var(--color-accent),transparent_68%)] opacity-45" />
         <ProductSearch key={JSON.stringify({ filters, sort })} filters={filters} sort={sort} showFilters={!isDealsPage} />

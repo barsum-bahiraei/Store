@@ -76,14 +76,14 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   }, []);
 
   return (
-    <div className={`mx-auto grid w-full max-w-[1700px] items-start gap-5 rounded-3xl border border-primary/25 bg-secondary/10 p-3 shadow-xl shadow-primary-shadow sm:p-5 lg:h-[calc(100dvh-12rem)] lg:min-h-[30rem] lg:items-stretch lg:gap-6 lg:p-6 ${showFilters ? "pb-20 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pb-6" : ""}`}>
+    <div className={`mx-auto grid w-full max-w-[1700px] items-start gap-5 rounded-3xl border border-primary/25 bg-secondary/10 p-3 shadow-xl shadow-primary-shadow sm:p-5 lg:gap-6 lg:p-6 ${showFilters ? "pb-20 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pb-6" : ""}`}>
       {showFilters && <>
         <button type="button" onClick={() => setIsFiltersOpen(true)} className="fixed inset-x-4 bottom-4 z-40 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground shadow-xl shadow-primary-shadow outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring lg:hidden">
           <span className="material-symbols-rounded" aria-hidden="true">tune</span>
           نمایش فیلترها
         </button>
         {isFiltersOpen && <button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden" />}
-      <aside className={`self-start rounded-2xl border border-primary/25 bg-surface p-5 shadow-2xl shadow-primary-shadow lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto lg:shadow-none ${isFiltersOpen ? "fixed inset-x-3 bottom-3 top-20 z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto" : "hidden"}`}>
+      <aside className={`self-start rounded-2xl border border-primary/25 bg-surface p-5 shadow-2xl shadow-primary-shadow lg:sticky lg:top-40 lg:block lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:shadow-none ${isFiltersOpen ? "fixed inset-x-3 bottom-3 top-20 z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto" : "hidden"}`}>
         <div className="mb-5 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><span className="material-symbols-rounded text-primary" aria-hidden="true">tune</span><h2 className="font-black">فیلترها</h2></div><button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="grid size-10 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><span className="material-symbols-rounded" aria-hidden="true">close</span></button></div>
         <form key={JSON.stringify(filters)} action="/shop" method="get" onPointerDownCapture={(event) => { if (!categoryDropdownRef.current?.contains(event.target as Node)) { setIsCategoryDropdownOpen(false); setOpenCategoryId(null); } }} className="space-y-5">
           {sort !== "priceAsc" && <input type="hidden" name="sort" value={sort} />}
@@ -138,7 +138,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
           <div className="grid gap-2"><button type="submit" className="min-h-11 rounded-lg bg-primary px-4 text-sm font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring">اعمال فیلترها</button><Link href="/shop" className="grid min-h-11 place-items-center rounded-lg text-sm font-bold text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">پاک کردن فیلترها</Link></div>
         </form>
       </aside></>}
-      <section aria-labelledby="search-results-title" aria-busy={isFetching} className="min-w-0 self-start lg:flex lg:h-full lg:min-h-0 lg:flex-col">
+      <section aria-labelledby="search-results-title" aria-busy={isFetching} className="min-w-0 self-start">
         <h2 id="search-results-title" className="sr-only">محصولات</h2>
         <nav aria-label="مرتب‌سازی محصولات" className="mb-4 flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border pb-3">
           <span className="shrink-0 text-sm font-bold text-muted-foreground">مرتب‌سازی:</span>
@@ -153,7 +153,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
             </Link>
           ))}
         </nav>
-        <div role="region" aria-label="فهرست محصولات" tabIndex={0} className="min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:pl-2">
+        <div role="region" aria-label="فهرست محصولات">
           {isFetching && !isPending && <span role="status" className="sr-only">در حال به‌روزرسانی محصولات…</span>}
           {isPending ? <div role="status" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[1700px]:grid-cols-5">      <span className="sr-only">در حال بارگذاری محصولات</span>{Array.from({ length: 10 }, (_, index) => <span key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />)}</div>
           : isError && !data ? <div role="alert" className="rounded-xl border border-border bg-surface p-6"><p className="text-error">بارگذاری نتایج جست‌وجو انجام نشد.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-3 min-h-11 rounded-lg bg-primary px-4 font-bold text-primary-foreground disabled:opacity-60">{isFetching ? "در حال بارگذاری…" : "تلاش دوباره"}</button></div>
