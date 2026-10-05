@@ -4,7 +4,7 @@ import { StoreHeader } from "@/features/categories/components/store-header";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
-  title: "تکمیل خرید | فروشگاه",
+  title: "تکمیل خرید",
   description: "روش تحویل و پرداخت سفارش خود را بررسی و ثبت کنید.",
   robots: { index: false, follow: false },
 };
@@ -19,4 +19,4 @@ export default function CheckoutPage() {
       <StoreFooter />
     </>
   );
-}  
+}

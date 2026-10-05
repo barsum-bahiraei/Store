@@ -4,11 +4,11 @@ import { StoreFooter } from "@/features/layout/components/store-footer";
 import { ProductDetailContent } from "@/features/products/components/product-detail";
 
 export const metadata: Metadata = {
-  title: "جزئیات محصول | فروشگاه",
+  title: "جزئیات محصول",
   description: "مشاهده جزئیات محصول، مشخصات فنی، اطلاعات فروشنده و نظرات مشتریان.",
 };
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
   const { id } = await params;
-  return <div className="flex min-h-dvh flex-col bg-background text-foreground"><StoreHeader /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-8 lg:px-12"><ProductDetailContent key={id} productId={Number(id)} /></main><StoreFooter /></div>;
+  return <div className="flex min-h-dvh flex-col bg-background text-foreground"><StoreHeader /><main className="w-full flex-1 bg-background text-foreground"><div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12"><ProductDetailContent key={id} productId={Number(id)} /></div></main><StoreFooter /></div>;
 }

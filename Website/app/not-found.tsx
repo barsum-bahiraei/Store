@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "صفحه پیدا نشد | فروشگاه",
+  title: "صفحه پیدا نشد",
   description: "صفحه‌ای که به دنبال آن بودید پیدا نشد.",
   robots: {
     index: false,
     follow: true,
   },
 };
- 
+
 export default function NotFound() {
   return (
     <div className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-background text-foreground">
@@ -28,12 +29,8 @@ export default function NotFound() {
           aria-label="خانه فروشگاه"
           className="group inline-flex min-h-12 items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
         >
-          <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground transition-transform duration-200 group-hover:-rotate-3">
-            <span className="material-symbols-rounded text-2xl" aria-hidden="true">
-              storefront
-            </span>
-          </span>
-          <span className="text-lg font-black tracking-[-0.04em]">فروشگاه.</span>
+          <Image src="/images/zaryvan-logo.png" alt="" width={48} height={48} className="size-12 rounded-full object-contain transition-transform duration-200 group-hover:-rotate-3" />
+          <span className="text-lg font-black tracking-[-0.04em]">لوازم کمپ و کوه‌نوردی زریوان</span>
         </Link>
 
         <span className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-bold tracking-widest text-muted-foreground">

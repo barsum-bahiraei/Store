@@ -6,8 +6,8 @@ import { StoreBenefits } from "@/features/home/components/store-benefits";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
-  title: "فروشگاه | انتخاب‌های هوشمند برای زندگی روزمره",
-  description: "تازه‌ترین محصولات و کالاهای کاربردی روزمره را در فروشگاه پیدا کنید.",
+  title: { absolute: "لوازم کمپ و کوه‌نوردی زریوان | تجهیزات طبیعت‌گردی" },
+  description: "خرید لوازم کمپینگ، کوه‌نوردی و تجهیزات طبیعت‌گردی از فروشگاه زریوان.",
 };
 
 export default function Home() {

@@ -9,8 +9,10 @@ export type ProductImage = {
 export type ProductVariantAttributeValue = {
   id: number;
   size: string;
-  name: string;
-  code: string;
+  name?: string;
+  code?: string;
+  colorName?: string;
+  colorCode?: string;
 };
 
 export type ProductVariant = {
@@ -47,6 +49,10 @@ export type ProductSearchInput = {
   isPriceDec?: boolean;
   isIdDec?: boolean;
 };
+
+export type ProductSearchFilters = Omit<ProductSearchInput, "page">;
+
+export type ProductSort = "newest" | "priceAsc" | "priceDesc";
 
 export type ProductSearchResult = {
   totalCount: number;

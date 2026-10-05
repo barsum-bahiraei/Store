@@ -91,7 +91,7 @@ export function CheckoutContent() {
 
   const items = cart.data ?? [];
   if (items.length === 0) {
-    return <div className="rounded-xl border border-border bg-surface p-8 text-center"><span className="material-symbols-rounded text-5xl text-muted-foreground" aria-hidden="true">remove_shopping_cart</span><h1 className="mt-4 text-2xl font-black">سبد خرید خالی است</h1><p className="mt-2 text-muted-foreground">برای ثبت سفارش ابتدا محصولی به سبد اضافه کنید.</p><Link href="/search" className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 font-black text-primary-foreground">مشاهده محصولات</Link></div>;
+    return <div className="rounded-xl border border-border bg-surface p-8 text-center"><span className="material-symbols-rounded text-5xl text-muted-foreground" aria-hidden="true">remove_shopping_cart</span><h1 className="mt-4 text-2xl font-black">سبد خرید خالی است</h1><p className="mt-2 text-muted-foreground">برای ثبت سفارش ابتدا محصولی به سبد اضافه کنید.</p><Link href="/shop" className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 font-black text-primary-foreground">مشاهده محصولات</Link></div>;
   }
 
   const estimatedSubtotal = items.reduce((total, item) => total + getSalePrice(item.variant?.price ?? item.product.price, item.product.discount) * item.productCount, 0);
