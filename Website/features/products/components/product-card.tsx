@@ -9,7 +9,7 @@ import { useAuthToken, useUserProfile } from "@/features/auth/hooks/use-account"
 import { isUserRole } from "@/features/auth/types/account";
 import { useCartItemActions } from "@/features/cart/hooks/use-cart";
 import type { ProductSearchItem } from "../types/product";
-import { getProductImageUrl, getSalePrice, formatToman, formatVariantLabel, matchVariantBySelection } from "../utils/product";
+import { getProductImageUrl, getSalePrice, formatToman, formatVariantLabel } from "../utils/product";
 
 export function ProductCard({ product, originalAppearance = false }: { product: ProductSearchItem; originalAppearance?: boolean }) {
   const router = useRouter();
@@ -17,13 +17,13 @@ export function ProductCard({ product, originalAppearance = false }: { product: 
   const { data: userProfile } = useUserProfile();
   const canQuickAdd = !token || isUserRole(userProfile);
   const variants = product.variants ?? [];
-  const isSingleVariant = variants.length === 1;
-  const selectedVariant = isSingleVariant && product.isAvailable ? matchVariantBySelection(variants, null, null) : undefined;
+  const purchasableVariants = variants.filter((variant) => variant.stock > 0);
+  const quickBuyVariant = product.isAvailable && purchasableVariants.length === 1 ? purchasableVariants[0] : undefined;
   const { change, isPending, error } = useCartItemActions({
     productId: product.id,
-    productVariantId: selectedVariant?.id,
+    productVariantId: quickBuyVariant?.id,
     productName: product.name,
-    variantName: selectedVariant ? formatVariantLabel(selectedVariant.values) : undefined,
+    variantName: quickBuyVariant ? formatVariantLabel(quickBuyVariant.values) : undefined,
   });
   const imageUrl = getProductImageUrl(product.image?.url);
   const salePrice = getSalePrice(product.price, product.discount);
@@ -41,8 +41,12 @@ export function ProductCard({ product, originalAppearance = false }: { product: 
   }
 
   function handleQuickBuy() {
-    if (!product.isAvailable || !isSingleVariant || !selectedVariant || isPending || !canQuickAdd) return;
-    change("increase");
+    if (!product.isAvailable || isPending) return;
+    if (quickBuyVariant && canQuickAdd) {
+      change("increase");
+      return;
+    }
+    router.push(`/products/${product.id}`);
   }
 
   return (
@@ -62,7 +66,7 @@ export function ProductCard({ product, originalAppearance = false }: { product: 
              <div><span className="font-black text-primary">{formatToman(salePrice)}</span>{product.discount > 0 && <span className="ml-2 text-xs text-muted-foreground line-through">{formatToman(product.price)}</span>}</div>
              <span className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground"><span className="material-symbols-rounded text-base text-warning" aria-hidden="true">star</span>{product.averageRating.toFixed(1)}</span>
            </div>
-          {isSingleVariant && <button type="button" onClick={handleQuickBuy} disabled={!product.isAvailable || isPending || !canQuickAdd || !selectedVariant || selectedVariant.stock <= 0} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary bg-surface text-sm font-black text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-60"><span className={`material-symbols-rounded text-xl ${isPending ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isPending ? "progress_activity" : "shopping_cart"}</span>{isPending ? "در حال افزودن…" : "افزودن به سبد خرید"}</button>}
+          <button type="button" onClick={handleQuickBuy} disabled={!product.isAvailable || isPending} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary bg-surface text-sm font-black text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-60"><span className={`material-symbols-rounded text-xl ${isPending ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isPending ? "progress_activity" : "shopping_cart"}</span>{isPending ? "در حال افزودن…" : "افزودن به سبد خرید"}</button>
           {error && <p role="alert" className="mt-2 text-xs text-error">{error.message}</p>}
         </div>
       </div>

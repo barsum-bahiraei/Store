@@ -42,6 +42,14 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const [openCategoryId, setOpenCategoryId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(filters.categoryId ? String(filters.categoryId) : "");
   const selectedCategoryLabel = descendants(categoryTree).find((category) => String(category.id) === selectedCategoryId)?.name ?? (selectedCategoryId ? `دسته‌بندی ${selectedCategoryId}` : "همه دسته‌بندی‌ها");
+
+  useEffect(() => {
+    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    if (navigation?.type === "reload" && window.location.search) {
+      window.location.replace("/shop");
+    }
+  }, []);
+
   const products = useMemo(() => {
     const uniqueProducts = new Map<number, ProductSearchItem>();
     for (const page of data?.pages ?? []) {
@@ -76,7 +84,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   }, []);
 
   return (
-    <div className={`mx-auto grid w-full max-w-[1700px] items-start gap-5 rounded-3xl border border-primary/25 bg-secondary/10 p-3 shadow-xl shadow-primary-shadow sm:p-5 lg:gap-6 lg:p-6 ${showFilters ? "pb-20 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pb-6" : ""}`}>
+    <div className={`mx-auto grid w-full max-w-[1700px] items-start gap-5 rounded-3xl border border-primary/20 bg-surface p-3 shadow-xl shadow-primary-shadow sm:p-5 lg:gap-6 lg:p-6 ${showFilters ? "pb-20 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pb-6" : ""}`}>
       {showFilters && <>
         <button type="button" onClick={() => setIsFiltersOpen(true)} className="fixed inset-x-4 bottom-4 z-40 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground shadow-xl shadow-primary-shadow outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring lg:hidden">
           <span className="material-symbols-rounded" aria-hidden="true">tune</span>
