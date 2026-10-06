@@ -18,7 +18,7 @@ export function BrandShowcase() {
 
   return (
     <section aria-labelledby="brand-showcase-title" className="bg-background px-4 pb-10 pt-2 text-foreground sm:px-8 sm:pb-14 lg:px-12">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto w-full max-w-[1700px]">
         <div className="mb-5 flex items-center justify-between gap-4">
           <h2 id="brand-showcase-title" className="text-2xl font-black tracking-[-0.03em] sm:text-3xl">برندهای منتخب</h2>
         </div>
