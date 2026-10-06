@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { StoreHeader } from "@/features/categories/components/store-header";
 import { FeaturedProducts } from "@/features/home/components/featured-products";
 import { BrandShowcase } from "@/features/home/components/brand-showcase";
+import { ClimbingToolsPromo } from "@/features/home/components/climbing-tools-promo";
+import { CategoryPromos } from "@/features/home/components/category-promos";
 import { HeroSlider } from "@/features/home/components/hero-slider";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
@@ -17,7 +19,9 @@ export default function Home() {
       <main className="flex-1">
         <HeroSlider />
         <FeaturedProducts />
+        <ClimbingToolsPromo />
         <BrandShowcase />
+        <CategoryPromos />
       </main>
       <StoreFooter />
     </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { useCart } from "@/features/cart/hooks/use-cart";
 import { useCategories } from "../hooks/use-categories";
@@ -13,33 +14,22 @@ type CategoryTreeProps = {
   onNavigate?: () => void;
 };
 
-function categoryDescendants(categories: Category[]): Category[] {
-  return categories.flatMap((category) => [category, ...categoryDescendants(category.children)]);
-}
-
-function DesktopCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
+function DesktopCategoryItems({ categories, onNavigate }: CategoryTreeProps) {
   return (
-    <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid gap-1">
       {categories.map((category) => (
-        <li key={category.id} className="group/category relative min-w-0">
+        <li key={category.id} className="relative min-w-0 [&:focus-within>div]:pointer-events-auto [&:focus-within>div]:visible [&:focus-within>div]:opacity-100 [&:hover>div]:pointer-events-auto [&:hover>div]:visible [&:hover>div]:opacity-100">
           <Link
             href={`/shop?category=${category.id}`}
             onClick={onNavigate}
-            className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex min-h-10 items-center justify-between gap-2 rounded-lg px-2 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span className="truncate">{category.name}</span>
+            {category.children.length > 0 && <span className="material-symbols-rounded shrink-0 text-base text-muted-foreground" aria-hidden="true">chevron_left</span>}
           </Link>
           {category.children.length > 0 && (
-            <div className="pointer-events-none invisible absolute right-0 top-full z-20 min-w-56 translate-y-1 rounded-xl border border-border bg-surface p-2 opacity-0 shadow-xl shadow-primary-shadow transition-[opacity,transform,visibility] duration-200 group-hover/category:pointer-events-auto group-hover/category:visible group-hover/category:translate-y-0 group-hover/category:opacity-100 group-focus-within/category:pointer-events-auto group-focus-within/category:visible group-focus-within/category:translate-y-0 group-focus-within/category:opacity-100">
-              <ul className="grid gap-1">
-                {categoryDescendants(category.children).map((child) => (
-                  <li key={child.id}>
-                    <Link href={`/shop?category=${child.id}`} onClick={onNavigate} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
-                      <span className="truncate">{child.name}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            <div className="pointer-events-none invisible absolute right-full top-0 z-20 min-w-56 rounded-xl border border-border bg-surface p-2 opacity-0 shadow-xl shadow-primary-shadow transition-[opacity,visibility] duration-150">
+              <DesktopCategoryItems categories={category.children} onNavigate={onNavigate} />
             </div>
           )}
         </li>
@@ -48,42 +38,51 @@ function DesktopCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
   );
 }
 
+function DesktopCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
+  return <DesktopCategoryItems categories={categories} onNavigate={onNavigate} />;
+}
+
 function MobileCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  return (
-    <ul className="grid gap-1">
-      {categories.map((category) => {
-        const isExpanded = expandedId === category.id;
-        const hasChildren = category.children.length > 0;
+  const toggleCategory = (categoryId: number) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  };
 
-        return (
-          <li key={category.id} className="border-b border-border/70 last:border-b-0">
-            <div className="flex items-center">
-              <Link href={`/shop?category=${category.id}`} onClick={onNavigate} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
-                <span className="truncate">{category.name}</span>
-              </Link>
-              {hasChildren && <button type="button" aria-label={`زیرمجموعه‌های ${category.name}`} aria-expanded={isExpanded} onClick={() => setExpandedId(isExpanded ? null : category.id)} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span></button>}
-            </div>
+  function renderCategories(items: Category[], level = 0): ReactNode {
+    return (
+      <ul className={level === 0 ? "grid gap-1" : "mr-3 grid gap-1 border-r-2 border-primary/20 pr-3"}>
+        {items.map((category) => {
+          const isExpanded = expandedIds.has(category.id);
+          const hasChildren = category.children.length > 0;
 
-            {hasChildren && (
-              <div className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out ${isExpanded ? "grid-rows-[1fr] pb-2 opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-                <ul className="min-h-0 space-y-1 overflow-hidden border-r-2 border-primary/20 pr-3">
-                  {categoryDescendants(category.children).map((child) => (
-                    <li key={child.id}>
-                      <Link href={`/shop?category=${child.id}`} onClick={onNavigate} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
-                        <span className="truncate">{child.name}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+          return (
+            <li key={category.id} className="border-b border-border/70 last:border-b-0">
+              <div className="flex items-center">
+                <Link href={`/shop?category=${category.id}`} onClick={onNavigate} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+                  <span className="truncate">{category.name}</span>
+                </Link>
+                {hasChildren && <button type="button" aria-label={`زیرمجموعه‌های ${category.name}`} aria-expanded={isExpanded} onClick={() => toggleCategory(category.id)} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span></button>}
               </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
+
+              {hasChildren && (
+                <div className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out ${isExpanded ? "grid-rows-[1fr] pb-2 opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                  <div className="min-h-0 overflow-hidden">{renderCategories(category.children, level + 1)}</div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  return renderCategories(categories);
 }
 
 function CategorySkeleton() {
@@ -109,6 +108,14 @@ export function StoreHeader() {
   const toggleMenu = () => {
     setIsMenuOpen((open) => !open);
     setIsMobileCategoriesOpen(false);
+  };
+
+  const openDesktopMenu = () => {
+    if (window.innerWidth >= 768) setIsMenuOpen(true);
+  };
+
+  const closeDesktopMenu = () => {
+    if (window.innerWidth >= 768) closeMenu();
   };
 
   useEffect(() => {
@@ -156,7 +163,7 @@ export function StoreHeader() {
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/95 text-foreground backdrop-blur-lg">
+    <header onMouseLeave={closeDesktopMenu} className="sticky top-0 z-50 border-b border-border bg-surface/95 text-foreground md:backdrop-blur-lg">
       <div className="mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 sm:gap-4 sm:px-5 lg:px-6 xl:px-8">
         <div className="flex min-w-0 shrink-0 items-center gap-1 [direction:rtl] sm:gap-2">
           <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring md:hidden">
@@ -193,7 +200,7 @@ export function StoreHeader() {
             <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول و دسته‌بندی" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
           </form>
           <div className="hidden items-center gap-1 md:flex">
-          <button type="button" onClick={toggleMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+          <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
             دسته‌بندی کالاها
             <span className={`material-symbols-rounded text-lg transition-transform ${isMenuOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
           </button>
@@ -208,8 +215,8 @@ export function StoreHeader() {
       </nav>
 
       {isMenuOpen && (
-        <nav id="store-navigation" aria-label="منوی دسته‌بندی‌ها" className="fixed inset-0 z-[60] overflow-y-auto border-border bg-surface p-5 shadow-lg shadow-primary-shadow md:static md:z-auto md:max-h-none md:overflow-visible md:border-t">
-          <div className="mx-auto grid w-full max-w-7xl gap-5 [direction:rtl]">
+        <nav id="store-navigation" aria-label="منوی دسته‌بندی‌ها" onMouseEnter={openDesktopMenu} className="fixed inset-0 z-[60] h-dvh w-screen max-w-none overflow-y-auto border-border bg-surface p-5 shadow-lg shadow-primary-shadow md:absolute md:inset-auto md:right-5 md:top-full md:z-[60] md:h-auto md:w-72 md:overflow-visible md:rounded-b-2xl md:border md:p-3 lg:right-6 xl:right-8">
+          <div className="mx-auto grid w-full max-w-7xl gap-5 [direction:rtl] md:max-w-none">
             <div className="flex items-center justify-between border-b border-border pb-4 md:hidden">
               <p className="font-black">منوی زریوان</p>
               <button type="button" onClick={closeMenu} aria-label="بستن منو" className="grid size-11 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
@@ -217,9 +224,9 @@ export function StoreHeader() {
               </button>
             </div>
             <div className="hidden md:block">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-                <p className="font-black">دسته‌بندی کالاها</p>
-                <Link href="/shop" onClick={closeMenu} className="text-xs font-black text-primary hover:text-primary-hover">مشاهده همه محصولات</Link>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                <p className="text-sm font-black">دسته‌بندی کالاها</p>
+                <Link href="/shop" onClick={closeMenu} className="text-[11px] font-black text-primary hover:text-primary-hover">مشاهده همه</Link>
               </div>
               {categoryContent}
             </div>
@@ -229,13 +236,13 @@ export function StoreHeader() {
                 <span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isMobileCategoriesOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
               </button>
               {isMobileCategoriesOpen && categoryContent}
-              <div className="grid gap-1 border-t border-border pt-3">
-                <Link href="/shop" onClick={closeMenu} className="flex min-h-11 items-center rounded-lg px-3 font-bold hover:bg-muted hover:text-primary">همه محصولات</Link>
-                <Link href="/shop?discount=true" onClick={closeMenu} className="flex min-h-11 items-center rounded-lg px-3 font-bold hover:bg-muted hover:text-primary">شگفت‌انگیزها</Link>
-                <Link href="/about" onClick={closeMenu} className="flex min-h-11 items-center rounded-lg px-3 font-bold hover:bg-muted hover:text-primary">درباره ما</Link>
-                <Link href="/contact" onClick={closeMenu} className="flex min-h-11 items-center rounded-lg px-3 font-bold hover:bg-muted hover:text-primary">تماس با ما</Link>
-                <Link href="/contact?subject= همکاری با ما" onClick={closeMenu} className="flex min-h-11 items-center rounded-lg px-3 font-bold hover:bg-muted hover:text-primary">همکاری با ما</Link>
-                <Link href="/blog-1/" onClick={closeMenu} className="flex min-h-11 items-center rounded-lg px-3 font-bold hover:bg-muted hover:text-primary">مجله زریوان</Link>
+              <div className="grid gap-2">
+                <Link href="/shop" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">همه محصولات</Link>
+                <Link href="/shop?discount=true" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">شگفت‌انگیزها</Link>
+                <Link href="/about" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">درباره ما</Link>
+                <Link href="/contact" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">تماس با ما</Link>
+                <Link href="/contact?subject= همکاری با ما" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">همکاری با ما</Link>
+                <Link href="/blog-1/" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">مجله زریوان</Link>
               </div>
             </div>
           </div>

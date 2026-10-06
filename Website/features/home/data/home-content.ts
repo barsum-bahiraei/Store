@@ -4,6 +4,7 @@ export type HeroSlide = {
   description: string;
   image: string;
   imageAlt: string;
+  categoryId?: number;
 };
 
 export const heroSlides: HeroSlide[] = [
@@ -20,6 +21,7 @@ export const heroSlides: HeroSlide[] = [
     description: "با چراغ‌قوه‌ها و فانوس‌های کمپینگ، مسیر و محل اقامت خود را در تاریکی شب روشن نگه دارید.",
     image: "/images/home/hero-outdoor-lighting.png",
     imageAlt: "چراغ‌قوه‌ها و فانوس‌های روشن در جنگل تاریک",
+    categoryId: 72,
   },
   {
     eyebrow: "کفش‌های کوهنوردی",
@@ -27,6 +29,7 @@ export const heroSlides: HeroSlide[] = [
     description: "کفش مناسب مسیرهای برفی و پیمایش‌های طولانی را از میان مدل‌های هومتو و اسنوهاک انتخاب کنید.",
     image: "/images/home/hero-homtto-snowhawk.png",
     imageAlt: "کوهنورد در حال پیمایش مسیر برفی با منظره کوهستان",
+    categoryId: 60,
   },
   {
     eyebrow: "ماگ و فلاسک‌های استنلی",
@@ -34,23 +37,6 @@ export const heroSlides: HeroSlide[] = [
     description: "از اولین جرعه صبح تا آخرین توقف مسیر، مدل محبوبت را همین حالا انتخاب کن.",
     image: "/images/home/hero-stanley-drinkware.png",
     imageAlt: "چند مدل ماگ و فلاسک استنلی در منظره کوهستانی",
-  },
-  {
-    title: "زمان، به سبک شما.",
-    description: "اکسسوری‌های کاربردی برای هر برنامه، از شروع صبح تا پایان شب.",
-    image: "/images/home/hero-watch.jpg",
-    imageAlt: "ساعت مچی مینیمال روی سطحی ساده",
-  },
-  {
-    title: "قدم‌های تازه از اینجا شروع می‌شوند.",
-    description: "کفش‌های فصل جدید برای راحتی و انرژی بیشتر در هر روز.",
-    image: "/images/home/hero-sneaker.jpg",
-    imageAlt: "کفش ورزشی قرمز با پس‌زمینه هماهنگ",
-  },
-  {
-    title: "صدای روزمره را بهتر بشنوید.",
-    description: "صدایی فراگیر و راحتی ماندگار برای کار، سفر و تمام لحظه‌های بین آن‌ها.",
-    image: "/images/home/hero-headphones.jpg",
-    imageAlt: "هدفون مشکی روی پس‌زمینه زرد گرم",
+    categoryId: 30,
   },
 ];

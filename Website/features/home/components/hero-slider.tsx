@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef, useSyncExternalStore } from "react";
 import { A11y, Autoplay, Keyboard, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -46,6 +47,7 @@ export function HeroSlider() {
             <article className="relative min-h-[20rem] overflow-hidden bg-secondary text-white sm:min-h-[31rem] lg:min-h-[29rem]">
               <Image src={slide.image} alt={slide.imageAlt} fill priority={index === 0} sizes="100vw" className="object-cover" />
               <div className="absolute inset-0 bg-secondary/45 sm:bg-gradient-to-r sm:from-secondary/90 sm:via-secondary/55 sm:to-transparent" aria-hidden="true" />
+              {slide.categoryId && <Link href={`/shop?category=${slide.categoryId}`} aria-label={`مشاهده محصولات ${slide.title}`} className="absolute inset-0 z-20 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset" />}
 
               <div className="relative z-10 flex min-h-[20rem] items-center px-5 pb-14 pt-8 sm:min-h-[31rem] sm:px-20 sm:pb-16 sm:pt-12 lg:min-h-[29rem] lg:px-24 xl:px-[max(6rem,calc((100vw-80rem)/2))]">
                 <div className="mr-auto max-w-md text-right drop-shadow-md">
