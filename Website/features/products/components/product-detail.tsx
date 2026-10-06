@@ -94,8 +94,8 @@ export function ProductDetailContent({ productId }: { productId: number }) {
         </ol>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <section aria-label="تصاویر محصول">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-2 lg:gap-12">
+        <section aria-label="تصاویر محصول" className="min-w-0 overflow-hidden">
           <div className="overflow-hidden rounded-xl border border-primary/25 bg-surface">
             <Swiper
               modules={[A11y, Keyboard, Thumbs]}
@@ -158,7 +158,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
           )}
         </section>
 
-        <section aria-labelledby="product-title" className="self-center">
+        <section aria-labelledby="product-title" className="min-w-0 self-center">
           <h1 id="product-title" className="text-3xl font-black tracking-tight sm:text-4xl">{product.name}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-black ${product.isAvailable ? "bg-success/10 text-success" : "bg-error/10 text-error"}`}>
