@@ -164,23 +164,23 @@ export function StoreHeader() {
 
   return (
     <header onMouseLeave={closeDesktopMenu} className="sticky top-0 z-50 border-b border-border bg-surface/95 text-foreground md:backdrop-blur-lg">
-      <div className="mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 sm:gap-4 sm:px-5 lg:px-6 xl:px-8">
-        <div className="flex min-w-0 shrink-0 items-center gap-1 [direction:rtl] sm:gap-2">
-          <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring md:hidden">
+      <div className="relative mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 md:gap-4 md:px-5 lg:px-6 xl:px-8">
+        <div className="contents md:flex md:min-w-0 md:shrink-0 md:items-center md:gap-2 md:[direction:rtl]">
+          <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="absolute right-0 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring md:hidden">
             <span className="material-symbols-rounded text-2xl" aria-hidden="true">{isMenuOpen ? "close" : "menu"}</span>
           </button>
-          <Link href="/" aria-label="خانه فروشگاه" className="flex min-h-11 min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl]">
+          <Link href="/" aria-label="خانه فروشگاه" className="absolute left-1/2 flex min-h-11 min-w-0 -translate-x-1/2 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl] md:static md:translate-x-0">
             <Image src="/images/zaryvan-logo.png" alt="" width={64} height={64} className="size-14 rounded-full object-contain sm:size-16" />
           </Link>
         </div>
 
-        <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl sm:block">
+        <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">
           <label htmlFor="store-search" className="sr-only">جست‌وجوی محصولات</label>
           <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
           <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول و دسته‌بندی" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
         </form>
 
-        <nav aria-label="عملیات حساب کاربری" className="flex shrink-0 items-center gap-0 [direction:rtl] sm:gap-1">
+        <nav aria-label="عملیات حساب کاربری" className="absolute left-0 flex shrink-0 items-center gap-0 [direction:rtl] md:static md:gap-1">
           <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">person</span>
             <span className="hidden max-w-20 truncate text-xs font-bold lg:block">{user?.firstName ?? "ورود"}</span>
