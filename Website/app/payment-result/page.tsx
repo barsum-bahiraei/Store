@@ -4,7 +4,7 @@ import { StoreHeader } from "@/features/categories/components/store-header";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
-  title: "نتیجه پرداخت | فروشگاه",
+  title: "نتیجه پرداخت",
   robots: { index: false, follow: false },
 };
 

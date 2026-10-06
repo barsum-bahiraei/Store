@@ -18,8 +18,15 @@ const iranSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "فروشگاه",
-  description: "محصولات منتخب برای زندگی روزمره را پیدا کنید.",
+  title: {
+    default: "لوازم کمپ و کوه‌نوردی زریوان",
+    template: "%s | زریوان",
+  },
+  description: "خرید لوازم کمپینگ و کوه‌نوردی از فروشگاه زریوان.",
+  icons: {
+    icon: "/images/zaryvan-logo.png",
+    apple: "/images/zaryvan-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

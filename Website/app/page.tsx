@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { StoreHeader } from "@/features/categories/components/store-header";
 import { FeaturedProducts } from "@/features/home/components/featured-products";
+import { BrandShowcase } from "@/features/home/components/brand-showcase";
+import { ClimbingToolsPromo } from "@/features/home/components/climbing-tools-promo";
+import { CategoryPromos } from "@/features/home/components/category-promos";
 import { HeroSlider } from "@/features/home/components/hero-slider";
-import { StoreBenefits } from "@/features/home/components/store-benefits";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
-  title: "فروشگاه | انتخاب‌های هوشمند برای زندگی روزمره",
-  description: "تازه‌ترین محصولات و کالاهای کاربردی روزمره را در فروشگاه پیدا کنید.",
+  title: { absolute: "لوازم کمپ و کوه‌نوردی زریوان | تجهیزات طبیعت‌گردی" },
+  description: "خرید لوازم کمپینگ، کوه‌نوردی و تجهیزات طبیعت‌گردی از فروشگاه زریوان.",
 };
 
 export default function Home() {
@@ -16,8 +18,10 @@ export default function Home() {
       <StoreHeader />
       <main className="flex-1">
         <HeroSlider />
-        <StoreBenefits />
         <FeaturedProducts />
+        <ClimbingToolsPromo />
+        <BrandShowcase />
+        <CategoryPromos />
       </main>
       <StoreFooter />
     </div>

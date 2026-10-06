@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 type AuthShellProps = {
   title: string;
@@ -11,10 +12,8 @@ export function AuthShell({ title, description, children }: AuthShellProps) {
     <main className="grid min-h-dvh bg-background text-foreground lg:grid-cols-[minmax(0,0.9fr)_minmax(32rem,1.1fr)]">
       <section className="relative hidden overflow-hidden bg-secondary p-12 text-secondary-foreground lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="relative z-10 flex w-fit items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <span className="material-symbols-rounded" aria-hidden="true">storefront</span>
-          </span>
-          <span className="text-lg font-black tracking-[-0.04em]">فروشگاه.</span>
+          <Image src="/images/zaryvan-logo.png" alt="" width={48} height={48} className="size-12 rounded-full object-contain" />
+          <span className="text-lg font-black tracking-[-0.04em]">لوازم کمپ و کوه‌نوردی زریوان</span>
         </Link>
 
         <div className="relative z-10 max-w-lg">

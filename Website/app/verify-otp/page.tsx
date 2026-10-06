@@ -3,7 +3,7 @@ import { AuthShell } from "@/features/auth/components/auth-shell";
 import { OtpVerifyForm } from "@/features/auth/components/otp-verify-form";
 
 export const metadata: Metadata = {
-  title: "تأیید کد | فروشگاه",
+  title: "تأیید کد",
   description: "کد تأیید ارسال شده به شماره تماس خود را وارد کنید.",
 };
 

@@ -1,13 +1,8 @@
 import { ProductAttributeType, ProductAttributeUnit, type ProductVariant, type ProductVariantAttributeValue } from "../types/product";
 
-export type VariantOption = {
-  colorName: string;
-  colorCode: string;
-};
-
-export type VariantGroup = {
-  size: string;
-  options: VariantOption[];
+export type VariantColor = {
+  name: string;
+  code: string;
 };
 
 export const priceFormatter = new Intl.NumberFormat("fa-IR", {
@@ -46,67 +41,66 @@ export function getSalePrice(price: number, discount: number) {
 
 export function formatVariantLabel(values: ProductVariantAttributeValue[]) {
   if (values.length === 0) return undefined;
-  return values.map((value) => `${value.size}: ${value.colorName || value.colorCode}`).join("، ");
+  const labels = values
+    .map((value) => [getVariantColor(value)?.name, value.size?.trim()].filter(Boolean).join("، "))
+    .filter(Boolean);
+  return labels.join("، ") || undefined;
 }
 
-function variantOptionKey(value: { colorName: string; colorCode: string }) {
-  return value.colorName || value.colorCode;
+function getVariantColor(value: ProductVariantAttributeValue): VariantColor | null {
+  const name = (value.colorName ?? value.name ?? "").trim();
+  const code = (value.colorCode ?? value.code ?? "").trim();
+  return name || code ? { name: name || code, code } : null;
 }
 
-export function buildVariantGroups(variants: ProductVariant[]): VariantGroup[] {
-  const groups = new Map<string, Map<string, VariantOption>>();
+export function getVariantColors(variants: ProductVariant[]): VariantColor[] {
+  const colors = new Map<string, VariantColor>();
   for (const variant of variants) {
     for (const value of variant.values) {
-      const options = groups.get(value.size) ?? new Map<string, VariantOption>();
-      const key = variantOptionKey(value);
-      if (!options.has(key)) options.set(key, { colorName: value.colorName, colorCode: value.colorCode });
-      groups.set(value.size, options);
+      const color = getVariantColor(value);
+      if (color && !colors.has(color.name)) colors.set(color.name, color);
     }
   }
-  return [...groups.entries()].map(([size, options]) => ({ size, options: [...options.values()] }));
+  return [...colors.values()];
 }
 
-export function createDefaultVariantSelection(variants: ProductVariant[], groups: VariantGroup[]): Record<string, string> {
-  if (variants.length === 1) {
-    return Object.fromEntries(variants[0].values.map((value) => [value.size, variantOptionKey(value)]));
-  }
-  const selection: Record<string, string> = {};
-  for (const group of groups) {
-    if (group.options.length === 1) selection[group.size] = variantOptionKey(group.options[0]);
-  }
-  return selection;
+function variantHasColor(variant: ProductVariant, color: string) {
+  return variant.values.some((value) => getVariantColor(value)?.name === color);
 }
 
-function variantMatchesSelection(variant: ProductVariant, selection: Record<string, string>) {
-  return Object.entries(selection).every(([size, option]) =>
-    variant.values.some((value) => value.size === size && variantOptionKey(value) === option),
+function variantHasSize(variant: ProductVariant, size: string) {
+  return variant.values.some((value) => value.size?.trim() === size);
+}
+
+export function getVariantSizes(variants: ProductVariant[], color: string | null): string[] {
+  const sizes = new Set<string>();
+  for (const variant of variants) {
+    if (color && !variantHasColor(variant, color)) continue;
+    for (const value of variant.values) {
+      const size = value.size?.trim();
+      if (size) sizes.add(size);
+    }
+  }
+  return [...sizes];
+}
+
+export function isVariantOptionOutOfStock(variants: ProductVariant[], color: string | null, size: string | null) {
+  return !variants.some((variant) =>
+    (!color || variantHasColor(variant, color)) && (!size || variantHasSize(variant, size)) && variant.stock > 0,
   );
 }
 
-export function matchVariantBySelection(variants: ProductVariant[], selection: Record<string, string>) {
-  if (Object.keys(selection).length === 0) return undefined;
-  return variants.find((variant) => variantMatchesSelection(variant, selection));
-}
-
-export function getVariantOptionStatus(
-  variants: ProductVariant[],
-  selection: Record<string, string>,
-  size: string,
-  option: string,
-) {
-  const hypothetical = { ...selection, [size]: option };
-  const matching = variants.filter((variant) => variantMatchesSelection(variant, hypothetical));
-  const hasStock = matching.some((variant) => variant.stock > 0);
-  return {
-    disabled: !hasStock,
-    outOfStock: matching.length > 0 && !hasStock,
-  };
+export function matchVariantBySelection(variants: ProductVariant[], color: string | null, size: string | null) {
+  const matching = variants.filter((variant) =>
+    (!color || variantHasColor(variant, color)) && (!size || variantHasSize(variant, size)),
+  );
+  return matching.find((variant) => variant.stock > 0) ?? matching[0];
 }
 
 export function getProductImageUrl(url?: string | null) {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://localhost:7185/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://5.10.248.182:8080/api";
   return `${apiBase.replace(/\/api\/?$/, "")}/${url.replace(/^\//, "")}`;
 }
 

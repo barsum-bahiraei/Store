@@ -4,7 +4,7 @@ import { StoreHeader } from "@/features/categories/components/store-header";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
-  title: "سبد خرید | فروشگاه",
+  title: "سبد خرید",
   description: "محصولات سبد خرید و تعداد آن‌ها را مدیریت کنید.",
   robots: { index: false, follow: false },
 };

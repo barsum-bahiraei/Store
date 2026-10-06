@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef, useSyncExternalStore } from "react";
 import { A11y, Autoplay, Keyboard, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -30,7 +31,7 @@ export function HeroSlider() {
   );
 
   return (
-    <section aria-label="مجموعه‌های ویژه" className="relative w-full overflow-hidden bg-secondary">
+    <section aria-label="مجموعه‌های ویژه" className="relative mt-4 w-full overflow-hidden bg-secondary sm:mt-6 lg:mt-8">
       <Swiper
         modules={[A11y, Autoplay, Keyboard, Pagination]}
         onSwiper={(swiper) => { swiperRef.current = swiper; }}
@@ -43,28 +44,32 @@ export function HeroSlider() {
       >
         {heroSlides.map((slide, index) => (
           <SwiperSlide key={slide.title}>
-            <article className="grid min-h-[31rem] bg-secondary text-secondary-foreground lg:min-h-[29rem] lg:grid-cols-[0.72fr_1.28fr]">
-              <div className="relative z-10 flex items-center px-5 pb-14 pt-9 sm:px-10 lg:px-12 lg:py-14 xl:pl-16 xl:pr-[max(3rem,calc((100vw-80rem)/2))]">
-                <div className="max-w-md">
-                  <span className="block h-1 w-12 rounded-full bg-accent" aria-hidden="true" />
-                  <h1 className="mt-5 text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl lg:text-5xl">
+            <article className="relative min-h-[20rem] overflow-hidden bg-secondary text-white sm:min-h-[31rem] lg:min-h-[29rem]">
+              <Image src={slide.image} alt={slide.imageAlt} fill priority={index === 0} sizes="100vw" className="object-cover" />
+              <div className="absolute inset-0 bg-secondary/45 sm:bg-gradient-to-r sm:from-secondary/90 sm:via-secondary/55 sm:to-transparent" aria-hidden="true" />
+              {slide.categoryId && <Link href={`/shop?category=${slide.categoryId}`} aria-label={`مشاهده محصولات ${slide.title}`} className="absolute inset-0 z-20 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset" />}
+
+              <div className="relative z-10 flex min-h-[20rem] items-center px-5 pb-14 pt-8 sm:min-h-[31rem] sm:px-20 sm:pb-16 sm:pt-12 lg:min-h-[29rem] lg:px-24 xl:px-[max(6rem,calc((100vw-80rem)/2))]">
+                <div className="mr-auto max-w-md text-right drop-shadow-md">
+                  {slide.eyebrow ? (
+                    <span className="inline-flex min-h-8 items-center rounded-full border border-accent/60 bg-secondary/45 px-3 text-xs font-black text-accent backdrop-blur-sm sm:min-h-9 sm:px-4 sm:text-sm">{slide.eyebrow}</span>
+                  ) : (
+                    <span className="block h-1 w-12 rounded-full bg-accent" aria-hidden="true" />
+                  )}
+                  <h1 className="mt-4 text-2xl font-black leading-tight tracking-[-0.04em] sm:mt-5 sm:text-4xl lg:text-5xl">
                     {slide.title}
                   </h1>
-                  <p className="mt-4 max-w-sm text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+                  <p className="mt-3 line-clamp-3 max-w-sm text-xs font-medium leading-5 text-white/85 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-7">
                     {slide.description}
                   </p>
                 </div>
-              </div>
-
-              <div className="relative order-first min-h-64 overflow-hidden lg:order-none lg:min-h-full">
-                <Image src={slide.image} alt={slide.imageAlt} fill priority={index === 0} sizes="(max-width: 1023px) 100vw, 60vw" className="object-cover" />
               </div>
             </article>
           </SwiperSlide>
         ))}
       </Swiper>
 
-      <div className="pointer-events-none absolute left-5 top-5 z-20 hidden gap-2 sm:flex lg:left-8 lg:top-1/2 lg:-translate-y-1/2 lg:flex-col">
+      <div className="pointer-events-none absolute inset-x-5 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-between sm:flex lg:inset-x-8">
         <button type="button" onClick={() => swiperRef.current?.slidePrev()} aria-label="پیشنهاد قبلی" className="pointer-events-auto grid size-11 place-items-center rounded-full border border-border bg-surface/90 text-foreground outline-none backdrop-blur-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring">
           <span className="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
         </button>
