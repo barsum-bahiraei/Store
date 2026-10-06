@@ -31,6 +31,19 @@ public class CategoryService(ICategoryRepository categoryRepository, AttributeSe
         return Result<List<CategoryListOutput>>.Success(result);
     }
 
+    public async Task<Result<List<CategoryGetOutput>>> BestSellingListAsync(CancellationToken cancellation)
+    {
+        var categories = await categoryRepository.BestSellingListAsync(10, cancellation);
+        var result = categories.Select(x => new CategoryGetOutput
+        {
+            Id = x.Id,
+            Name = x.Name,
+            ParentId = x.ParentId
+        }).ToList();
+
+        return Result<List<CategoryGetOutput>>.Success(result);
+    }
+
     public async Task<Result<CategoryGetOutput?>> GetAsync(int id, CancellationToken cancellation)
     {
         var eniity = await categoryRepository.GetAsync(id, cancellation);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Store.Domain.Categories;
+using Store.Domain.Invoices;
 using Store.Persistent.Database.StoreDbContext;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,37 @@ public class CategoryRepository(StoreDbContext context) : ICategoryRepository
     public async Task<List<CategoryEntity>> ListAsync(CancellationToken cancellation)
     {
         var result = await context.Categoryies.ToListAsync(cancellation);
+        return result;
+    }
+
+    public async Task<List<CategoryEntity>> BestSellingListAsync(int limit, CancellationToken cancellation)
+    {
+        var successfulStatuses = new[]
+        {
+            PaymentStatusEnum.PaymentCompleted,
+            PaymentStatusEnum.Preparing,
+            PaymentStatusEnum.ReadyForShipment,
+            PaymentStatusEnum.Shipping,
+            PaymentStatusEnum.Delivered
+        };
+
+        var categorySales = context.InvoiceItems
+            .Where(x => successfulStatuses.Contains(x.Invoice.PaymentStatus))
+            .GroupBy(x => x.Product.CategoryId)
+            .Select(x => new
+            {
+                CategoryId = x.Key,
+                UnitsSold = x.Sum(item => (long)item.ProductCount),
+                SalesAmount = x.Sum(item => item.ProductPrice * item.ProductCount)
+            });
+
+        var result = await (from category in context.Categoryies.AsNoTracking()
+                join sales in categorySales on category.Id equals sales.CategoryId
+                orderby sales.UnitsSold descending, sales.SalesAmount descending, category.Id
+                select category)
+            .Take(limit)
+            .ToListAsync(cancellation);
+
         return result;
     }
 

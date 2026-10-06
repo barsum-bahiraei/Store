@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Store.Api.Authorization;
 using Store.Domain.Categories.Models.Input;
 using Store.Service.EntityService;
@@ -16,6 +17,14 @@ public class CategoryController(CategoryService categoryService) : ControllerBas
     public async Task<IActionResult> Get(CancellationToken cancellation = default)
     {
         var result = await categoryService.ListAsync(cancellation);
+        return Ok(result);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("BestSelling")]
+    public async Task<IActionResult> BestSellingGet(CancellationToken cancellation = default)
+    {
+        var result = await categoryService.BestSellingListAsync(cancellation);
         return Ok(result);
     }
 
