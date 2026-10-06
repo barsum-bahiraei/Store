@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import HighchartsReactModule from "highcharts-react-official";
 import { sellerDashboardApi } from "../api/seller-dashboard-api";
 import type { CategorySalesItem, SellerDateRange } from "../models/seller-dashboard";
 import { errorMessage, formatNumber } from "../utils/format";
 import { useTheme } from "~/contexts/theme-context";
+import { unwrapDefault } from "~/shared/utils/unwrap-default";
 import { EmptyState } from "./EmptyState";
 import { ErrorBanner } from "./ErrorBanner";
 import { LoadingState } from "./LoadingState";
 import { SectionCard } from "./SectionCard";
+
+const HighchartsReact = unwrapDefault(HighchartsReactModule);
 
 interface CategorySalesCardProps {
   range: SellerDateRange;

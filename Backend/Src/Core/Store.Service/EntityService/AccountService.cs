@@ -3,10 +3,12 @@ using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Store.Domain.Accounts;
 using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
+using Store.Domain.Invoices;
 using Store.Service.ProviderService;
 
 namespace Store.Service.EntityService;
@@ -14,7 +16,8 @@ namespace Store.Service.EntityService;
 public class AccountService(
     IAccountRepository accountRepository,
     IConfiguration configuration,
-    KavenegarSmsService smsService
+    KavenegarSmsService smsService,
+    ILogger<AccountService> logger
 )
 {
     public async Task<Result<UserListPageOutput>> UserListAsync(UserListInput input,
@@ -210,6 +213,9 @@ public class AccountService(
 
         var (user, isNewUser) = authentication.Value;
 
+        if (isNewUser)
+            await CreateWelcomeDiscountAsync(user, cancellation);
+
         return Result<UserOtpVerifyOutput>.Success(new UserOtpVerifyOutput
         {
             Id = user.Id,
@@ -313,11 +319,10 @@ public class AccountService(
         {
             Id = x.Id,
             Code = x.Code,
-            DiscountPercent = x.DiscountPercent,
             MaxDiscountAmount = x.MaxDiscountAmount,
+            MinimumPurchaseAmount = x.MinimumPurchaseAmount,
             PaymentMethod = x.PaymentMethod,
-            StartDate = x.StartDate,
-            EndDate = x.EndDate,
+            ExpireAt = x.ExpireAt,
             IsActive = x.IsActive,
             AssignedUserCount = x.UserDiscountCodes.Count,
             UsedUserCount = x.UserDiscountCodes.Count(userDiscountCode => userDiscountCode.IsUsed)
@@ -351,11 +356,10 @@ public class AccountService(
         var entity = new DiscountCodeEntity
         {
             Code = code,
-            DiscountPercent = input.DiscountPercent,
             MaxDiscountAmount = input.MaxDiscountAmount,
+            MinimumPurchaseAmount = input.MinimumPurchaseAmount,
             PaymentMethod = input.PaymentMethod,
-            StartDate = input.StartDate,
-            EndDate = input.EndDate,
+            ExpireAt = input.ExpireAt,
             IsActive = input.IsActive,
             UserDiscountCodes = usersResult.Users.Select(user => new UserDiscountCodeEntity
             {
@@ -366,6 +370,20 @@ public class AccountService(
         };
 
         var created = await accountRepository.DiscountCodeCreateAsync(entity, cancellation);
+        foreach (var user in usersResult.Users)
+        {
+            try
+            {
+                await smsService.SendAssignedDiscountAsync(user.PhoneNumber, created.Code,
+                    created.MaxDiscountAmount, created.MinimumPurchaseAmount, created.ExpireAt, cancellation);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogError(exception,
+                    "Sending discount code {DiscountCodeId} to user {UserId} failed", created.Id, user.Id);
+            }
+        }
+
         return Result<DiscountCodeOutput>.Success(MapDiscountCode(created));
     }
 
@@ -405,11 +423,10 @@ public class AccountService(
         }
 
         entity.Code = code;
-        entity.DiscountPercent = input.DiscountPercent;
         entity.MaxDiscountAmount = input.MaxDiscountAmount;
+        entity.MinimumPurchaseAmount = input.MinimumPurchaseAmount;
         entity.PaymentMethod = input.PaymentMethod;
-        entity.StartDate = input.StartDate;
-        entity.EndDate = input.EndDate;
+        entity.ExpireAt = input.ExpireAt;
         entity.IsActive = input.IsActive;
 
         var updated = await accountRepository.DiscountCodeUpdateAsync(entity, cancellation);
@@ -478,6 +495,49 @@ public class AccountService(
         return Result<bool>.Success(true);
     }
 
+    private async Task CreateWelcomeDiscountAsync(UserEntity user, CancellationToken cancellation)
+    {
+        var amount = configuration.GetValue<decimal>("WelcomeDiscount:AmountToman");
+        var minimumPurchase = configuration.GetValue<decimal>("WelcomeDiscount:MinimumPurchaseAmountToman");
+        var validityDays = configuration.GetValue<int>("WelcomeDiscount:ValidityDays");
+        if (amount <= 0 || minimumPurchase < 0 || validityDays <= 0)
+        {
+            logger.LogError("Welcome discount configuration is invalid");
+            return;
+        }
+
+        var expireAt = DateTime.UtcNow.AddDays(validityDays);
+        var code = $"WELCOME{user.Id}{RandomNumberGenerator.GetInt32(100000, 1000000)}";
+
+        try
+        {
+            await accountRepository.DiscountCodeCreateAsync(new DiscountCodeEntity
+            {
+                Code = code,
+                MaxDiscountAmount = amount,
+                MinimumPurchaseAmount = minimumPurchase,
+                PaymentMethod = PaymentMethodEnum.Online,
+                ExpireAt = expireAt,
+                IsActive = true,
+                UserDiscountCodes =
+                [
+                    new UserDiscountCodeEntity
+                    {
+                        UserId = user.Id,
+                        IsUsed = false
+                    }
+                ]
+            }, cancellation);
+
+            await smsService.SendWelcomeDiscountAsync(user.PhoneNumber, code, amount, minimumPurchase, expireAt,
+                cancellation);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Creating or sending welcome discount failed for user {UserId}", user.Id);
+        }
+    }
+
     private string GenerateToken(int id)
     {
         var claims = new[]
@@ -526,14 +586,12 @@ public class AccountService(
             return "Discount code is required";
         if (input.Code.Trim().Length > 100)
             return "Discount code cannot exceed 100 characters";
-        if (input.DiscountPercent is <= 0 or > 100)
-            return "Discount percent must be greater than zero and at most 100";
-        if (input.MaxDiscountAmount is < 0)
-            return "Maximum discount amount cannot be negative";
+        if (input.MaxDiscountAmount <= 0)
+            return "Discount amount must be greater than zero";
+        if (input.MinimumPurchaseAmount < 0)
+            return "Minimum purchase amount cannot be negative";
         if (input.PaymentMethod.HasValue && !Enum.IsDefined(input.PaymentMethod.Value))
             return "Payment method is invalid";
-        if (input.StartDate.HasValue && input.EndDate.HasValue && input.StartDate > input.EndDate)
-            return "Start date cannot be after end date";
         if (input.UserIds == null || input.UserIds.Count == 0)
             return "At least one user must be selected";
         if (input.UserIds.Any(x => x <= 0))
@@ -547,11 +605,10 @@ public class AccountService(
         {
             Id = entity.Id,
             Code = entity.Code,
-            DiscountPercent = entity.DiscountPercent,
             MaxDiscountAmount = entity.MaxDiscountAmount,
+            MinimumPurchaseAmount = entity.MinimumPurchaseAmount,
             PaymentMethod = entity.PaymentMethod,
-            StartDate = entity.StartDate,
-            EndDate = entity.EndDate,
+            ExpireAt = entity.ExpireAt,
             IsActive = entity.IsActive,
             Users = entity.UserDiscountCodes.Select(x => new DiscountCodeUserOutput
             {

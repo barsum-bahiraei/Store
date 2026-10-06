@@ -5,6 +5,7 @@ using Store.Domain.Products.Models.Input;
 using Store.Domain.Products.Models.Output;
 using Store.Domain.Sellers;
 using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Store.Service.EntityService;
 
@@ -552,7 +553,8 @@ public class ProductService(
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
             return Result<ProductCreateOutput>.Failure("Seller not found");
 
-        if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
+        if (input.ProductBrandId is { } createBrandId &&
+            await productRepository.BrandGetAsync(createBrandId, cancellation) == null)
             return Result<ProductCreateOutput>.Failure("Product brand not found");
 
         var combinations = input.Variants?.Select(x => new ProductCombinationData(
@@ -561,8 +563,8 @@ public class ProductService(
             x.Stock,
             x.Values?.Select(value => new ProductVariantAttributeValueData(
                 value.Size,
-                value.Name,
-                value.Code)).ToList() ?? [])).ToList() ?? [];
+                value.ColorName,
+                value.ColorCode)).ToList() ?? [])).ToList() ?? [];
         var validationError = ValidateCombinations(combinations);
         if (validationError != null)
             return Result<ProductCreateOutput>.Failure(validationError);
@@ -592,8 +594,8 @@ public class ProductService(
                 AttributeValues = x.Values.Select(value => new ProductVariantAttributeValueEntity
                 {
                     Size = value.Size.Trim(),
-                    Name = value.Name.Trim(),
-                    Code = value.Code.Trim()
+                    ColorName = value.ColorName.Trim(),
+                    ColorCode = value.ColorCode.Trim()
                 }).ToList()
             }).ToList()
         };
@@ -632,7 +634,8 @@ public class ProductService(
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
             return Result<ProductUpdateOutput>.Failure("Seller not found");
 
-        if (await productRepository.BrandGetAsync(input.ProductBrandId, cancellation) == null)
+        if (input.ProductBrandId is { } updateBrandId &&
+            await productRepository.BrandGetAsync(updateBrandId, cancellation) == null)
             return Result<ProductUpdateOutput>.Failure("Product brand not found");
 
         var combinations = input.Variants?.Select(x => new ProductCombinationData(
@@ -641,8 +644,8 @@ public class ProductService(
             x.Stock,
             x.Values?.Select(value => new ProductVariantAttributeValueData(
                 value.Size,
-                value.Name,
-                value.Code)).ToList() ?? [])).ToList() ?? [];
+                value.ColorName,
+                value.ColorCode)).ToList() ?? [])).ToList() ?? [];
         var validationError = ValidateCombinations(combinations);
         if (validationError != null)
             return Result<ProductUpdateOutput>.Failure(validationError);
@@ -696,8 +699,8 @@ public class ProductService(
                 existing.AttributeValues.Add(new ProductVariantAttributeValueEntity
                 {
                     Size = value.Size.Trim(),
-                    Name = value.Name.Trim(),
-                    Code = value.Code.Trim()
+                    ColorName = value.ColorName.Trim(),
+                    ColorCode = value.ColorCode.Trim()
                 });
         }
 
@@ -710,8 +713,8 @@ public class ProductService(
                 AttributeValues = item.Values.Select(value => new ProductVariantAttributeValueEntity
                 {
                     Size = value.Size.Trim(),
-                    Name = value.Name.Trim(),
-                    Code = value.Code.Trim()
+                    ColorName = value.ColorName.Trim(),
+                    ColorCode = value.ColorCode.Trim()
                 }).ToList()
             });
 
@@ -952,8 +955,9 @@ public class ProductService(
 
         if (combinations.Any(x => x.Values.Count == 0 || x.Values.Any(value =>
                 string.IsNullOrWhiteSpace(value.Size) || value.Size.Trim().Length > 50 ||
-                string.IsNullOrWhiteSpace(value.Name) || value.Name.Trim().Length > 100 ||
-                string.IsNullOrWhiteSpace(value.Code) || value.Code.Trim().Length > 32)))
+                string.IsNullOrWhiteSpace(value.ColorName) || value.ColorName.Trim().Length > 100 ||
+                string.IsNullOrWhiteSpace(value.ColorCode) || value.ColorCode.Trim().Length > 32 ||
+                !Regex.IsMatch(value.ColorCode.Trim(), "^#[0-9a-fA-F]{6}$"))))
             return "Product variant values are invalid";
 
         if (combinations.Any(combination => combination.Values
@@ -976,8 +980,8 @@ public class ProductService(
         string.Join("\u001e", values
             .Select(value => string.Join("\u001f",
                 value.Size.Trim().ToLowerInvariant(),
-                value.Name.Trim().ToLowerInvariant(),
-                value.Code.Trim().ToLowerInvariant()))
+                value.ColorName.Trim().ToLowerInvariant(),
+                value.ColorCode.Trim().ToLowerInvariant()))
             .OrderBy(value => value, StringComparer.Ordinal));
 
     private static decimal GetDisplayPrice(ProductEntity product)
@@ -1004,8 +1008,8 @@ public class ProductService(
             {
                 Id = x.Id,
                 Size = x.Size,
-                Name = x.Name,
-                Code = x.Code
+                ColorName = x.ColorName,
+                ColorCode = x.ColorCode
             }).ToList()
     };
 
@@ -1015,5 +1019,5 @@ public class ProductService(
         int Stock,
         List<ProductVariantAttributeValueData> Values);
 
-    private sealed record ProductVariantAttributeValueData(string Size, string Name, string Code);
+    private sealed record ProductVariantAttributeValueData(string Size, string ColorName, string ColorCode);
 }

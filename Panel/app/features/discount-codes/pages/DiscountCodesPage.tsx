@@ -32,21 +32,19 @@ function errorMessage(error: unknown) {
 
 interface FormState {
   code: string;
-  discountPercent: string;
   maxDiscountAmount: string;
+  minimumPurchaseAmount: string;
   paymentMethod: string;
-  startDate: string;
-  endDate: string;
+  expireAt: string;
   isActive: boolean;
 }
 
 const emptyForm: FormState = {
   code: "",
-  discountPercent: "",
   maxDiscountAmount: "",
+  minimumPurchaseAmount: "",
   paymentMethod: "",
-  startDate: "",
-  endDate: "",
+  expireAt: "",
   isActive: true,
 };
 
@@ -134,11 +132,10 @@ export default function DiscountCodesPage() {
       const detail = await discountCodeApi.get(id);
       setForm({
         code: detail.code,
-        discountPercent: String(detail.discountPercent),
-        maxDiscountAmount: detail.maxDiscountAmount != null ? String(detail.maxDiscountAmount) : "",
+        maxDiscountAmount: String(detail.maxDiscountAmount),
+        minimumPurchaseAmount: String(detail.minimumPurchaseAmount),
         paymentMethod: detail.paymentMethod != null ? String(detail.paymentMethod) : "",
-        startDate: detail.startDate ? detail.startDate.slice(0, 16) : "",
-        endDate: detail.endDate ? detail.endDate.slice(0, 16) : "",
+        expireAt: detail.expireAt ? detail.expireAt.slice(0, 16) : "",
         isActive: detail.isActive,
       });
       setSelectedUserIds(new Set(detail.users.map((u) => u.userId)));
@@ -158,13 +155,18 @@ export default function DiscountCodesPage() {
   };
 
   const goToStep2 = async () => {
-    const percent = Number(form.discountPercent);
+    const amount = Number(form.maxDiscountAmount);
+    const minimumPurchase = Number(form.minimumPurchaseAmount);
     if (!form.code.trim()) {
       setFormError("کد تخفیف را وارد کنید.");
       return;
     }
-    if (!Number.isFinite(percent) || percent <= 0 || percent > 100) {
-      setFormError("درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.");
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormError("مبلغ تخفیف باید بیشتر از صفر باشد.");
+      return;
+    }
+    if (!Number.isFinite(minimumPurchase) || minimumPurchase < 0) {
+      setFormError("حداقل مبلغ خرید نمی‌تواند منفی باشد.");
       return;
     }
     setFormError(null);
@@ -229,14 +231,12 @@ export default function DiscountCodesPage() {
   };
 
   const handleFinalSubmit = async () => {
-    const percent = Number(form.discountPercent);
     const payload: DiscountCodeUpsertInput = {
       code: form.code.trim(),
-      discountPercent: percent,
-      maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : null,
+      maxDiscountAmount: Number(form.maxDiscountAmount),
+      minimumPurchaseAmount: Number(form.minimumPurchaseAmount),
       paymentMethod: form.paymentMethod !== "" ? (Number(form.paymentMethod) as PaymentMethod) : null,
-      startDate: form.startDate || null,
-      endDate: form.endDate || null,
+      expireAt: form.expireAt || null,
       isActive: form.isActive,
       userIds: Array.from(selectedUserIds),
     };
@@ -298,9 +298,9 @@ export default function DiscountCodesPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 sm:grid sm:grid-cols-[1fr_100px_100px_100px_120px_100px] sm:gap-4">
+          <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 sm:grid sm:grid-cols-[1fr_140px_100px_100px_120px_100px] sm:gap-4">
             <span>کد</span>
-            <span className="text-center">درصد</span>
+            <span className="text-center">مبلغ تخفیف</span>
             <span className="text-center">تعداد کاربران</span>
             <span className="text-center">استفاده</span>
             <span className="text-center">وضعیت</span>
@@ -308,15 +308,15 @@ export default function DiscountCodesPage() {
           </div>
           <ul className="divide-y divide-gray-200 dark:divide-gray-800">
             {codes.map((item) => (
-              <li key={item.id} className="flex flex-col gap-3 p-4 sm:grid sm:grid-cols-[1fr_100px_100px_100px_120px_100px] sm:items-center sm:gap-4 sm:px-6">
+              <li key={item.id} className="flex flex-col gap-3 p-4 sm:grid sm:grid-cols-[1fr_140px_100px_100px_120px_100px] sm:items-center sm:gap-4 sm:px-6">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-gray-900 dark:text-white">{item.code}</p>
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {paymentMethodLabels[item.paymentMethod ?? -1] ?? "—"}
-                    {item.maxDiscountAmount != null && ` · سقف ${item.maxDiscountAmount.toLocaleString("fa-IR")}`}
+                    {` · حداقل خرید ${item.minimumPurchaseAmount.toLocaleString("fa-IR")} تومان`}
                   </p>
                 </div>
-                <p className="text-center text-sm font-semibold text-primary-600 dark:text-primary-400">{item.discountPercent}%</p>
+                <p className="text-center text-sm font-semibold text-primary-600 dark:text-primary-400">{item.maxDiscountAmount.toLocaleString("fa-IR")} تومان</p>
                 <p className="text-center text-sm text-gray-600 dark:text-gray-300">{item.assignedUserCount}</p>
                 <p className="text-center text-sm text-gray-600 dark:text-gray-300">{item.usedUserCount}</p>
                 <div className="flex justify-center">
@@ -388,12 +388,12 @@ export default function DiscountCodesPage() {
                       </div>
                     </label>
                     <label>
-                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">درصد تخفیف <span className="text-red-500">*</span></span>
-                      <input type="number" min={1} max={100} value={form.discountPercent} onChange={(e) => { const v = e.target.value; if (v === "" || Number(v) <= 100) setFormField("discountPercent", v); }} onInput={(e) => { const v = Number((e.target as HTMLInputElement).value); if (v > 100) setFormField("discountPercent", "100"); }} placeholder="۱ تا ۱۰۰" className={inputClasses} required />
+                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">مبلغ تخفیف (تومان) <span className="text-red-500">*</span></span>
+                      <input type="number" min={1} value={form.maxDiscountAmount} onChange={(e) => setFormField("maxDiscountAmount", e.target.value)} placeholder="مثال: ۲۰۰۰۰۰" className={inputClasses} required />
                     </label>
                     <label>
-                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">سقف تخفیف (تومان)</span>
-                      <input type="number" min={0} value={form.maxDiscountAmount} onChange={(e) => setFormField("maxDiscountAmount", e.target.value)} placeholder="اختیاری" className={inputClasses} />
+                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">حداقل مبلغ خرید (تومان) <span className="text-red-500">*</span></span>
+                      <input type="number" min={0} value={form.minimumPurchaseAmount} onChange={(e) => setFormField("minimumPurchaseAmount", e.target.value)} placeholder="مثال: ۱۰۰۰۰۰۰" className={inputClasses} required />
                     </label>
                     <label>
                       <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">روش پرداخت</span>
@@ -403,14 +403,9 @@ export default function DiscountCodesPage() {
                         ))}
                       </select>
                     </label>
-                    <div />
                     <label>
-                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ شروع</span>
-                      <PersianDateTimePicker mode="datetime" value={form.startDate} onChange={(value) => setFormField("startDate", value)} className={inputClasses} ariaLabel="تاریخ شروع" />
-                    </label>
-                    <label>
-                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ پایان</span>
-                      <PersianDateTimePicker mode="datetime" value={form.endDate} onChange={(value) => setFormField("endDate", value)} className={inputClasses} ariaLabel="تاریخ پایان" />
+                      <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تاریخ انقضا</span>
+                      <PersianDateTimePicker mode="datetime" value={form.expireAt} onChange={(value) => setFormField("expireAt", value)} className={inputClasses} ariaLabel="تاریخ انقضا" />
                     </label>
                     <label className="sm:col-span-2 flex items-center gap-3 cursor-pointer">
                       <input type="checkbox" checked={form.isActive} onChange={(e) => setFormField("isActive", e.target.checked)} className="size-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />

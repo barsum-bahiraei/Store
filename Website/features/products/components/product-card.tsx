@@ -6,11 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { BookmarkButton } from "@/features/bookmarks/components/bookmark-button";
-import { useAuthToken, useUserProfile } from "@/features/auth/hooks/use-account";
-import { isUserRole } from "@/features/auth/types/account";
-import { useCartItemActions } from "@/features/cart/hooks/use-cart";
 import type { ProductSearchItem } from "../types/product";
-import { getProductImageUrl, getSalePrice, formatToman, formatVariantLabel } from "../utils/product";
+import { getProductImageUrl, getSalePrice, formatToman } from "../utils/product";
 
 export function ProductCard({ product, originalAppearance = false, compactOnMobile = false }: { product: ProductSearchItem; originalAppearance?: boolean; compactOnMobile?: boolean }) {
   const router = useRouter();
@@ -75,6 +72,7 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
           {error && <p role="alert" className="mt-2 text-xs text-error">{error.message}</p>}
         </div>
       </div>
+      <Link href={`/products/${product.id}`} aria-label={product.name} className="absolute inset-0 z-[5] rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" />
     </article>
   );
 }

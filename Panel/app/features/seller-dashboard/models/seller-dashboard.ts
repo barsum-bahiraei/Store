@@ -42,8 +42,8 @@ export interface TopProductItem {
 export interface VariantValueOutput {
   id: number;
   size: string;
-  name: string;
-  code: string;
+  colorName: string;
+  colorCode: string;
 }
 
 export interface TopVariantItem {

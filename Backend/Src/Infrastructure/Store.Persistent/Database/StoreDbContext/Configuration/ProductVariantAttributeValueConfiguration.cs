@@ -10,8 +10,8 @@ public class ProductVariantAttributeValueConfiguration : IEntityTypeConfiguratio
     {
         builder.ToTable("ProductVariantAttributeValues");
         builder.Property(x => x.Size).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.Code).IsRequired().HasMaxLength(32);
+        builder.Property(x => x.ColorName).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.ColorCode).IsRequired().HasMaxLength(32);
 
         builder.HasOne(x => x.ProductVariant)
             .WithMany(x => x.AttributeValues)

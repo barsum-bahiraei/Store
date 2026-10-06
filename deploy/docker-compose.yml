@@ -41,6 +41,9 @@ services:
       ConnectionStrings__StoreDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Cors__AllowedOrigins__0: http://${SERVER_PUBLIC_HOST}:${WEBSITE_PORT:-3000}
       Cors__AllowedOrigins__1: http://${SERVER_PUBLIC_HOST}:${PANEL_PORT:-3001}
+      # TEMP-LOCAL-CORS: delete this block before production
+      Cors__AllowedOrigins__2: http://localhost:3000
+      # /TEMP-LOCAL-CORS
       Minio__Endpoint: ${SERVER_PUBLIC_HOST}:${MINIO_PORT:-9000}
       Minio__AccessKey: ${MINIO_ROOT_USER}
       Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
@@ -51,14 +54,11 @@ services:
       Jwt__Audience: ${JWT_AUDIENCE}
       Jwt__ExpireMinutes: ${JWT_EXPIRE_MINUTES}
       Kavenegar__ApiKey: ${KAVENEGAR_API_KEY}
-      Kavenegar__Template: ${KAVENEGAR_TEMPLATE}
       Mellat__TerminalId: ${MELLAT_TERMINAL_ID}
       Mellat__UserName: ${MELLAT_USERNAME}
       Mellat__UserPassword: ${MELLAT_PASSWORD}
       Mellat__ServiceUrl: https://bpm.shaparak.ir/pgwchannel/services/pgw
       Mellat__GatewayUrl: https://bpm.shaparak.ir/pgwchannel/startpay.mellat
-      Mellat__CallbackUrl: ${MELLAT_CALLBACK_URL}
-      Mellat__ResultUrl: ${MELLAT_RESULT_URL}
     depends_on:
       postgres:
         condition: service_healthy

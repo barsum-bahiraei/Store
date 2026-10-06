@@ -64,6 +64,24 @@ export default function SellersPage() {
     setFormError(null);
   };
 
+  const startCreating = () => {
+    closeForm();
+    setFormOpen(true);
+  };
+
+  const requestCloseForm = () => {
+    if (!submitting) closeForm();
+  };
+
+  useEffect(() => {
+    if (!formOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") requestCloseForm();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [formOpen, submitting]);
+
   const startEditing = async (seller: SellerListOutput) => {
     const requestId = ++editRequestId.current;
     setFormOpen(true);
@@ -85,6 +103,10 @@ export default function SellersPage() {
       setLongitude(String(details.longitude));
       setStatus(details.status);
       setExistingImage(details.images.find((image) => image.isMain) ?? details.images[0] ?? null);
+    } catch (caughtError) {
+      if (requestId === editRequestId.current) {
+        setFormError(caughtError instanceof Error ? caughtError.message : "بارگذاری اطلاعات فروشنده ناموفق بود.");
+      }
     } finally {
       if (requestId === editRequestId.current) setFormLoading(false);
     }
@@ -92,8 +114,11 @@ export default function SellersPage() {
 
   const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file?.type.startsWith("image/")) {
+    if (file && (file.type === "image/webp" || /\.webp$/i.test(file.name))) {
+      setFormError(null);
       setSelectedImage({ file, previewUrl: URL.createObjectURL(file) });
+    } else if (file) {
+      setFormError("فقط فایل تصویری WebP (.webp) پذیرفته می‌شود.");
     }
     event.target.value = "";
   };
@@ -142,7 +167,7 @@ export default function SellersPage() {
         name: `${sellerId}-${createClientId()}-${selectedImage.file.name.replace(/\.[^/.]+$/, "")}`,
         sellerId,
         imageId: existingImage?.id,
-        fileType: selectedImage.file.type === "image/svg+xml" ? 3 : 0,
+        fileType: 0,
       });
       if (!imageSaved) {
         setEditingId(sellerId);
@@ -173,62 +198,119 @@ export default function SellersPage() {
           <h1 className="mt-1 text-2xl font-semibold text-gray-950 dark:text-white">فروشندگان</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">مدیریت فروشندگانی که مالک آگهی محصولات هستند.</p>
         </div>
-        <button onClick={() => formOpen ? closeForm() : setFormOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white hover:bg-primary-700">
-          <span className="material-symbols-outlined text-xl">{formOpen ? "close" : "add_business"}</span>
-          {formOpen ? "بستن" : "فروشنده جدید"}
+        <button onClick={startCreating} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white hover:bg-primary-700">
+          <span className="material-symbols-outlined text-xl">add_business</span>
+          فروشنده جدید
         </button>
       </header>
 
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
       {formOpen && (
-        <form onSubmit={save} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-semibold text-gray-950 dark:text-white">{editingId === null ? "ایجاد فروشنده" : "ویرایش فروشنده"}</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">نام</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
-            {editingId !== null && <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">وضعیت</span><select value={status} onChange={(event) => setStatus(Number(event.target.value))} className={inputClasses}>{statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>}
-            <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">توضیحات</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} className={`${inputClasses} min-h-24 py-3`} /></label>
-            <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">آدرس</span><textarea value={address} onChange={(event) => setAddress(event.target.value)} className={`${inputClasses} min-h-20 py-3`} required disabled={formLoading} /></label>
-            <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">عرض جغرافیایی</span><input type="number" min="-90" max="90" step="any" value={latitude} onChange={(event) => setLatitude(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
-            <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">طول جغرافیایی</span><input type="number" min="-180" max="180" step="any" value={longitude} onChange={(event) => setLongitude(event.target.value)} className={inputClasses} required disabled={formLoading} /></label>
-            <div className="sm:col-span-2">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">مکان</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">روی نقشه کلیک کنید تا مختصات تنظیم شود</span>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="seller-form-title"
+          onMouseDown={requestCloseForm}
+        >
+          <form
+            onSubmit={save}
+            onMouseDown={(event) => event.stopPropagation()}
+            className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-2xl"
+          >
+            <header className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+              <div>
+                <h2 id="seller-form-title" className="font-semibold text-gray-950 dark:text-white">
+                  {editingId === null ? "افزودن فروشنده" : "ویرایش فروشنده"}
+                </h2>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  اطلاعات فروشگاه، موقعیت مکانی و تصویر فروشنده را تکمیل کنید.
+                </p>
               </div>
-              <div className="overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
-                <SellerLocationMap
-                  latitude={validLatitude ? latitudeNumber : null}
-                  longitude={validLongitude ? longitudeNumber : null}
-                  onChange={(nextLatitude, nextLongitude) => {
-                    setLatitude(nextLatitude.toFixed(6));
-                    setLongitude(nextLongitude.toFixed(6));
-                    setFormError(null);
-                  }}
-                />
-              </div>
-            </div>
-            <div className="sm:col-span-2">
-              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تصویر فروشنده</span>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950">
-                  {selectedImage || resolveSellerImageUrl(existingImage) ? <img src={selectedImage?.previewUrl ?? resolveSellerImageUrl(existingImage) ?? undefined} alt={`پیش‌نمایش ${name || "فروشنده"}`} className="size-full object-cover" /> : <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600">storefront</span>}
+              <button
+                type="button"
+                onClick={requestCloseForm}
+                disabled={submitting}
+                aria-label="بستن فرم فروشنده"
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </header>
+
+            <div className="overflow-y-auto p-5">
+              {formLoading ? (
+                <div className="flex min-h-72 items-center justify-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  در حال بارگذاری اطلاعات فروشنده...
                 </div>
-                <div>
-                  <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
-                    <span className="material-symbols-outlined text-xl">add_photo_alternate</span>
-                    {existingImage || selectedImage ? "جایگزینی تصویر" : "انتخاب تصویر"}
-                    <input type="file" accept="image/*" onChange={selectImage} className="sr-only" disabled={formLoading} />
-                  </label>
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">فقط یک تصویر. انتخاب تصویر جایگزین تصویر فعلی می‌شود.</p>
-                  {selectedImage && <button type="button" onClick={() => setSelectedImage(null)} className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400">لغو انتخاب تصویر</button>}
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">نام</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} className={inputClasses} required /></label>
+                  {editingId !== null && <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">وضعیت</span><select value={status} onChange={(event) => setStatus(Number(event.target.value))} className={inputClasses}>{statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>}
+                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">توضیحات</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} className={`${inputClasses} min-h-24 py-3`} /></label>
+                  <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">آدرس</span><textarea value={address} onChange={(event) => setAddress(event.target.value)} className={`${inputClasses} min-h-20 py-3`} required /></label>
+                  <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">عرض جغرافیایی</span><input type="number" min="-90" max="90" step="any" value={latitude} onChange={(event) => setLatitude(event.target.value)} className={inputClasses} required /></label>
+                  <label><span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">طول جغرافیایی</span><input type="number" min="-180" max="180" step="any" value={longitude} onChange={(event) => setLongitude(event.target.value)} className={inputClasses} required /></label>
+                  <div className="sm:col-span-2">
+                    <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">مکان</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">روی نقشه کلیک کنید تا مختصات تنظیم شود</span>
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
+                      <SellerLocationMap
+                        latitude={validLatitude ? latitudeNumber : null}
+                        longitude={validLongitude ? longitudeNumber : null}
+                        onChange={(nextLatitude, nextLongitude) => {
+                          setLatitude(nextLatitude.toFixed(6));
+                          setLongitude(nextLongitude.toFixed(6));
+                          setFormError(null);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">تصویر فروشنده</span>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <div className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950">
+                        {selectedImage || resolveSellerImageUrl(existingImage) ? <img src={selectedImage?.previewUrl ?? resolveSellerImageUrl(existingImage) ?? undefined} alt={`پیش‌نمایش ${name || "فروشنده"}`} className="size-full object-cover" /> : <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600">storefront</span>}
+                      </div>
+                      <div>
+                        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
+                          <span className="material-symbols-outlined text-xl">add_photo_alternate</span>
+                          {existingImage || selectedImage ? "جایگزینی تصویر" : "انتخاب تصویر"}
+                          <input type="file" accept=".webp,image/webp" onChange={selectImage} className="sr-only" />
+                        </label>
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">فقط یک تصویر WebP (.webp). انتخاب تصویر جایگزین تصویر فعلی می‌شود.</p>
+                        {selectedImage && <button type="button" onClick={() => setSelectedImage(null)} className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400">لغو انتخاب تصویر</button>}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {formError && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">{formError}</p>}
             </div>
-          </div>
-          {formError && <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">{formError}</p>}
-          <button disabled={submitting || formLoading || !name.trim() || !address.trim() || !validLatitude || !validLongitude} className="mt-4 min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white disabled:opacity-50">{submitting ? "در حال ذخیره..." : "ذخیره فروشنده"}</button>
-        </form>
+
+            <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-200 px-5 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={requestCloseForm}
+                disabled={submitting}
+                className="min-h-11 rounded-xl border border-gray-300 px-5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                لغو
+              </button>
+              <button
+                disabled={submitting || formLoading || !name.trim() || !address.trim() || !validLatitude || !validLongitude}
+                className="min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? "در حال ذخیره..." : editingId === null ? "افزودن فروشنده" : "ذخیره تغییرات"}
+              </button>
+            </footer>
+          </form>
+        </div>
       )}
 
       {loading && sellers.length === 0 ? (

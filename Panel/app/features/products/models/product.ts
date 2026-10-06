@@ -24,8 +24,8 @@ export interface ProductAttributeGetOutput
 
 export interface ProductVariantValueInput {
   size: string;
-  name: string;
-  code: string;
+  colorName: string;
+  colorCode: string;
 }
 
 export interface ProductVariantValueOutput extends ProductVariantValueInput {
@@ -53,7 +53,7 @@ export interface ProductCreateInput {
   discount: number;
   categoryId: number;
   sellerId: number;
-  productBrandId: number;
+  productBrandId: number | null;
   attributes: ProductAttributeInput[];
   variants: ProductVariantInput[];
 }

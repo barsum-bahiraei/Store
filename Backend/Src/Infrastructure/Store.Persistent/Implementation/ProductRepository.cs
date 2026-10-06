@@ -64,13 +64,39 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
     public async Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation)
     {
-        var query = context.Products.AsQueryable();
+        var query = context.Products
+            .Where(x => (x.ProductVariants.Where(v => v.Stock > 0)
+                            .Min(v => (decimal?)v.Price) ??
+                        x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0) > 0)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(input.Name))
             query = query.Where(x => x.Name.Contains(input.Name.Trim()));
 
         if (input.CategoryId.HasValue)
-            query = query.Where(x => x.CategoryId == input.CategoryId.Value);
+        {
+            var categories = await context.Categoryies
+                .AsNoTracking()
+                .Select(x => new { x.Id, x.ParentId })
+                .ToListAsync(cancellation);
+            var childrenByParentId = categories
+                .Where(x => x.ParentId.HasValue)
+                .ToLookup(x => x.ParentId!.Value, x => x.Id);
+            var categoryIds = new HashSet<int> { input.CategoryId.Value };
+            var pendingCategoryIds = new Stack<int>();
+            pendingCategoryIds.Push(input.CategoryId.Value);
+
+            while (pendingCategoryIds.TryPop(out var categoryId))
+            {
+                foreach (var childId in childrenByParentId[categoryId])
+                {
+                    if (categoryIds.Add(childId))
+                        pendingCategoryIds.Push(childId);
+                }
+            }
+
+            query = query.Where(x => categoryIds.Contains(x.CategoryId));
+        }
 
         if (input.ProductBrandId.HasValue)
             query = query.Where(x => x.ProductBrandId == input.ProductBrandId.Value);
@@ -84,27 +110,28 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
                 (!input.MinPrice.HasValue || v.Price >= input.MinPrice.Value) &&
                 (!input.MaxPrice.HasValue || v.Price <= input.MaxPrice.Value)));
 
-        if (input.IsAvailable.HasValue)
-            query = input.IsAvailable.Value
-                ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
-                : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
+        if (input.IsAvailable == true)
+            query = query.Where(x => x.ProductVariants.Any(v => v.Stock > 0));
 
         var totalCount = await query.CountAsync(cancellation);
         var page = input.Page < 1 ? 1 : input.Page;
         var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
 
+        var orderedQuery = query
+            .OrderByDescending(x => x.ProductVariants.Any(v => v.Stock > 0));
+
         query = input.IsIdDec
             ? input.IsPriceDec
-                ? query.OrderByDescending(x => x.CreatedAt)
+                ? orderedQuery.ThenByDescending(x => x.CreatedAt)
                     .ThenByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
                         .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
-                : query.OrderByDescending(x => x.CreatedAt)
+                : orderedQuery.ThenByDescending(x => x.CreatedAt)
                     .ThenBy(x => x.ProductVariants.Where(v => v.Stock > 0)
                         .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
             : input.IsPriceDec
-                ? query.OrderByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
+                ? orderedQuery.ThenByDescending(x => x.ProductVariants.Where(v => v.Stock > 0)
                     .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0)
-                : query.OrderBy(x => x.ProductVariants.Where(v => v.Stock > 0)
+                : orderedQuery.ThenBy(x => x.ProductVariants.Where(v => v.Stock > 0)
                     .Min(v => (decimal?)v.Price) ?? x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0);
 
         var result = await query

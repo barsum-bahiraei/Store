@@ -8,7 +8,7 @@ public class ProductCreateInput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
-    public int ProductBrandId { get; set; }
+    public int? ProductBrandId { get; set; }
     public List<ProductAttributeInput> Attributes { get; set; }
     public List<ProductCombinationCreateInput> Variants { get; set; }
 }
@@ -23,8 +23,8 @@ public class ProductCombinationCreateInput
 public class ProductVariantAttributeValueInput
 {
     public string Size { get; set; }
-    public string Name { get; set; }
-    public string Code { get; set; }
+    public string ColorName { get; set; }
+    public string ColorCode { get; set; }
 }
 
 public class ProductAttributeInput

@@ -6,11 +6,10 @@ public class DiscountCodeListOutput
 {
     public int Id { get; set; }
     public string Code { get; set; } = string.Empty;
-    public decimal DiscountPercent { get; set; }
-    public decimal? MaxDiscountAmount { get; set; }
+    public decimal MaxDiscountAmount { get; set; }
+    public decimal MinimumPurchaseAmount { get; set; }
     public PaymentMethodEnum? PaymentMethod { get; set; }
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
+    public DateTime? ExpireAt { get; set; }
     public bool IsActive { get; set; }
     public int AssignedUserCount { get; set; }
     public int UsedUserCount { get; set; }
@@ -20,11 +19,10 @@ public class DiscountCodeOutput
 {
     public int Id { get; set; }
     public string Code { get; set; } = string.Empty;
-    public decimal DiscountPercent { get; set; }
-    public decimal? MaxDiscountAmount { get; set; }
+    public decimal MaxDiscountAmount { get; set; }
+    public decimal MinimumPurchaseAmount { get; set; }
     public PaymentMethodEnum? PaymentMethod { get; set; }
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
+    public DateTime? ExpireAt { get; set; }
     public bool IsActive { get; set; }
     public List<DiscountCodeUserOutput> Users { get; set; } = [];
 }

@@ -8,7 +8,7 @@ public class ProductUpdateInput
     public decimal Discount { get; set; }
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
-    public int ProductBrandId { get; set; }
+    public int? ProductBrandId { get; set; }
     public List<ProductAttributeUpdateInput> Attributes { get; set; }
     public List<ProductCombinationUpdateInput> Variants { get; set; }
 }

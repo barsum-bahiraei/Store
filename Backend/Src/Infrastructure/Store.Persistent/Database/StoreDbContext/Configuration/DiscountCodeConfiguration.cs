@@ -10,8 +10,8 @@ public class DiscountCodeConfiguration : IEntityTypeConfiguration<DiscountCodeEn
     {
         builder.ToTable("DiscountCodes");
         builder.Property(x => x.Code).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.DiscountPercent).HasPrecision(5, 2);
         builder.Property(x => x.MaxDiscountAmount).HasPrecision(18, 2);
+        builder.Property(x => x.MinimumPurchaseAmount).HasPrecision(18, 2);
         builder.HasIndex(x => x.Code).IsUnique();
     }
 }

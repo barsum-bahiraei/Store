@@ -114,8 +114,8 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                         src={image.resolvedUrl}
                         alt={image.name || product.name}
                         fill
-                        priority={index === 0}
                         unoptimized
+                        loading="lazy"
                         sizes="(max-width: 1023px) 100vw, 50vw"
                         className="object-cover"
                       />
@@ -150,7 +150,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                     aria-label={`مشاهده تصویر ${index + 1}`}
                     className="relative size-20 overflow-hidden rounded-lg border border-primary/25 bg-surface outline-none transition-colors duration-200 hover:border-primary focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Image src={image.resolvedUrl!} alt="" fill unoptimized sizes="15vw" className="object-cover" />
+                    <Image src={image.resolvedUrl!} alt="" fill unoptimized loading="lazy" sizes="15vw" className="object-cover" />
                   </button>
                 </SwiperSlide>
               ))}
@@ -173,7 +173,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             <div className="mt-5 flex w-fit items-center gap-3 rounded-xl border border-border bg-surface p-3">
               <div className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted">
                 {brandImageUrl ? (
-                  <Image src={brandImageUrl} alt={`لوگوی ${product.brand.name}`} fill unoptimized sizes="3rem" className="object-contain p-1" />
+                  <Image src={brandImageUrl} alt={`لوگوی ${product.brand.name}`} fill unoptimized loading="lazy" sizes="3rem" className="object-contain p-1" />
                 ) : (
                   <span className="material-symbols-rounded text-2xl text-muted-foreground" aria-hidden="true">branding_watermark</span>
                 )}
