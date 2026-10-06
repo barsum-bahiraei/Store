@@ -31,17 +31,17 @@ public class CategoryService(ICategoryRepository categoryRepository, AttributeSe
         return Result<List<CategoryListOutput>>.Success(result);
     }
 
-    public async Task<Result<List<CategoryGetOutput>>> BestSellingListAsync(CancellationToken cancellation)
+    public async Task<Result<List<CategoryBestSellingOutput>>> BestSellingListAsync(CancellationToken cancellation)
     {
         var categories = await categoryRepository.BestSellingListAsync(10, cancellation);
-        var result = categories.Select(x => new CategoryGetOutput
+        var result = categories.Select(x => new CategoryBestSellingOutput
         {
             Id = x.Id,
             Name = x.Name,
             ParentId = x.ParentId
         }).ToList();
 
-        return Result<List<CategoryGetOutput>>.Success(result);
+        return Result<List<CategoryBestSellingOutput>>.Success(result);
     }
 
     public async Task<Result<CategoryGetOutput?>> GetAsync(int id, CancellationToken cancellation)
