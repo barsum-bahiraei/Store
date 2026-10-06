@@ -30,7 +30,7 @@ export function HeroSlider() {
   );
 
   return (
-    <section aria-label="مجموعه‌های ویژه" className="relative w-full overflow-hidden bg-secondary">
+    <section aria-label="مجموعه‌های ویژه" className="relative mt-4 w-full overflow-hidden bg-secondary sm:mt-6 lg:mt-8">
       <Swiper
         modules={[A11y, Autoplay, Keyboard, Pagination]}
         onSwiper={(swiper) => { swiperRef.current = swiper; }}
@@ -64,7 +64,7 @@ export function HeroSlider() {
         ))}
       </Swiper>
 
-      <div className="pointer-events-none absolute left-5 top-5 z-20 hidden gap-2 sm:flex lg:left-8 lg:top-1/2 lg:-translate-y-1/2 lg:flex-col">
+      <div className="pointer-events-none absolute inset-x-5 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-between sm:flex lg:inset-x-8">
         <button type="button" onClick={() => swiperRef.current?.slidePrev()} aria-label="پیشنهاد قبلی" className="pointer-events-auto grid size-11 place-items-center rounded-full border border-border bg-surface/90 text-foreground outline-none backdrop-blur-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring">
           <span className="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
         </button>

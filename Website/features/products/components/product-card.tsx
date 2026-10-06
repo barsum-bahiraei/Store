@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { BookmarkButton } from "@/features/bookmarks/components/bookmark-button";
 import { useAuthToken, useUserProfile } from "@/features/auth/hooks/use-account";
@@ -17,6 +18,7 @@ export function ProductCard({ product, originalAppearance = false }: { product: 
   const { data: userProfile } = useUserProfile();
   const canQuickAdd = !token || isUserRole(userProfile);
   const variants = product.variants ?? [];
+  const [imageLoaded, setImageLoaded] = useState(false);
   const purchasableVariants = variants.filter((variant) => variant.stock > 0);
   const quickBuyVariant = product.isAvailable && purchasableVariants.length === 1 ? purchasableVariants[0] : undefined;
   const { change, isPending, error } = useCartItemActions({
@@ -51,8 +53,11 @@ export function ProductCard({ product, originalAppearance = false }: { product: 
 
   return (
     <article onClick={handleCardClick} onKeyDown={handleCardKeyDown} tabIndex={0} className={originalAppearance ? "group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-surface text-foreground transition-shadow hover:shadow-lg hover:shadow-primary-shadow focus-visible:ring-2 focus-visible:ring-ring" : "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-accent/65 bg-accent/20 text-foreground shadow-lg shadow-primary-shadow backdrop-blur-xl transition-[transform,box-shadow] hover:-translate-y-1 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-ring"}>
-      <Link href={`/products/${product.id}`} className={originalAppearance ? "relative block aspect-square overflow-hidden bg-muted outline-none" : "relative block aspect-square overflow-hidden bg-background/45 outline-none"}>
-        {imageUrl ? <Image src={imageUrl} alt={product.image?.name || product.name} fill unoptimized sizes="(max-width: 639px) 80vw, (max-width: 1023px) 40vw, 22vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" /> : <span className="grid h-full place-items-center text-muted-foreground"><span className="material-symbols-rounded text-5xl" aria-hidden="true">image_not_supported</span><span className="sr-only">تصویری موجود نیست</span></span>}
+      <Link href={`/products/${product.id}`} aria-busy={Boolean(imageUrl) && !imageLoaded} className={originalAppearance ? "relative block aspect-square overflow-hidden bg-muted outline-none" : "relative block aspect-square overflow-hidden bg-background/45 outline-none"}>
+        {imageUrl ? <>
+          {!imageLoaded && <span className="absolute inset-0 z-10 grid place-items-center bg-muted/85 text-primary" role="status"><span className="material-symbols-rounded animate-spin text-4xl motion-reduce:animate-none" aria-hidden="true">progress_activity</span><span className="sr-only">در حال بارگذاری تصویر محصول</span></span>}
+          <Image src={imageUrl} alt={product.image?.name || product.name} fill unoptimized sizes="(max-width: 639px) 80vw, (max-width: 1023px) 40vw, 22vw" onLoad={() => setImageLoaded(true)} onError={() => setImageLoaded(true)} className={`object-cover transition-[transform,opacity] duration-300 group-hover:scale-[1.03] ${imageLoaded ? "opacity-100" : "opacity-0"}`} />
+        </> : <span className="grid h-full place-items-center text-muted-foreground"><span className="material-symbols-rounded text-5xl" aria-hidden="true">image_not_supported</span><span className="sr-only">تصویری موجود نیست</span></span>}
         {product.discount > 0 && <span className="absolute right-3 top-3 rounded-lg bg-accent px-2 py-1 text-xs font-black text-accent-foreground">تخفیف {formatToman(product.discount)}</span>}
         {!product.isAvailable && <span className="absolute left-3 top-3 rounded-lg bg-error/10 px-2 py-1 text-xs font-black text-error">ناموجود</span>}
         <BookmarkButton productId={product.id} productName={product.name} />

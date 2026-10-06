@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { StoreHeader } from "@/features/categories/components/store-header";
 import { FeaturedProducts } from "@/features/home/components/featured-products";
 import { HeroSlider } from "@/features/home/components/hero-slider";
-import { StoreBenefits } from "@/features/home/components/store-benefits";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
 export const metadata: Metadata = {
@@ -16,7 +15,6 @@ export default function Home() {
       <StoreHeader />
       <main className="flex-1">
         <HeroSlider />
-        <StoreBenefits />
         <FeaturedProducts />
       </main>
       <StoreFooter />
