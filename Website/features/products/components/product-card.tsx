@@ -7,7 +7,10 @@ import { useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { BookmarkButton } from "@/features/bookmarks/components/bookmark-button";
 import type { ProductSearchItem } from "../types/product";
-import { getProductImageUrl, getSalePrice, formatToman } from "../utils/product";
+import {getProductImageUrl, getSalePrice, formatToman, formatVariantLabel} from "../utils/product";
+import {useAuthToken, useUserProfile} from "@/features/auth/hooks/use-account";
+import {isUserRole} from "@/features/auth/types/account";
+import {useCartItemActions} from "@/features/cart/hooks/use-cart";
 
 export function ProductCard({ product, originalAppearance = false, compactOnMobile = false }: { product: ProductSearchItem; originalAppearance?: boolean; compactOnMobile?: boolean }) {
   const router = useRouter();
