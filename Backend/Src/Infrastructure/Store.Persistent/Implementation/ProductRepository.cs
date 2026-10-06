@@ -74,7 +74,29 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             query = query.Where(x => x.Name.Contains(input.Name.Trim()));
 
         if (input.CategoryId.HasValue)
-            query = query.Where(x => x.CategoryId == input.CategoryId.Value);
+        {
+            var categories = await context.Categoryies
+                .AsNoTracking()
+                .Select(x => new { x.Id, x.ParentId })
+                .ToListAsync(cancellation);
+            var childrenByParentId = categories
+                .Where(x => x.ParentId.HasValue)
+                .ToLookup(x => x.ParentId!.Value, x => x.Id);
+            var categoryIds = new HashSet<int> { input.CategoryId.Value };
+            var pendingCategoryIds = new Stack<int>();
+            pendingCategoryIds.Push(input.CategoryId.Value);
+
+            while (pendingCategoryIds.TryPop(out var categoryId))
+            {
+                foreach (var childId in childrenByParentId[categoryId])
+                {
+                    if (categoryIds.Add(childId))
+                        pendingCategoryIds.Push(childId);
+                }
+            }
+
+            query = query.Where(x => categoryIds.Contains(x.CategoryId));
+        }
 
         if (input.ProductBrandId.HasValue)
             query = query.Where(x => x.ProductBrandId == input.ProductBrandId.Value);
