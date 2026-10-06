@@ -11,7 +11,7 @@ import { useProductSearch } from "@/features/products/hooks/use-products";
 
 export function FeaturedProducts() {
   const swiperRef = useRef<SwiperInstance | null>(null);
-  const { data, isPending, isError, isFetching, refetch } = useProductSearch({ page: 1, pageSize: 10, hasDiscount: false });
+  const { data, isPending, isError, isFetching, refetch } = useProductSearch({ page: 1, pageSize: 10, hasDiscount: false, isIdDec: true });
 
   return (
     <section aria-labelledby="featured-products-title" className="bg-background px-4 py-10 text-foreground sm:px-8 sm:py-14 lg:px-12">

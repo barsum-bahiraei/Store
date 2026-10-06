@@ -45,7 +45,8 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
 
   useEffect(() => {
     const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    if (navigation?.type === "reload" && window.location.search) {
+    const loadedPath = navigation?.name ? new URL(navigation.name).pathname : "";
+    if (navigation?.type === "reload" && loadedPath === window.location.pathname && window.location.search) {
       window.location.replace("/shop");
     }
   }, []);
