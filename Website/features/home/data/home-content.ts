@@ -5,6 +5,10 @@ export type HeroSlide = {
   image: string;
   imageAlt: string;
   categoryId?: number;
+  href?: string;
+  external?: boolean;
+  linkLabel?: string;
+  showInstagramLogo?: boolean;
 };
 
 export const heroSlides: HeroSlide[] = [
@@ -38,5 +42,16 @@ export const heroSlides: HeroSlide[] = [
     image: "/images/home/hero-stanley-drinkware.png",
     imageAlt: "چند مدل ماگ و فلاسک استنلی در منظره کوهستانی",
     categoryId: 30,
+  },
+  {
+    eyebrow: "همراه زریوان باشید",
+    title: "ما را در شبکه‌های اجتماعی دنبال کنید",
+    description: "تازه‌ترین محصولات، پیشنهادها و لحظه‌های طبیعت‌گردی زریوان را در اینستاگرام دنبال کنید.",
+    image: "/images/home/hero-social-media.png",
+    imageAlt: "موبایل و کوله‌پشتی در منظره کوهستانی هنگام طلوع",
+    href: "https://instagram.com/zaryvan.shop",
+    external: true,
+    linkLabel: "مشاهده صفحه اینستاگرام زریوان",
+    showInstagramLogo: true,
   },
 ];
