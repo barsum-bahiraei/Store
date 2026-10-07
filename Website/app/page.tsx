@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StoreHeader } from "@/features/categories/components/store-header";
 import { FeaturedProducts } from "@/features/home/components/featured-products";
 import { BrandShowcase } from "@/features/home/components/brand-showcase";
+import { BestSellingCategories } from "@/features/home/components/best-selling-categories";
 import { ClimbingToolsPromo } from "@/features/home/components/climbing-tools-promo";
 import { CategoryPromos } from "@/features/home/components/category-promos";
 import { HeroSlider } from "@/features/home/components/hero-slider";
@@ -22,6 +23,7 @@ export default function Home() {
         <ClimbingToolsPromo />
         <BrandShowcase />
         <CategoryPromos />
+        <BestSellingCategories />
       </main>
       <StoreFooter />
     </div>

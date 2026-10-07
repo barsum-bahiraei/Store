@@ -9,8 +9,6 @@ export type ProductImage = {
 export type ProductVariantAttributeValue = {
   id: number;
   size: string;
-  name?: string;
-  code?: string;
   colorName?: string;
   colorCode?: string;
 };

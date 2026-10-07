@@ -31,7 +31,7 @@ export function HeroSlider() {
   );
 
   return (
-    <section aria-label="مجموعه‌های ویژه" className="relative mt-4 w-full overflow-hidden bg-secondary sm:mt-6 lg:mt-8">
+    <section aria-label="مجموعه‌های ویژه" className="relative w-full overflow-hidden bg-secondary">
       <Swiper
         modules={[A11y, Autoplay, Keyboard, Pagination]}
         onSwiper={(swiper) => { swiperRef.current = swiper; }}

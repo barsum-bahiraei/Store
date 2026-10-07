@@ -24,8 +24,8 @@ const promos = [
 
 export function CategoryPromos() {
   return (
-    <section aria-label="دسته‌بندی‌های منتخب" className="bg-background px-3 pb-10 text-white sm:px-8 sm:pb-14 lg:px-12">
-      <div className="mx-auto grid w-full max-w-[1700px] gap-5 px-0 sm:px-14 lg:grid-cols-2 lg:gap-6">
+    <section aria-label="دسته‌بندی‌های منتخب" className="bg-background px-4 pb-10 text-white sm:px-8 sm:pb-14 lg:px-12">
+      <div className="mx-auto grid w-full max-w-[1700px] gap-5 lg:grid-cols-2 lg:gap-6">
         {promos.map((promo) => (
           <Link key={promo.href} href={promo.href} className="group relative block min-h-[32rem] overflow-hidden rounded-3xl border border-primary/20 shadow-xl shadow-primary-shadow outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:min-h-[40rem] lg:min-h-[48rem]">
             <Image src={promo.image} alt={promo.imageAlt} fill sizes="(max-width: 1023px) 100vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025]" />

@@ -177,13 +177,13 @@ export function StoreHeader() {
         <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">
           <label htmlFor="store-search" className="sr-only">جست‌وجوی محصولات</label>
           <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
-          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول و دسته‌بندی" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
+          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
         </form>
 
         <nav aria-label="عملیات حساب کاربری" className="absolute left-0 flex shrink-0 items-center gap-0 [direction:rtl] md:static md:gap-1">
           <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">person</span>
-            <span className="hidden max-w-20 truncate text-xs font-bold lg:block">{user?.firstName ?? "ورود"}</span>
+            {!user && <span className="hidden max-w-20 truncate text-xs font-bold lg:block">ورود</span>}
           </Link>
           <Link href={isAuthenticated ? "/account?tab=cart" : "/login"} aria-label="سبد خرید" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">shopping_bag</span>
@@ -197,7 +197,7 @@ export function StoreHeader() {
           <form action="/shop" role="search" className="relative w-full md:hidden">
             <label htmlFor="mobile-store-search" className="sr-only">جست‌وجوی محصولات</label>
             <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
-            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول و دسته‌بندی" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
+            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
           </form>
           <div className="hidden items-center gap-1 md:flex">
           <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">

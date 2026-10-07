@@ -27,7 +27,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const [userSize, setUserSize] = useState<string | null>(null);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const colors = useMemo(() => (product ? getVariantColors(product.variants) : []), [product]);
-  const selectedColor = colors.length === 1 ? colors[0].name : colors.some((color) => color.name === userColor) ? userColor : null;
+  const selectedColor = colors.length === 1 ? colors[0].colorName ?? null : colors.some((color) => color.colorName === userColor) ? userColor : null;
   const sizes = useMemo(
     () => (product && (colors.length === 0 || selectedColor) ? getVariantSizes(product.variants, selectedColor) : []),
     [product, colors.length, selectedColor],
@@ -192,21 +192,22 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                   <h2 id="product-color-label" className="text-sm font-black">انتخاب رنگ</h2>
                   <div role="radiogroup" aria-labelledby="product-color-label" className="mt-3 flex flex-wrap gap-3">
                     {colors.map((color) => {
-                      const outOfStock = isVariantOptionOutOfStock(product.variants, color.name, null);
-                      const isSelected = selectedColor === color.name;
-                      const swatchColor = /^#[\da-f]{3}(?:[\da-f]{3})?$/i.test(color.code) ? color.code : null;
+                      const colorName = color.colorName ?? color.colorCode ?? "";
+                      const outOfStock = isVariantOptionOutOfStock(product.variants, colorName, null);
+                      const isSelected = selectedColor === colorName;
+                      const swatchColor = color.colorCode && /^#[\da-f]{3}(?:[\da-f]{3})?$/i.test(color.colorCode) ? color.colorCode : null;
                       return (
                         <button
-                          key={color.name}
+                          key={colorName}
                           type="button"
                           role="radio"
                           aria-checked={isSelected}
                           disabled={outOfStock}
-                          onClick={() => { setUserColor(color.name); setUserSize(null); }}
+                          onClick={() => { setUserColor(colorName); setUserSize(null); }}
                           className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary bg-primary/10 text-primary" : outOfStock ? "border-border bg-muted text-muted-foreground" : "border-border bg-surface hover:bg-muted"}`}
                         >
                           {swatchColor && <span className="size-4 shrink-0 rounded-full border border-border" style={{ backgroundColor: swatchColor }} aria-hidden="true" />}
-                          <span>{color.name}</span>
+                          <span>{colorName}</span>
                           {outOfStock && <span className="text-xs font-black text-error">ناموجود</span>}
                           {isSelected && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
                         </button>

@@ -1,8 +1,8 @@
 import { ProductAttributeType, ProductAttributeUnit, type ProductVariant, type ProductVariantAttributeValue } from "../types/product";
 
 export type VariantColor = {
-  name: string;
-  code: string;
+  colorName?: string;
+  colorCode?: string;
 };
 
 export const priceFormatter = new Intl.NumberFormat("fa-IR", {
@@ -42,15 +42,15 @@ export function getSalePrice(price: number, discount: number) {
 export function formatVariantLabel(values: ProductVariantAttributeValue[]) {
   if (values.length === 0) return undefined;
   const labels = values
-    .map((value) => [getVariantColor(value)?.name, value.size?.trim()].filter(Boolean).join("، "))
+    .map((value) => [getVariantColor(value)?.colorName, value.size?.trim()].filter(Boolean).join("، "))
     .filter(Boolean);
   return labels.join("، ") || undefined;
 }
 
 function getVariantColor(value: ProductVariantAttributeValue): VariantColor | null {
-  const name = (value.colorName ?? value.name ?? "").trim();
-  const code = (value.colorCode ?? value.code ?? "").trim();
-  return name || code ? { name: name || code, code } : null;
+  const name = (value.colorName ?? "").trim();
+  const code = (value.colorCode ?? "").trim();
+  return name || code ? { colorName: name || code || undefined, colorCode: code || undefined } : null;
 }
 
 export function getVariantColors(variants: ProductVariant[]): VariantColor[] {
@@ -58,14 +58,14 @@ export function getVariantColors(variants: ProductVariant[]): VariantColor[] {
   for (const variant of variants) {
     for (const value of variant.values) {
       const color = getVariantColor(value);
-      if (color && !colors.has(color.name)) colors.set(color.name, color);
+      if (color?.colorName && !colors.has(color.colorName)) colors.set(color.colorName, color);
     }
   }
   return [...colors.values()];
 }
 
 function variantHasColor(variant: ProductVariant, color: string) {
-  return variant.values.some((value) => getVariantColor(value)?.name === color);
+  return variant.values.some((value) => getVariantColor(value)?.colorName === color);
 }
 
 function variantHasSize(variant: ProductVariant, size: string) {
