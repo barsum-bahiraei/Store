@@ -74,14 +74,14 @@ export function HeroSlider() {
               <HeroSlideLink slide={slide} />
 
               <div className="relative z-10 flex min-h-[20rem] items-center px-5 pb-14 pt-8 sm:min-h-[31rem] sm:px-20 sm:pb-16 sm:pt-12 lg:min-h-[29rem] lg:px-24 xl:px-[max(6rem,calc((100vw-80rem)/2))]">
-                <div className="mr-auto max-w-md text-right drop-shadow-md">
+                <div className="mr-auto w-full max-w-3xl text-right drop-shadow-md">
                   {slide.showInstagramLogo ? <InstagramLogo /> : null}
                   {slide.eyebrow ? (
                     <span className="inline-flex min-h-8 items-center rounded-full border border-accent/60 bg-secondary/45 px-3 text-xs font-black text-accent backdrop-blur-sm sm:min-h-9 sm:px-4 sm:text-sm">{slide.eyebrow}</span>
                   ) : (
                     <span className="block h-1 w-12 rounded-full bg-accent" aria-hidden="true" />
                   )}
-                  <h1 className="mt-4 text-2xl font-black leading-tight tracking-[-0.04em] sm:mt-5 sm:text-4xl lg:text-5xl">
+                  <h1 className="mt-4 whitespace-nowrap text-[clamp(1rem,4.5vw,2.75rem)] font-black leading-tight tracking-[-0.04em] sm:mt-5">
                     {slide.title}
                   </h1>
                   <p className="mt-3 line-clamp-3 max-w-sm text-xs font-medium leading-5 text-white/85 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-7">

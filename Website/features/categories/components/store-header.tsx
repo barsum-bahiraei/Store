@@ -163,16 +163,17 @@ export function StoreHeader() {
   );
 
   return (
-    <header data-store-header onMouseLeave={closeDesktopMenu} className="sticky top-0 z-50 border-b border-border bg-surface/95 text-foreground md:backdrop-blur-lg">
-      <div className="relative mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 md:gap-4 md:px-5 lg:px-6 xl:px-8">
+    <header data-store-header onMouseLeave={closeDesktopMenu} className="store-header-landscape sticky top-0 z-50 border-b border-white/15 text-white shadow-lg shadow-emerald-950/20">
+      <Image src="/images/header-forest-mountains.png" alt="" fill priority sizes="100vw" className="pointer-events-none object-cover object-[center_62%]" />
+      <div className="relative z-[2] mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 md:gap-4 md:px-5 lg:px-6 xl:px-8">
         <div className="contents md:flex md:min-w-0 md:shrink-0 md:items-center md:gap-2 md:[direction:rtl]">
-          <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="absolute right-0 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring md:hidden">
+          <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="absolute right-0 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 md:hidden">
             <span className="material-symbols-rounded text-2xl" aria-hidden="true">{isMenuOpen ? "close" : "menu"}</span>
           </button>
           <Link href="/" aria-label="خانه فروشگاه" className="absolute left-1/2 flex min-h-11 min-w-0 -translate-x-1/2 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl] md:static md:translate-x-0">
-            <Image src="/images/zaryvan-logo.png" alt="" width={64} height={64} className="size-14 rounded-full object-contain sm:size-16" />
+            <Image src="/images/zaryvan-logo.png" alt="" width={64} height={64} className="size-14 rounded-full object-contain shadow-lg shadow-black/25 ring-2 ring-white/25 sm:size-16" />
           </Link>
-          <Link href="/" aria-label="رفتن به صفحه اصلی" className="absolute left-[calc(50%+2.25rem)] grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:left-[calc(50%+2.5rem)] md:static">
+          <Link href="/" aria-label="رفتن به صفحه اصلی" className="absolute left-[calc(50%+2.25rem)] grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 sm:left-[calc(50%+2.5rem)] md:static">
             <span className="material-symbols-rounded text-2xl" aria-hidden="true">home</span>
           </Link>
         </div>
@@ -180,45 +181,45 @@ export function StoreHeader() {
         <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">
           <label htmlFor="store-search" className="sr-only">جست‌وجوی محصولات</label>
           <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
-          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
+          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-xl border border-white/45 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-md shadow-black/10 outline-none backdrop-blur-md transition-[background-color,border-color,box-shadow] placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
         </form>
 
         <nav aria-label="عملیات حساب کاربری" className="absolute left-0 flex shrink-0 items-center gap-0 [direction:rtl] md:static md:gap-1">
-          <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+          <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
             <span className="material-symbols-rounded" aria-hidden="true">person</span>
             {!user && <span className="hidden max-w-20 truncate text-xs font-bold lg:block">ورود</span>}
           </Link>
-          <Link href={isAuthenticated ? "/account?tab=cart" : "/login"} aria-label="سبد خرید" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+          <Link href={isAuthenticated ? "/account?tab=cart" : "/login"} aria-label="سبد خرید" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
             <span className="material-symbols-rounded" aria-hidden="true">shopping_bag</span>
-            {cartCount !== undefined && !isCartError && <span aria-live="polite" className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-black text-primary-foreground">{cartCount}</span>}
+            {cartCount !== undefined && !isCartError && <span aria-live="polite" className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-emerald-200 px-1 text-[9px] font-black text-emerald-950 ring-1 ring-white/60">{cartCount}</span>}
           </Link>
         </nav>
       </div>
 
-      <nav aria-label="منوی اصلی" className="border-t border-border bg-surface text-foreground">
+      <nav aria-label="منوی اصلی" className="relative z-[2] border-t border-white/15 bg-[#092f2a]/60 text-white backdrop-blur-md">
         <div className="mx-auto flex min-h-12 w-full items-center px-0 sm:px-5 lg:px-6 xl:px-8">
           <form action="/shop" role="search" className="relative w-full md:hidden">
             <label htmlFor="mobile-store-search" className="sr-only">جست‌وجوی محصولات</label>
             <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
-            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
+            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-white/35 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-sm outline-none backdrop-blur-md placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
           </form>
           <div className="hidden items-center gap-1 md:flex">
-          <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+          <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
             دسته‌بندی کالاها
             <span className={`material-symbols-rounded text-lg transition-transform ${isMenuOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
           </button>
-          <Link href="/shop" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">همه محصولات</Link>
-          <Link href="/shop?discount=true" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">شگفت‌انگیزها</Link>
-          <Link href="/about" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">درباره ما</Link>
-          <Link href="/contact" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">تماس با ما</Link>
-          <Link href="/cooperation" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">همکاری با ما</Link>
-          <Link href="/blog-1/" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">مجله زریوان</Link>
+          <Link href="/shop" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">همه محصولات</Link>
+          <Link href="/shop?discount=true" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">شگفت‌انگیزها</Link>
+          <Link href="/about" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">درباره ما</Link>
+          <Link href="/contact" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">تماس با ما</Link>
+          <Link href="/cooperation" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">همکاری با ما</Link>
+          <Link href="/blog-1/" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">مجله زریوان</Link>
           </div>
         </div>
       </nav>
 
       {isMenuOpen && (
-        <nav id="store-navigation" aria-label="منوی دسته‌بندی‌ها" onMouseEnter={openDesktopMenu} className="fixed inset-0 z-[60] h-dvh w-screen max-w-none overflow-y-auto border-border bg-surface p-5 shadow-lg shadow-primary-shadow md:absolute md:inset-auto md:right-5 md:top-full md:z-[60] md:h-auto md:w-72 md:overflow-visible md:rounded-b-2xl md:border md:p-3 lg:right-6 xl:right-8">
+        <nav id="store-navigation" aria-label="منوی دسته‌بندی‌ها" onMouseEnter={openDesktopMenu} className="fixed inset-0 z-[60] h-dvh w-screen max-w-none overflow-y-auto border-border bg-surface p-5 text-foreground shadow-lg shadow-primary-shadow md:absolute md:inset-auto md:right-5 md:top-full md:z-[60] md:h-auto md:w-72 md:overflow-visible md:rounded-b-2xl md:border md:p-3 lg:right-6 xl:right-8">
           <div className="mx-auto grid w-full max-w-7xl gap-5 [direction:rtl] md:max-w-none">
             <div className="flex items-center justify-between border-b border-border pb-4 md:hidden">
               <Link
