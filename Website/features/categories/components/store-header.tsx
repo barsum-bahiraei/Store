@@ -163,7 +163,7 @@ export function StoreHeader() {
   );
 
   return (
-    <header onMouseLeave={closeDesktopMenu} className="sticky top-0 z-50 border-b border-border bg-surface/95 text-foreground md:backdrop-blur-lg">
+    <header data-store-header onMouseLeave={closeDesktopMenu} className="sticky top-0 z-50 border-b border-border bg-surface/95 text-foreground md:backdrop-blur-lg">
       <div className="relative mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 md:gap-4 md:px-5 lg:px-6 xl:px-8">
         <div className="contents md:flex md:min-w-0 md:shrink-0 md:items-center md:gap-2 md:[direction:rtl]">
           <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="absolute right-0 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring md:hidden">

@@ -4,7 +4,7 @@ import { FeaturedProducts } from "@/features/home/components/featured-products";
 import { BrandShowcase } from "@/features/home/components/brand-showcase";
 import { BestSellingCategories } from "@/features/home/components/best-selling-categories";
 import { ClimbingToolsPromo } from "@/features/home/components/climbing-tools-promo";
-import { CategoryPromos } from "@/features/home/components/category-promos";
+import { CategoryPromos, OutdoorEssentialsPromos } from "@/features/home/components/category-promos";
 import { HeroSlider } from "@/features/home/components/hero-slider";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 
@@ -24,6 +24,7 @@ export default function Home() {
         <BrandShowcase />
         <CategoryPromos />
         <BestSellingCategories />
+        <OutdoorEssentialsPromos />
       </main>
       <StoreFooter />
     </div>

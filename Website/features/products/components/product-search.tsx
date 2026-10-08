@@ -31,6 +31,13 @@ function descendants(categories: Category[]): Category[] {
   return categories.flatMap((category) => [category, ...descendants(category.children)]);
 }
 
+function getMobileFiltersMaxHeight() {
+  const storeHeader = document.querySelector<HTMLElement>("[data-store-header]");
+  const headerHeight = storeHeader?.getBoundingClientRect().height ?? 0;
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  return Math.max(0, Math.floor(viewportHeight - headerHeight));
+}
+
 export function ProductSearch({ filters, sort, showFilters = true }: { filters: ProductSearchFilters; sort: ProductSort; showFilters?: boolean }) {
   const { data, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } = useInfiniteProductSearch(filters);
   const { data: brands = [], isPending: areBrandsPending, isError: isBrandsError } = useProductBrands();
@@ -38,6 +45,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [mobileFiltersMaxHeight, setMobileFiltersMaxHeight] = useState(0);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [openCategoryId, setOpenCategoryId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(filters.categoryId ? String(filters.categoryId) : "");
@@ -84,16 +92,75 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
     return () => document.removeEventListener("pointerdown", closeCategoryFilter);
   }, []);
 
+  useEffect(() => {
+    if (!isFiltersOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFiltersOpen]);
+
+  useEffect(() => {
+    if (!isFiltersOpen) return;
+
+    const storeHeader = document.querySelector<HTMLElement>("[data-store-header]");
+    if (!storeHeader) return;
+
+    const updateFiltersHeight = () => {
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        setIsFiltersOpen(false);
+        return;
+      }
+      setMobileFiltersMaxHeight(getMobileFiltersMaxHeight());
+    };
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateFiltersHeight);
+    const visualViewport = window.visualViewport;
+
+    updateFiltersHeight();
+    observer?.observe(storeHeader);
+    window.addEventListener("resize", updateFiltersHeight);
+    visualViewport?.addEventListener("resize", updateFiltersHeight);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateFiltersHeight);
+      visualViewport?.removeEventListener("resize", updateFiltersHeight);
+    };
+  }, [isFiltersOpen]);
+
   return (
     <div className={`mx-auto grid w-full max-w-[1700px] items-start gap-5 rounded-3xl border border-primary/20 bg-surface p-3 shadow-xl shadow-primary-shadow sm:p-5 lg:gap-6 lg:p-6 ${showFilters ? "pb-20 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pb-6" : ""}`}>
       {showFilters && <>
-        <button type="button" onClick={() => setIsFiltersOpen(true)} className="fixed inset-x-4 bottom-4 z-40 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground shadow-xl shadow-primary-shadow outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring lg:hidden">
+        <button type="button" onClick={() => {
+          setMobileFiltersMaxHeight(getMobileFiltersMaxHeight());
+          setIsFiltersOpen(true);
+        }} className="fixed inset-x-4 bottom-4 z-40 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground shadow-xl shadow-primary-shadow outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring lg:hidden">
           <span className="material-symbols-rounded" aria-hidden="true">tune</span>
           نمایش فیلترها
         </button>
-        {isFiltersOpen && <button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden" />}
-      <aside className={`self-start rounded-2xl border border-primary/25 bg-surface p-5 shadow-2xl shadow-primary-shadow lg:sticky lg:top-40 lg:block lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:shadow-none ${isFiltersOpen ? "fixed inset-x-3 bottom-3 top-20 z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto" : "hidden"}`}>
-        <div className="mb-5 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><span className="material-symbols-rounded text-primary" aria-hidden="true">tune</span><h2 className="font-black">فیلترها</h2></div><div className="flex items-center gap-1"><Link href="/shop" aria-label="حذف فیلترها" title="حذف فیلترها" className="flex min-h-10 items-center gap-1 rounded-lg px-2 text-xs font-bold text-error outline-none hover:bg-error/10 focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-lg" aria-hidden="true">delete</span><span>حذف فیلترها</span></Link><button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="grid size-10 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><span className="material-symbols-rounded" aria-hidden="true">close</span></button></div></div>
+      <aside style={isFiltersOpen ? { maxHeight: `${mobileFiltersMaxHeight}px` } : undefined} className={`self-start border-0 bg-surface p-5 shadow-2xl shadow-primary-shadow lg:sticky lg:inset-auto lg:top-40 lg:z-auto lg:block lg:h-auto lg:w-auto lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-primary/25 lg:shadow-none ${isFiltersOpen ? "fixed inset-x-0 bottom-0 z-40 h-auto w-screen overflow-y-auto" : "hidden"}`}>
+        <div className="sticky top-0 z-20 -mx-5 -mt-5 mb-8 min-h-14 border-b border-border bg-surface px-5 lg:hidden">
+          <button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="absolute right-5 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+            <span className="material-symbols-rounded" aria-hidden="true">close</span>
+          </button>
+          <Link href="/shop" onClick={() => setIsFiltersOpen(false)} aria-label="حذف فیلترها" title="حذف فیلترها" className="absolute left-5 top-1/2 flex min-h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-xs font-bold text-error outline-none hover:bg-error/10 focus-visible:ring-2 focus-visible:ring-ring">
+            <span className="material-symbols-rounded text-lg" aria-hidden="true">delete</span>
+            <span>حذف فیلترها</span>
+          </Link>
+        </div>
+        <div className="mb-5 hidden items-center justify-between gap-2 lg:flex">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-rounded text-primary" aria-hidden="true">tune</span>
+            <h2 className="font-black">فیلترها</h2>
+          </div>
+          <Link href="/shop" aria-label="حذف فیلترها" title="حذف فیلترها" className="flex min-h-10 items-center gap-1 rounded-lg px-2 text-xs font-bold text-error outline-none hover:bg-error/10 focus-visible:ring-2 focus-visible:ring-ring">
+            <span className="material-symbols-rounded text-lg" aria-hidden="true">delete</span>
+            <span>حذف فیلترها</span>
+          </Link>
+        </div>
         <form key={JSON.stringify(filters)} action="/shop" method="get" onPointerDownCapture={(event) => { if (!categoryDropdownRef.current?.contains(event.target as Node)) { setIsCategoryDropdownOpen(false); setOpenCategoryId(null); } }} className="space-y-5">
           {sort !== "priceAsc" && <input type="hidden" name="sort" value={sort} />}
           <div><label htmlFor="filter-name" className="text-sm font-bold">نام محصول</label><input id="filter-name" name="q" type="search" defaultValue={filters.name} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div>

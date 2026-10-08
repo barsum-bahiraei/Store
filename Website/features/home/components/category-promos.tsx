@@ -1,6 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 
+type Promo = {
+  href: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  action: string;
+  image: string;
+  imageAlt: string;
+};
+
 const promos = [
   {
     href: "/shop?category=3",
@@ -20,13 +30,34 @@ const promos = [
     image: "/images/home/sleeping-bag-category-promo.png",
     imageAlt: "فردی آسوده داخل کیسه‌خواب روی تشک بادی در طبیعت برفی",
   },
-] as const;
+] as const satisfies readonly Promo[];
 
-export function CategoryPromos() {
+const outdoorEssentialsPromos = [
+  {
+    href: "/shop?category=14",
+    eyebrow: "میز و صندلی کمپینگ",
+    title: "قله را به بهترین کافه دنیا تبدیل کن",
+    description: "میز را باز کن، صندلی‌ات را بچین و طعم استراحت را وسط بلندترین منظره‌ها بچش.",
+    action: "مشاهده میز و صندلی‌ها",
+    image: "/images/home/camp-furniture-category-promo.png",
+    imageAlt: "میز و صندلی‌های کمپینگ کنار دریاچه و کوهستان هنگام غروب",
+  },
+  {
+    href: "/shop?category=16",
+    eyebrow: "کوله‌پشتی‌های کوهنوردی",
+    title: "همه مسیر را روی دوشت فتح کن",
+    description: "کوله‌ات را ببند؛ هر چیزی که برای صعود بعدی لازم داری، آماده حرکت است.",
+    action: "مشاهده کوله‌پشتی‌ها",
+    image: "/images/home/backpack-category-promo.png",
+    imageAlt: "کوله‌پشتی کوهنوردی حرفه‌ای روی صخره در طلوع کوهستان",
+  },
+] as const satisfies readonly Promo[];
+
+function PromoGrid({ items, label }: { items: readonly Promo[]; label: string }) {
   return (
-    <section aria-label="دسته‌بندی‌های منتخب" className="bg-background px-4 pb-10 text-white sm:px-8 sm:pb-14 lg:px-12">
+    <section aria-label={label} className="bg-background px-4 pb-10 text-white sm:px-8 sm:pb-14 lg:px-12">
       <div className="mx-auto grid w-full max-w-[1700px] gap-5 lg:grid-cols-2 lg:gap-6">
-        {promos.map((promo) => (
+        {items.map((promo) => (
           <Link key={promo.href} href={promo.href} className="group relative block min-h-[32rem] overflow-hidden rounded-3xl border border-primary/20 shadow-xl shadow-primary-shadow outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:min-h-[40rem] lg:min-h-[48rem]">
             <Image src={promo.image} alt={promo.imageAlt} fill sizes="(max-width: 1023px) 100vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025]" />
             <span className="absolute inset-0 bg-gradient-to-b from-secondary/90 via-secondary/30 to-transparent" aria-hidden="true" />
@@ -47,4 +78,12 @@ export function CategoryPromos() {
       </div>
     </section>
   );
+}
+
+export function CategoryPromos() {
+  return <PromoGrid items={promos} label="دسته‌بندی‌های منتخب" />;
+}
+
+export function OutdoorEssentialsPromos() {
+  return <PromoGrid items={outdoorEssentialsPromos} label="تجهیزات سفر و کمپینگ" />;
 }
