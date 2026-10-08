@@ -158,15 +158,14 @@ export function CheckoutContent() {
             const variantLabel = formatVariantLabel(item.variant?.values ?? []);
             return (
               <li key={item.id} className="flex justify-between gap-4 py-3 text-sm">
-                <span className="min-w-0 break-words font-bold">{item.product.name}{variantLabel ? <span className="block text-xs font-normal text-muted-foreground">{variantLabel}</span> : null} <span className="text-muted-foreground">× {item.productCount.toLocaleString("fa-IR")}</span></span>
+                <span className="min-w-0 break-words font-bold">{item.product.name}{variantLabel ? <span className="block text-xs font-normal text-muted-foreground">{variantLabel}</span> : null}<span className="mt-1 block text-xs font-normal text-muted-foreground">تعداد: {item.productCount.toLocaleString("fa-IR")} عدد</span></span>
                 <span className="shrink-0 font-black">{formatToman(unitPrice * item.productCount)}</span>
               </li>
             );
           })}
         </ul>
-        <div className="mt-4 border-t border-border pt-4"><label htmlFor="discount-code" className="text-sm font-black">کد تخفیف <span className="font-normal text-muted-foreground">(اختیاری)</span></label><input id="discount-code" value={discountCode} onChange={(event) => setDiscountCode(event.target.value)} disabled={checkout.isPending} autoComplete="off" className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary focus:ring-2 focus:ring-ring disabled:opacity-60" placeholder="کد را وارد کنید" /><p className="mt-2 text-xs leading-5 text-muted-foreground">کد هنگام ثبت نهایی توسط سرور بررسی می‌شود.</p></div>
-        <dl className="mt-5 border-t border-border pt-4"><div className="flex items-center justify-between gap-4"><dt className="font-bold">مبلغ تخمینی</dt><dd className="text-lg font-black text-primary">{formatToman(estimatedSubtotal)}</dd></div></dl>
-        <p className="mt-2 text-xs leading-5 text-muted-foreground">این مبلغ تخمینی است؛ مبلغ قطعی فقط از پاسخ ثبت سفارش دریافت می‌شود.</p>
+        <div className="mt-4 border-t border-border pt-4"><label htmlFor="discount-code" className="text-sm font-black">کد تخفیف</label><input id="discount-code" value={discountCode} onChange={(event) => setDiscountCode(event.target.value)} disabled={checkout.isPending} autoComplete="off" className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary focus:ring-2 focus:ring-ring disabled:opacity-60" placeholder="کد را وارد کنید" /></div>
+        <dl className="mt-5 border-t border-border pt-4"><div className="flex items-center justify-between gap-4"><dt className="font-bold">مبلغ نهایی</dt><dd className="text-lg font-black text-primary">{formatToman(estimatedSubtotal)}</dd></div></dl>
         {(itemsError || checkout.error) && <p role="alert" className="mt-4 rounded-lg bg-error/10 p-3 text-sm font-bold text-error">{itemsError ?? checkout.error?.message}</p>}
         <button type="submit" disabled={submitDisabled} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"><span className={`material-symbols-rounded ${checkout.isPending ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{checkout.isPending ? "progress_activity" : "receipt_long"}</span>{checkout.isPending ? "در حال ثبت سفارش…" : "ثبت نهایی سفارش"}</button>
       </aside>
