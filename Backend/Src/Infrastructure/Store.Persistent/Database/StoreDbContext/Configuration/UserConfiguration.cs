@@ -15,6 +15,7 @@ public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
         builder.Property(x => x.PhoneNumber).IsRequired().HasMaxLength(32);
         builder.Property(x => x.NationalCode).HasMaxLength(32);
         builder.Property(x => x.Address).HasMaxLength(1000);
+        builder.Property(x => x.PostalCode).HasMaxLength(20);
         builder.Property(x => x.IsEmailVerified).HasDefaultValue(false);
         builder.Property(x => x.IsPhoneNumberVerified).HasDefaultValue(false);
         builder.HasIndex(x => x.Email).IsUnique();

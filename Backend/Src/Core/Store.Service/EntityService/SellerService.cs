@@ -13,6 +13,11 @@ public class SellerService(
     IProductRepository productRepository,
     FileService fileService)
 {
+    private readonly SellerReportingService sellerReportingService = new(
+        sellerRepository,
+        invoiceRepository,
+        productRepository);
+
     public async Task<Result<List<SellerListOutput>>> ListAsync(int userId, CancellationToken cancellation)
     {
         var entities = await sellerRepository.ListAsync(userId, cancellation);
@@ -169,407 +174,38 @@ public class SellerService(
     }
 
     public async Task<Result<SellerDashboardOutput>> DashboardAsync(int userId, SellerDashboardInput input,
-        CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<SellerDashboardOutput>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<SellerDashboardOutput>.Failure(dateError);
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-        var successfulInvoices = invoices.Where(IsSuccessfulOrder).ToList();
-
-        decimal totalSales = 0;
-        int itemsSoldCount = 0;
-        decimal discountAmount = 0;
-
-        foreach (var invoice in successfulInvoices)
-        {
-            var items = GetSellerItems(invoice, sellerIds);
-            totalSales += GetItemsAmount(items);
-            itemsSoldCount += items.Sum(x => x.ProductCount);
-            discountAmount += GetSellerDiscountShare(invoice, sellerIds);
-        }
-
-        var output = new SellerDashboardOutput
-        {
-            TotalSales = totalSales,
-            OrderCount = invoices.Count,
-            ItemsSoldCount = itemsSoldCount,
-            AverageOrderValue = successfulInvoices.Count == 0
-                ? 0
-                : decimal.Round(totalSales / successfulInvoices.Count, 2, MidpointRounding.AwayFromZero),
-            CompletedOrderCount = invoices.Count(x => x.PaymentStatus == PaymentStatusEnum.Delivered),
-            CancelledOrderCount = invoices.Count(x => x.PaymentStatus == PaymentStatusEnum.Cancelled),
-            DiscountAmount = discountAmount
-        };
-
-        return Result<SellerDashboardOutput>.Success(output);
-    }
+        CancellationToken cancellation) => await sellerReportingService.DashboardAsync(userId, input, cancellation);
 
     public async Task<Result<List<SellerSalesChartOutput>>> SalesChartAsync(int userId,
-        SellerSalesChartInput input, CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<List<SellerSalesChartOutput>>.Failure(sellerError);
-
-        if (!Enum.IsDefined(input.GroupBy))
-            return Result<List<SellerSalesChartOutput>>.Failure("Group by is invalid");
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<List<SellerSalesChartOutput>>.Failure(dateError);
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var result = invoices
-            .Where(IsSuccessfulOrder)
-            .SelectMany(invoice =>
-            {
-                var key = GetSalesChartGroupKey(invoice.CreatedAt, input.GroupBy);
-                return GetSellerItems(invoice, sellerIds).Select(item => new
-                {
-                    Key = key,
-                    InvoiceId = invoice.Id,
-                    Sales = item.ProductPrice * item.ProductCount,
-                    Count = item.ProductCount
-                });
-            })
-            .GroupBy(x => x.Key)
-            .Select(group => new SellerSalesChartOutput
-            {
-                Date = group.Key,
-                SalesAmount = group.Sum(x => x.Sales),
-                OrderCount = group.Select(x => x.InvoiceId).Distinct().Count(),
-                ItemsSoldCount = group.Sum(x => x.Count)
-            })
-            .OrderBy(x => x.Date)
-            .ToList();
-
-        return Result<List<SellerSalesChartOutput>>.Success(result);
-    }
+        SellerSalesChartInput input, CancellationToken cancellation) =>
+        await sellerReportingService.SalesChartAsync(userId, input, cancellation);
 
     public async Task<Result<SellerTopProductsOutput>> TopProductsAsync(int userId,
-        SellerTopProductsInput input, CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<SellerTopProductsOutput>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<SellerTopProductsOutput>.Failure(dateError);
-
-        var page = input.Page < 1 ? 1 : input.Page;
-        var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var items = invoices
-            .Where(IsSuccessfulOrder)
-            .SelectMany(invoice => GetSellerItems(invoice, sellerIds)
-                .Select(item => new
-                {
-                    item.ProductId,
-                    item.Product.Name,
-                    item.ProductCount,
-                    Sales = item.ProductPrice * item.ProductCount
-                }))
-            .GroupBy(x => x.ProductId)
-            .Select(group => new SellerTopProductItemOutput
-            {
-                ProductId = group.Key,
-                ProductName = group.First().Name,
-                UnitsSold = group.Sum(x => x.ProductCount),
-                SalesAmount = group.Sum(x => x.Sales)
-            })
-            .OrderByDescending(x => x.SalesAmount)
-            .ThenByDescending(x => x.UnitsSold)
-            .ThenBy(x => x.ProductId)
-            .ToList();
-
-        var output = new SellerTopProductsOutput
-        {
-            TotalCount = items.Count,
-            Items = items
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList()
-        };
-
-        return Result<SellerTopProductsOutput>.Success(output);
-    }
+        SellerTopProductsInput input, CancellationToken cancellation) =>
+        await sellerReportingService.TopProductsAsync(userId, input, cancellation);
 
     public async Task<Result<SellerTopVariantsOutput>> TopVariantsAsync(int userId,
-        SellerTopVariantsInput input, CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<SellerTopVariantsOutput>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<SellerTopVariantsOutput>.Failure(dateError);
-
-        var page = input.Page < 1 ? 1 : input.Page;
-        var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var items = invoices
-            .Where(IsSuccessfulOrder)
-            .SelectMany(invoice => GetSellerItems(invoice, sellerIds)
-                .Select(item => new
-                {
-                    item.ProductVariantId,
-                    item.ProductId,
-                    item.Product.Name,
-                    item.ProductVariant.Price,
-                    item.ProductVariant.Stock,
-                    Values = item.ProductVariant.AttributeValues,
-                    item.ProductCount,
-                    Sales = item.ProductPrice * item.ProductCount
-                }))
-            .GroupBy(x => x.ProductVariantId)
-            .Select(group =>
-            {
-                var first = group.First();
-                return new SellerTopVariantItemOutput
-                {
-                    ProductVariantId = group.Key,
-                    ProductId = first.ProductId,
-                    ProductName = first.Name,
-                    Price = first.Price,
-                    Stock = first.Stock,
-                    Values = first.Values
-                        .OrderBy(x => x.Size)
-                        .ThenBy(x => x.Id)
-                        .Select(x => new SellerTopVariantValueItemOutput
-                        {
-                            Id = x.Id,
-                            Size = x.Size,
-                            ColorName = x.ColorName,
-                            ColorCode = x.ColorCode
-                        }).ToList(),
-                    UnitsSold = group.Sum(x => x.ProductCount),
-                    SalesAmount = group.Sum(x => x.Sales)
-                };
-            })
-            .OrderByDescending(x => x.SalesAmount)
-            .ThenByDescending(x => x.UnitsSold)
-            .ThenBy(x => x.ProductVariantId)
-            .ToList();
-
-        var output = new SellerTopVariantsOutput
-        {
-            TotalCount = items.Count,
-            Items = items
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList()
-        };
-
-        return Result<SellerTopVariantsOutput>.Success(output);
-    }
+        SellerTopVariantsInput input, CancellationToken cancellation) =>
+        await sellerReportingService.TopVariantsAsync(userId, input, cancellation);
 
     public async Task<Result<List<SellerOrderStatusListOutput>>> OrderStatusesAsync(int userId,
-        SellerOrderStatusesInput input, CancellationToken cancellation)
-    {
-        var (_, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<List<SellerOrderStatusListOutput>>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<List<SellerOrderStatusListOutput>>.Failure(dateError);
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var result = Enum.GetValues<PaymentStatusEnum>()
-            .Select(status => new SellerOrderStatusListOutput
-            {
-                PaymentStatus = status,
-                Count = invoices.Count(x => x.PaymentStatus == status)
-            })
-            .ToList();
-
-        return Result<List<SellerOrderStatusListOutput>>.Success(result);
-    }
+        SellerOrderStatusesInput input, CancellationToken cancellation) =>
+        await sellerReportingService.OrderStatusesAsync(userId, input, cancellation);
 
     public async Task<Result<SellerLowStockOutput>> LowStockAsync(int userId, SellerLowStockInput input,
-        CancellationToken cancellation)
-    {
-        var (_, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<SellerLowStockOutput>.Failure(sellerError);
-
-        if (input.Threshold < 0)
-            return Result<SellerLowStockOutput>.Failure("Threshold cannot be negative");
-
-        var page = input.Page < 1 ? 1 : input.Page;
-        var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
-
-        var products = await productRepository.SellerProductListAsync(userId, cancellation);
-
-        var variants = products
-            .SelectMany(product => product.ProductVariants
-                .Where(variant => variant.Stock <= input.Threshold)
-                .Select(variant => new { product, variant }))
-            .OrderBy(x => x.variant.Stock)
-            .ThenBy(x => x.variant.Id)
-            .ToList();
-
-        var output = new SellerLowStockOutput
-        {
-            TotalCount = variants.Count,
-            Items = variants
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new SellerLowStockItemOutput
-                {
-                    ProductVariantId = x.variant.Id,
-                    ProductId = x.product.Id,
-                    ProductName = x.product.Name,
-                    Price = x.variant.Price,
-                    Values = x.variant.AttributeValues
-                        .OrderBy(value => value.Size)
-                        .ThenBy(value => value.Id)
-                        .Select(value => new SellerLowStockValueItemOutput
-                        {
-                            Id = value.Id,
-                            Size = value.Size,
-                            ColorName = value.ColorName,
-                            ColorCode = value.ColorCode
-                        }).ToList(),
-                    Stock = x.variant.Stock
-                })
-                .ToList()
-        };
-
-        return Result<SellerLowStockOutput>.Success(output);
-    }
+        CancellationToken cancellation) => await sellerReportingService.LowStockAsync(userId, input, cancellation);
 
     public async Task<Result<SellerProductsWithoutSalesOutput>> ProductsWithoutSalesAsync(int userId,
-        SellerProductsWithoutSalesInput input, CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<SellerProductsWithoutSalesOutput>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<SellerProductsWithoutSalesOutput>.Failure(dateError);
-
-        var page = input.Page < 1 ? 1 : input.Page;
-        var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var soldProductIds = invoices
-            .Where(IsSuccessfulOrder)
-            .SelectMany(invoice => GetSellerItems(invoice, sellerIds))
-            .Select(x => x.ProductId)
-            .ToHashSet();
-
-        var products = await productRepository.SellerProductListAsync(userId, cancellation);
-
-        var items = products
-            .Where(x => !soldProductIds.Contains(x.Id))
-            .OrderByDescending(x => x.Id)
-            .ToList();
-
-        var output = new SellerProductsWithoutSalesOutput
-        {
-            TotalCount = items.Count,
-            Items = items
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new SellerProductsWithoutSalesItemOutput
-                {
-                    ProductId = x.Id,
-                    ProductName = x.Name
-                })
-                .ToList()
-        };
-
-        return Result<SellerProductsWithoutSalesOutput>.Success(output);
-    }
+        SellerProductsWithoutSalesInput input, CancellationToken cancellation) =>
+        await sellerReportingService.ProductsWithoutSalesAsync(userId, input, cancellation);
 
     public async Task<Result<List<SellerCategorySalesOutput>>> CategorySalesAsync(int userId,
-        SellerCategorySalesInput input, CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<List<SellerCategorySalesOutput>>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<List<SellerCategorySalesOutput>>.Failure(dateError);
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var result = invoices
-            .Where(IsSuccessfulOrder)
-            .SelectMany(invoice => GetSellerItems(invoice, sellerIds)
-                .Select(item => new
-                {
-                    invoice.Id,
-                    item.Product.CategoryId,
-                    item.Product.Category.Name,
-                    item.ProductCount,
-                    Sales = item.ProductPrice * item.ProductCount
-                }))
-            .GroupBy(x => x.CategoryId)
-            .Select(group => new SellerCategorySalesOutput
-            {
-                CategoryId = group.Key,
-                CategoryName = group.First().Name,
-                SalesAmount = group.Sum(x => x.Sales),
-                UnitsSold = group.Sum(x => x.ProductCount),
-                OrderCount = group.Select(x => x.Id).Distinct().Count()
-            })
-            .OrderByDescending(x => x.SalesAmount)
-            .ThenBy(x => x.CategoryId)
-            .ToList();
-
-        return Result<List<SellerCategorySalesOutput>>.Success(result);
-    }
+        SellerCategorySalesInput input, CancellationToken cancellation) =>
+        await sellerReportingService.CategorySalesAsync(userId, input, cancellation);
 
     public async Task<Result<List<SellerDiscountStatisticsOutput>>> DiscountStatisticsAsync(int userId,
-        SellerDiscountStatisticsInput input, CancellationToken cancellation)
-    {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
-        if (sellerError != null)
-            return Result<List<SellerDiscountStatisticsOutput>>.Failure(sellerError);
-
-        var dateError = ValidateDateRange(input.From, input.To);
-        if (dateError != null)
-            return Result<List<SellerDiscountStatisticsOutput>>.Failure(dateError);
-
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
-
-        var result = invoices
-            .Where(IsSuccessfulOrder)
-            .Where(x => x.DiscountCodeId.HasValue && x.DiscountCode != null)
-            .GroupBy(x => x.DiscountCodeId!.Value)
-            .Select(group => new SellerDiscountStatisticsOutput
-            {
-                DiscountCodeId = group.Key,
-                Code = group.First().DiscountCode!.Code,
-                UsageCount = group.Count(),
-                DiscountAmount = group.Sum(x => GetSellerDiscountShare(x, sellerIds)),
-                SalesAmount = group.Sum(x => GetItemsAmount(GetSellerItems(x, sellerIds)))
-            })
-            .OrderByDescending(x => x.UsageCount)
-            .ThenBy(x => x.DiscountCodeId)
-            .ToList();
-
-        return Result<List<SellerDiscountStatisticsOutput>>.Success(result);
-    }
+        SellerDiscountStatisticsInput input, CancellationToken cancellation) =>
+        await sellerReportingService.DiscountStatisticsAsync(userId, input, cancellation);
 
     public async Task<Result<List<SellerOrderAttentionListOutput>>> OrdersAttentionAsync(int userId,
         SellerOrdersAttentionInput input, CancellationToken cancellation)
@@ -669,13 +305,6 @@ public class SellerService(
         return null;
     }
 
-    private static bool IsSuccessfulOrder(InvoiceEntity invoice) =>
-        invoice.PaymentStatus is PaymentStatusEnum.PaymentCompleted
-            or PaymentStatusEnum.Preparing
-            or PaymentStatusEnum.ReadyForShipment
-            or PaymentStatusEnum.Shipping
-            or PaymentStatusEnum.Delivered;
-
     private static bool IsAllowedOrderStatusTransition(PaymentStatusEnum current, PaymentStatusEnum next) =>
         current switch
         {
@@ -698,26 +327,4 @@ public class SellerService(
     private static decimal GetItemsAmount(IEnumerable<InvoiceItemEntity> items) =>
         items.Sum(x => x.ProductPrice * x.ProductCount);
 
-    private static decimal GetSellerDiscountShare(InvoiceEntity invoice, HashSet<int> sellerIds)
-    {
-        var subtotal = invoice.InvoiceItems.Sum(x => x.ProductPrice * x.ProductCount);
-        if (subtotal <= 0)
-            return 0;
-
-        var payment = invoice.Payments.OrderBy(x => x.Id).FirstOrDefault();
-        if (payment == null || payment.Amount >= subtotal)
-            return 0;
-
-        var sellerAmount = GetItemsAmount(GetSellerItems(invoice, sellerIds));
-        var invoiceDiscount = subtotal - payment.Amount;
-        return decimal.Round(sellerAmount / subtotal * invoiceDiscount, 2, MidpointRounding.AwayFromZero);
-    }
-
-    private static DateTime GetSalesChartGroupKey(DateTime date, SalesChartGroupByEnum groupBy) =>
-        groupBy switch
-        {
-            SalesChartGroupByEnum.Week => date.Date.AddDays(-(((int)date.DayOfWeek + 1) % 7)),
-            SalesChartGroupByEnum.Month => new DateTime(date.Year, date.Month, 1),
-            _ => date.Date
-        };
 }

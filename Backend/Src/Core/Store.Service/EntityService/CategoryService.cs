@@ -10,23 +10,23 @@ namespace Store.Service.EntityService;
 
 public class CategoryService(ICategoryRepository categoryRepository, AttributeService attributeService)
 {
-    private List<CategoryListOutput> BuildTree(List<CategoryEntity> categories, int? parentId)
+    private static List<CategoryListOutput> BuildTree(ILookup<int?, CategoryEntity> categoriesByParentId,
+        int? parentId)
     {
-        return categories
-            .Where(x => x.ParentId == parentId)
+        return categoriesByParentId[parentId]
             .Select(x => new CategoryListOutput
             {
                 Id = x.Id,
                 Name = x.Name,
                 ParentId = x.ParentId,
-                Children = BuildTree(categories, x.Id)
+                Children = BuildTree(categoriesByParentId, x.Id)
             }).ToList();
     }
 
     public async Task<Result<List<CategoryListOutput>>> ListAsync(CancellationToken cancellation)
     {
         var categoryEntityList = await categoryRepository.ListAsync(cancellation);
-        var result = BuildTree(categoryEntityList, null);
+        var result = BuildTree(categoryEntityList.ToLookup(x => x.ParentId), null);
 
         return Result<List<CategoryListOutput>>.Success(result);
     }
