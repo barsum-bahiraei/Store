@@ -75,7 +75,6 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
           {error && <p role="alert" className="mt-2 text-xs text-error">{error.message}</p>}
         </div>
       </div>
-      <Link href={`/products/${product.id}`} aria-label={product.name} className="absolute inset-0 z-[5] rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" />
     </article>
   );
 }

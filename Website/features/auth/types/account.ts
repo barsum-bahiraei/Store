@@ -15,6 +15,7 @@ export type AccountUser = {
   birthDate: string | null;
   gender: Gender;
   address: string | null;
+  postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
   isEmailVerified: boolean;
@@ -26,6 +27,7 @@ export type UpdateUserProfileInput = {
   lastName: string | null;
   email: string | null;
   address: string | null;
+  postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
   gender: Gender;
