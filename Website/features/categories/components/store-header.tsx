@@ -208,7 +208,7 @@ export function StoreHeader() {
           <Link href="/shop?discount=true" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">شگفت‌انگیزها</Link>
           <Link href="/about" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">درباره ما</Link>
           <Link href="/contact" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">تماس با ما</Link>
-          <Link href="/contact?subject= همکاری با ما" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">همکاری با ما</Link>
+          <Link href="/cooperation" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">همکاری با ما</Link>
           <Link href="/blog-1/" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">مجله زریوان</Link>
           </div>
         </div>
@@ -263,7 +263,7 @@ export function StoreHeader() {
                   <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">support_agent</span>
                   <span className="flex-1">تماس با ما</span>
                 </Link>
-                <Link href="/contact?subject= همکاری با ما" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                <Link href="/cooperation" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
                   <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">handshake</span>
                   <span className="flex-1">همکاری با ما</span>
                 </Link>
