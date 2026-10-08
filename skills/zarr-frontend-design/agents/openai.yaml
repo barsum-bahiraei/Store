@@ -1,0 +1,4 @@
+interface:
+  display_name: ZARR Frontend Design
+  short_description: Design and refine ZARR frontend UI only
+  default_prompt: Improve the requested ZARR frontend interface while changing only Panel or Website and preserving the backend contract.

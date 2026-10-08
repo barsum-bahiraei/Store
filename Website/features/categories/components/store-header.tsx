@@ -177,13 +177,13 @@ export function StoreHeader() {
         <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">
           <label htmlFor="store-search" className="sr-only">جست‌وجوی محصولات</label>
           <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
-          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول و دسته‌بندی" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
+          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
         </form>
 
         <nav aria-label="عملیات حساب کاربری" className="absolute left-0 flex shrink-0 items-center gap-0 [direction:rtl] md:static md:gap-1">
           <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">person</span>
-            <span className="hidden max-w-20 truncate text-xs font-bold lg:block">{user?.firstName ?? "ورود"}</span>
+            {!user && <span className="hidden max-w-20 truncate text-xs font-bold lg:block">ورود</span>}
           </Link>
           <Link href={isAuthenticated ? "/account?tab=cart" : "/login"} aria-label="سبد خرید" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <span className="material-symbols-rounded" aria-hidden="true">shopping_bag</span>
@@ -197,7 +197,7 @@ export function StoreHeader() {
           <form action="/shop" role="search" className="relative w-full md:hidden">
             <label htmlFor="mobile-store-search" className="sr-only">جست‌وجوی محصولات</label>
             <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
-            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول و دسته‌بندی" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
+            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-transparent bg-muted py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15" />
           </form>
           <div className="hidden items-center gap-1 md:flex">
           <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
@@ -218,7 +218,16 @@ export function StoreHeader() {
         <nav id="store-navigation" aria-label="منوی دسته‌بندی‌ها" onMouseEnter={openDesktopMenu} className="fixed inset-0 z-[60] h-dvh w-screen max-w-none overflow-y-auto border-border bg-surface p-5 shadow-lg shadow-primary-shadow md:absolute md:inset-auto md:right-5 md:top-full md:z-[60] md:h-auto md:w-72 md:overflow-visible md:rounded-b-2xl md:border md:p-3 lg:right-6 xl:right-8">
           <div className="mx-auto grid w-full max-w-7xl gap-5 [direction:rtl] md:max-w-none">
             <div className="flex items-center justify-between border-b border-border pb-4 md:hidden">
-              <p className="font-black">منوی زریوان</p>
+              <Link
+                href="/"
+                onClick={closeMenu}
+                className="flex min-h-11 items-center gap-2 rounded-lg px-2 font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="material-symbols-rounded text-xl text-primary" aria-hidden="true">
+                  home
+                </span>
+                <span>خانه</span>
+              </Link>
               <button type="button" onClick={closeMenu} aria-label="بستن منو" className="grid size-11 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
                 <span className="material-symbols-rounded text-2xl" aria-hidden="true">close</span>
               </button>
@@ -232,17 +241,36 @@ export function StoreHeader() {
             </div>
             <div className="grid gap-2 md:hidden">
               <button type="button" onClick={() => setIsMobileCategoriesOpen((open) => !open)} aria-expanded={isMobileCategoriesOpen} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 text-right font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+                <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">category</span>
                 <span className="flex-1">دسته‌بندی کالاها</span>
                 <span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isMobileCategoriesOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
               </button>
               {isMobileCategoriesOpen && categoryContent}
               <div className="grid gap-2">
-                <Link href="/shop" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">همه محصولات</Link>
-                <Link href="/shop?discount=true" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">شگفت‌انگیزها</Link>
-                <Link href="/about" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">درباره ما</Link>
-                <Link href="/contact" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">تماس با ما</Link>
-                <Link href="/contact?subject= همکاری با ما" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">همکاری با ما</Link>
-                <Link href="/blog-1/" onClick={closeMenu} className="flex min-h-12 items-center rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">مجله زریوان</Link>
+                <Link href="/shop" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                  <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">storefront</span>
+                  <span className="flex-1">همه محصولات</span>
+                </Link>
+                <Link href="/shop?discount=true" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                  <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">local_offer</span>
+                  <span className="flex-1">شگفت‌انگیزها</span>
+                </Link>
+                <Link href="/about" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                  <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">info</span>
+                  <span className="flex-1">درباره ما</span>
+                </Link>
+                <Link href="/contact" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                  <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">support_agent</span>
+                  <span className="flex-1">تماس با ما</span>
+                </Link>
+                <Link href="/contact?subject= همکاری با ما" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                  <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">handshake</span>
+                  <span className="flex-1">همکاری با ما</span>
+                </Link>
+                <Link href="/blog-1/" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
+                  <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">article</span>
+                  <span className="flex-1">مجله زریوان</span>
+                </Link>
               </div>
             </div>
           </div>

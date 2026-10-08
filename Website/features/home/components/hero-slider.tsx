@@ -8,7 +8,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperInstance } from "swiper";
 import "swiper/css";
 import "swiper/css/pagination";
-import { heroSlides } from "../data/home-content";
+import { heroSlides, type HeroSlide } from "../data/home-content";
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
@@ -22,6 +22,30 @@ function getReducedMotionPreference() {
   return window.matchMedia(reducedMotionQuery).matches;
 }
 
+function InstagramLogo() {
+  return (
+    <span className="mb-4 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045] shadow-lg sm:size-16" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="size-8 fill-none stroke-white sm:size-9" strokeWidth="1.8">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.4" cy="6.7" r="1" className="fill-white stroke-none" />
+      </svg>
+    </span>
+  );
+}
+
+function HeroSlideLink({ slide }: { slide: HeroSlide }) {
+  const href = slide.href ?? (slide.categoryId ? `/shop?category=${slide.categoryId}` : null);
+  if (!href) return null;
+
+  const className = "absolute inset-0 z-20 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
+  const ariaLabel = slide.linkLabel ?? `مشاهده محصولات ${slide.title}`;
+
+  return slide.external
+    ? <a href={href} target="_blank" rel="noreferrer" aria-label={ariaLabel} className={className} />
+    : <Link href={href} aria-label={ariaLabel} className={className} />;
+}
+
 export function HeroSlider() {
   const swiperRef = useRef<SwiperInstance | null>(null);
   const prefersReducedMotion = useSyncExternalStore(
@@ -31,7 +55,7 @@ export function HeroSlider() {
   );
 
   return (
-    <section aria-label="مجموعه‌های ویژه" className="relative mt-4 w-full overflow-hidden bg-secondary sm:mt-6 lg:mt-8">
+    <section aria-label="مجموعه‌های ویژه" className="relative w-full overflow-hidden bg-secondary">
       <Swiper
         modules={[A11y, Autoplay, Keyboard, Pagination]}
         onSwiper={(swiper) => { swiperRef.current = swiper; }}
@@ -47,10 +71,11 @@ export function HeroSlider() {
             <article className="relative min-h-[20rem] overflow-hidden bg-secondary text-white sm:min-h-[31rem] lg:min-h-[29rem]">
               <Image src={slide.image} alt={slide.imageAlt} fill priority={index === 0} sizes="100vw" className="object-cover" />
               <div className="absolute inset-0 bg-secondary/45 sm:bg-gradient-to-r sm:from-secondary/90 sm:via-secondary/55 sm:to-transparent" aria-hidden="true" />
-              {slide.categoryId && <Link href={`/shop?category=${slide.categoryId}`} aria-label={`مشاهده محصولات ${slide.title}`} className="absolute inset-0 z-20 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset" />}
+              <HeroSlideLink slide={slide} />
 
               <div className="relative z-10 flex min-h-[20rem] items-center px-5 pb-14 pt-8 sm:min-h-[31rem] sm:px-20 sm:pb-16 sm:pt-12 lg:min-h-[29rem] lg:px-24 xl:px-[max(6rem,calc((100vw-80rem)/2))]">
                 <div className="mr-auto max-w-md text-right drop-shadow-md">
+                  {slide.showInstagramLogo ? <InstagramLogo /> : null}
                   {slide.eyebrow ? (
                     <span className="inline-flex min-h-8 items-center rounded-full border border-accent/60 bg-secondary/45 px-3 text-xs font-black text-accent backdrop-blur-sm sm:min-h-9 sm:px-4 sm:text-sm">{slide.eyebrow}</span>
                   ) : (

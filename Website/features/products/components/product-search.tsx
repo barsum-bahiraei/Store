@@ -93,7 +93,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
         </button>
         {isFiltersOpen && <button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden" />}
       <aside className={`self-start rounded-2xl border border-primary/25 bg-surface p-5 shadow-2xl shadow-primary-shadow lg:sticky lg:top-40 lg:block lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:shadow-none ${isFiltersOpen ? "fixed inset-x-3 bottom-3 top-20 z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto" : "hidden"}`}>
-        <div className="mb-5 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><span className="material-symbols-rounded text-primary" aria-hidden="true">tune</span><h2 className="font-black">فیلترها</h2></div><button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="grid size-10 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><span className="material-symbols-rounded" aria-hidden="true">close</span></button></div>
+        <div className="mb-5 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><span className="material-symbols-rounded text-primary" aria-hidden="true">tune</span><h2 className="font-black">فیلترها</h2></div><div className="flex items-center gap-1"><Link href="/shop" aria-label="حذف فیلترها" title="حذف فیلترها" className="flex min-h-10 items-center gap-1 rounded-lg px-2 text-xs font-bold text-error outline-none hover:bg-error/10 focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-lg" aria-hidden="true">delete</span><span>حذف فیلترها</span></Link><button type="button" aria-label="بستن فیلترها" onClick={() => setIsFiltersOpen(false)} className="grid size-10 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><span className="material-symbols-rounded" aria-hidden="true">close</span></button></div></div>
         <form key={JSON.stringify(filters)} action="/shop" method="get" onPointerDownCapture={(event) => { if (!categoryDropdownRef.current?.contains(event.target as Node)) { setIsCategoryDropdownOpen(false); setOpenCategoryId(null); } }} className="space-y-5">
           {sort !== "priceAsc" && <input type="hidden" name="sort" value={sort} />}
           <div><label htmlFor="filter-name" className="text-sm font-bold">نام محصول</label><input id="filter-name" name="q" type="search" defaultValue={filters.name} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div>
@@ -144,23 +144,25 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
             <label className="flex min-h-11 items-center gap-1.5 whitespace-nowrap text-xs font-bold"><input name="available" value="true" type="checkbox" defaultChecked={filters.isAvailable === true} className="size-5 shrink-0 accent-primary" />محصولات موجود</label>
             <label className="flex min-h-11 items-center gap-1.5 whitespace-nowrap text-xs font-bold"><input name="discount" value="true" type="checkbox" defaultChecked={filters.hasDiscount} className="size-5 shrink-0 accent-primary" />محصولات تخفیف‌دار</label>
           </div>
-          <div className="grid gap-2"><button type="submit" className="min-h-11 rounded-lg bg-primary px-4 text-sm font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring">اعمال فیلترها</button><Link href="/shop" className="grid min-h-11 place-items-center rounded-lg text-sm font-bold text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">پاک کردن فیلترها</Link></div>
+          <div className="grid gap-2"><button type="submit" className="min-h-11 rounded-lg bg-primary px-4 text-sm font-black text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring">اعمال فیلترها</button></div>
         </form>
       </aside></>}
       <section aria-labelledby="search-results-title" aria-busy={isFetching} className="min-w-0 self-start">
         <h2 id="search-results-title" className="sr-only">محصولات</h2>
-        <nav aria-label="مرتب‌سازی محصولات" className="mb-4 flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border pb-3">
-          <span className="shrink-0 text-sm font-bold text-muted-foreground">مرتب‌سازی:</span>
-          {sortOptions.map((option) => (
-            <Link
-              key={option.value}
-              href={sortHref(filters, option.value)}
-              aria-current={sort === option.value ? "page" : undefined}
-              className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-4 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${sort === option.value ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-foreground hover:bg-muted"}`}
-            >
-              {option.label}
-            </Link>
-          ))}
+        <nav aria-label="مرتب‌سازی محصولات" className="mb-4 flex shrink-0 items-stretch gap-2 overflow-x-auto border-b border-border pb-0">
+          <span className="flex min-h-11 shrink-0 items-center px-2 text-sm font-bold text-muted-foreground">مرتب‌سازی:</span>
+          <div className="flex shrink-0 items-stretch">
+            {sortOptions.map((option) => (
+              <Link
+                key={option.value}
+                href={sortHref(filters, option.value)}
+                aria-current={sort === option.value ? "page" : undefined}
+                className={`relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center border-b-2 border-transparent px-4 text-sm font-bold outline-none transition-colors hover:text-primary focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring ${sort === option.value ? "text-primary after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-primary" : "text-foreground"}`}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </div>
         </nav>
         <div role="region" aria-label="فهرست محصولات">
           {isFetching && !isPending && <span role="status" className="sr-only">در حال به‌روزرسانی محصولات…</span>}

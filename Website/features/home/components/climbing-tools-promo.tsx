@@ -3,8 +3,8 @@ import Link from "next/link";
 
 export function ClimbingToolsPromo() {
   return (
-    <section aria-label="ابزارهای صعود" className="bg-background px-3 pb-10 text-white sm:px-8 sm:pb-14 lg:px-12">
-      <div className="mx-auto w-full max-w-[1700px] px-0 sm:px-14">
+    <section aria-label="ابزارهای صعود" className="bg-background px-4 pb-10 text-white sm:px-8 sm:pb-14 lg:px-12">
+      <div className="mx-auto w-full max-w-[1700px]">
       <Link href="/shop?category=41" className="group relative block min-h-64 w-full overflow-hidden rounded-3xl border border-primary/20 shadow-xl shadow-primary-shadow outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:min-h-80 lg:min-h-96">
         <Image src="/images/home/climbing-tools-promo.png" alt="کارابین و طناب گره‌خورده در مسیر صعود کوهستانی" fill sizes="(max-width: 1700px) 100vw, 1700px" className="object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
         <span className="absolute inset-0 bg-secondary/45 sm:bg-gradient-to-r sm:from-secondary/90 sm:via-secondary/55 sm:to-transparent" aria-hidden="true" />

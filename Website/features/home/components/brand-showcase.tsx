@@ -2,13 +2,29 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProductBrands } from "@/features/products/hooks/use-products";
 import { getProductImageUrl } from "@/features/products/utils/product";
 
 export function BrandShowcase() {
   const { data: brands = [], isPending, isError } = useProductBrands();
   const brandsScrollerRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  useEffect(() => {
+    const scroller = brandsScrollerRef.current;
+    if (!scroller || isPending) return;
+
+    const updateOverflow = () => {
+      setHasOverflow(scroller.scrollWidth > scroller.clientWidth + 1);
+    };
+
+    updateOverflow();
+    const resizeObserver = new ResizeObserver(updateOverflow);
+    resizeObserver.observe(scroller);
+
+    return () => resizeObserver.disconnect();
+  }, [brands.length, isPending]);
 
   function scrollBrands(amount: number) {
     brandsScrollerRef.current?.scrollBy({ left: amount, behavior: "smooth" });
@@ -28,9 +44,9 @@ export function BrandShowcase() {
             {Array.from({ length: 6 }, (_, index) => <span key={index} className="h-28 min-w-36 flex-1 animate-pulse rounded-2xl bg-muted motion-reduce:animate-none" />)}
           </div>
         ) : (
-          <div className="relative px-0 sm:px-14">
-            <button type="button" onClick={() => scrollBrands(320)} aria-label="برندهای قبلی" className="absolute right-0 top-1/2 z-10 hidden size-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface outline-none transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:grid"><span className="material-symbols-rounded" aria-hidden="true">arrow_forward</span></button>
-            <button type="button" onClick={() => scrollBrands(-320)} aria-label="برندهای بعدی" className="absolute left-0 top-1/2 z-10 hidden size-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface outline-none transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:grid"><span className="material-symbols-rounded" aria-hidden="true">arrow_back</span></button>
+          <div className="relative">
+            {hasOverflow ? <button type="button" onClick={() => scrollBrands(320)} aria-label="برندهای قبلی" className="absolute right-0 top-1/2 z-10 hidden size-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface outline-none transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:grid"><span className="material-symbols-rounded" aria-hidden="true">arrow_forward</span></button> : null}
+            {hasOverflow ? <button type="button" onClick={() => scrollBrands(-320)} aria-label="برندهای بعدی" className="absolute left-0 top-1/2 z-10 hidden size-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface outline-none transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:grid"><span className="material-symbols-rounded" aria-hidden="true">arrow_back</span></button> : null}
             <div ref={brandsScrollerRef} className="flex gap-3 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {brands.map((brand) => {
                 const imageUrl = getProductImageUrl(brand.image?.url);

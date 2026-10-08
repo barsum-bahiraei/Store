@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 const neshanMapUrl = "https://neshan.org/maps/share/37.250805015534795,55.1845741520782";
 
 const socialLinks = [
-  { label: "تلگرام", icon: "send", href: "https://t.me/" },
-  { label: "اینستاگرام", icon: "photo_camera", href: "https://instagram.com/" },
-  { label: "بله", icon: "forum", href: "https://bale.ai/" },
+  { label: "تلگرام", value: "@mohsengolchin", icon: "send", href: "https://t.me/mohsengolchin" },
+  { label: "اینستاگرام", value: "@zaryvan.shop", icon: "photo_camera", href: "https://instagram.com/zaryvan.shop" },
+  { label: "بله", value: "09306815858", icon: "forum", href: "https://ble.ir/09306815858" },
 ] as const;
 
 export default function ContactPage() {
@@ -45,6 +45,7 @@ export default function ContactPage() {
                     <a key={social.label} href={social.href} target="_blank" rel="noreferrer" className="group flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-accent/35 bg-background/10 px-2 text-center transition-[transform,background-color,border-color] hover:-translate-y-1 hover:border-accent hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                       <span className="material-symbols-rounded text-3xl text-accent transition-transform group-hover:scale-110" aria-hidden="true">{social.icon}</span>
                       <span className="text-xs font-bold">{social.label}</span>
+                      <span dir="ltr" className="max-w-full truncate text-[11px] text-secondary-foreground/70">{social.value}</span>
                     </a>
                   ))}
                 </div>
