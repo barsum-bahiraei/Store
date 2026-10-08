@@ -39,12 +39,13 @@ type CartItemActionOptions = {
   productId: number;
   productVariantId?: number;
   productName?: string;
+  productImageUrl?: string | null;
   variantName?: string;
   cartItemId?: number;
   productCount?: number;
 };
 
-export function useCartItemActions({ productId, productVariantId, productName, variantName, cartItemId, productCount }: CartItemActionOptions) {
+export function useCartItemActions({ productId, productVariantId, productName, productImageUrl, variantName, cartItemId, productCount }: CartItemActionOptions) {
   const token = useAuthToken();
   const queryClient = useQueryClient();
   const [trackedItems, setTrackedItems] = useState<Record<number, CartItem>>({});
@@ -105,7 +106,7 @@ export function useCartItemActions({ productId, productVariantId, productName, v
   function change(action: CartAction) {
     if (!token && !getAuthToken()) {
       if (productVariantId == null) return;
-      useGuestCartStore.getState().change(productId, productVariantId, action, productName, variantName);
+      useGuestCartStore.getState().change(productId, productVariantId, action, productName, variantName, productImageUrl ?? undefined);
       return;
     }
     if (queryClient.isMutating({ mutationKey }) > 0) return;

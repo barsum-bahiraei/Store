@@ -9,6 +9,7 @@ export type GuestCartItem = {
   productVariantId: number;
   variantName?: string;
   name?: string;
+  imageUrl?: string;
   count: number;
 };
 
@@ -17,7 +18,7 @@ export type CartState = {
 };
 
 export type CartStore = CartState & {
-  change: (productId: number, productVariantId: number, action: CartAction, name?: string, variantName?: string) => void;
+  change: (productId: number, productVariantId: number, action: CartAction, name?: string, variantName?: string, imageUrl?: string) => void;
   completeTransfer: (productId: number, productVariantId: number) => void;
 };
 
@@ -33,20 +34,21 @@ function validItems(value: unknown): GuestCartItem[] {
       && Number.isSafeInteger(item.productVariantId) && item.productVariantId > 0
       && Number.isSafeInteger(item.count) && item.count > 0
       && (item.name === undefined || typeof item.name === "string")
-      && (item.variantName === undefined || typeof item.variantName === "string");
+      && (item.variantName === undefined || typeof item.variantName === "string")
+      && (item.imageUrl === undefined || typeof item.imageUrl === "string");
   }).filter((item, index, items) => items.findIndex((entry) => isSameItem(entry, item.productId, item.productVariantId)) === index);
 }
 
 export const useGuestCartStore = create<CartStore>()(persist((set) => ({
   items: [],
-  change: (productId, productVariantId, action, name, variantName) => set((state) => {
+  change: (productId, productVariantId, action, name, variantName, imageUrl) => set((state) => {
     const item = state.items.find((entry) => isSameItem(entry, productId, productVariantId));
     if (action === "remove" || (action === "decrease" && item?.count === 1)) {
       return { items: state.items.filter((entry) => !isSameItem(entry, productId, productVariantId)) };
     }
-    if (!item) return action === "increase" ? { items: [...state.items, { productId, productVariantId, name, variantName, count: 1 }] } : state;
+    if (!item) return action === "increase" ? { items: [...state.items, { productId, productVariantId, name, variantName, imageUrl, count: 1 }] } : state;
     return { items: state.items.map((entry) => isSameItem(entry, productId, productVariantId)
-      ? { ...entry, name: name ?? entry.name, variantName: variantName ?? entry.variantName, count: entry.count + (action === "increase" ? 1 : -1) } : entry) };
+      ? { ...entry, name: name ?? entry.name, variantName: variantName ?? entry.variantName, imageUrl: imageUrl ?? entry.imageUrl, count: entry.count + (action === "increase" ? 1 : -1) } : entry) };
   }),
   completeTransfer: (productId, productVariantId) => set((state) => ({
     items: state.items.filter((item) => !isSameItem(item, productId, productVariantId)),

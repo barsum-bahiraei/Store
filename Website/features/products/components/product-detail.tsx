@@ -45,10 +45,12 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const serverItem = isAuthenticated && effectiveVariantId != null
     ? cartItems?.find((item) => item.product.id === productId && item.productVariantId === effectiveVariantId)
     : undefined;
+  const productImageUrl = getProductImageUrl(product?.images.find((image) => image.isMain)?.url ?? product?.images[0]?.url);
   const { change, productCount: serverQuantity, isPending: isAdding, error: cartError } = useCartItemActions({
     productId,
     productVariantId: effectiveVariantId ?? undefined,
     productName: product?.name,
+    productImageUrl,
     variantName: selectedVariant ? formatVariantLabel(selectedVariant.values) : undefined,
     cartItemId: serverItem?.id,
     productCount: serverItem?.productCount,

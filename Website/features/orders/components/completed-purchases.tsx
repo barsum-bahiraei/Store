@@ -20,7 +20,7 @@ const deliveryMethodLabels: Record<DeliveryMethod, string> = {
 };
 const paymentStatusDetails: Record<PaymentStatus, { label: string; className: string }> = {
   [PaymentStatus.New]: { label: "سفارش ثبت شده", className: "bg-muted text-foreground" },
-  [PaymentStatus.ProcessingPayment]: { label: "در حال پرداخت", className: "bg-warning/10 text-warning" },
+  [PaymentStatus.ProcessingPayment]: { label: "در انتظار پرداخت", className: "bg-white/15 text-white" },
   [PaymentStatus.PaymentCompleted]: { label: "پرداخت موفق", className: "bg-success/10 text-success" },
   [PaymentStatus.Preparing]: { label: "در حال آماده‌سازی", className: "bg-primary/10 text-primary" },
   [PaymentStatus.ReadyForShipment]: { label: "آماده ارسال", className: "bg-primary/10 text-primary" },
@@ -114,12 +114,9 @@ export function OrdersList() {
           <li key={invoice.id}>
             <article className="overflow-hidden rounded-3xl border border-border bg-surface shadow-xl shadow-primary-shadow">
               <header className="flex flex-col gap-4 bg-secondary px-5 py-5 text-secondary-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="material-symbols-rounded grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-2xl text-primary-foreground" aria-hidden="true">receipt_long</span>
-                  <div className="min-w-0">
-                    <h3 className="truncate text-lg font-black">سفارش شماره {invoice.id}</h3>
-                    <time dateTime={invoice.createdAt} className="mt-1 flex items-center gap-1.5 text-xs font-bold text-secondary-foreground/70"><span className="material-symbols-rounded text-base" aria-hidden="true">calendar_today</span>{formatDate(invoice.createdAt)}</time>
-                  </div>
+                <div className="min-w-0">
+                  <h3 className="truncate text-lg font-black">سفارش شماره {invoice.id}</h3>
+                  <time dateTime={invoice.createdAt} className="mt-1 flex items-center gap-1.5 text-xs font-bold text-secondary-foreground/70"><span className="material-symbols-rounded text-base" aria-hidden="true">calendar_today</span>{formatDate(invoice.createdAt)}</time>
                 </div>
                 <span aria-label={`وضعیت سفارش: ${status?.label ?? "نامشخص"}`} className={`w-fit rounded-full px-3 py-1.5 text-xs font-black ring-1 ring-inset ring-current/10 ${status?.className ?? "bg-muted text-muted-foreground"}`}>{status?.label ?? "نامشخص"}</span>
               </header>

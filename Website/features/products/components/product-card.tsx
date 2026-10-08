@@ -21,13 +21,14 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
   const [imageLoaded, setImageLoaded] = useState(false);
   const purchasableVariants = variants.filter((variant) => variant.stock > 0);
   const quickBuyVariant = product.isAvailable && purchasableVariants.length === 1 ? purchasableVariants[0] : undefined;
+  const imageUrl = getProductImageUrl(product.image?.url);
   const { change, isPending, error } = useCartItemActions({
     productId: product.id,
     productVariantId: quickBuyVariant?.id,
     productName: product.name,
+    productImageUrl: imageUrl,
     variantName: quickBuyVariant ? formatVariantLabel(quickBuyVariant.values) : undefined,
   });
-  const imageUrl = getProductImageUrl(product.image?.url);
   const salePrice = getSalePrice(product.price, product.discount);
 
   function handleCardClick(event: MouseEvent<HTMLElement>) {

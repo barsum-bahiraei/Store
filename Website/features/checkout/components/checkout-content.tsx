@@ -121,7 +121,7 @@ export function CheckoutContent() {
   return (
     <form onSubmit={handleSubmit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-6">
-        <header><p className="text-sm font-black text-primary">مرحله نهایی خرید</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">ثبت سفارش</h1><p className="mt-2 text-sm text-muted-foreground">روش تحویل و پرداخت را بررسی کنید؛ مبلغ قطعی پس از ثبت توسط سرور محاسبه می‌شود.</p></header>
+        <header><h1 className="text-3xl font-black sm:text-4xl">ثبت سفارش</h1></header>
 
         <fieldset className="rounded-xl border border-border bg-surface p-5 sm:p-6">
           <legend className="px-2 text-lg font-black">روش تحویل</legend>

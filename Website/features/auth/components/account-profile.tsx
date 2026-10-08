@@ -54,7 +54,6 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
   return (
     <main className="flex-1 bg-background px-5 py-10 text-foreground sm:px-8 sm:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8"><Link href="/" className="rounded-lg text-sm font-bold text-muted-foreground outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">خانه فروشگاه</Link><h1 className="mt-2 text-3xl font-black tracking-[-0.04em]">حساب من</h1></div>
         <div className="grid items-start gap-6 md:grid-cols-[14rem_minmax(0,1fr)]">
           <nav aria-label="بخش‌های حساب کاربری" className="grid gap-2 rounded-xl border border-border bg-surface p-3">
             {([

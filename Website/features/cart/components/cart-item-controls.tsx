@@ -31,18 +31,16 @@ export function CartItemControls({ productId, productName, productCount, product
     <div>
       <div className="flex flex-wrap items-center gap-3" aria-busy={isPending}>
         <div className="flex items-center rounded-lg border border-border">
-          <button type="button" onClick={() => change("decrease")} disabled={isPending} aria-label={productCount === 1 ? `حذف ${productName}` : `کاهش تعداد ${productName}`} className={buttonClass}>
+          <button type="button" onClick={() => change("decrease")} disabled={isPending} aria-label={productCount === 1 ? `حذف ${productName}` : `کاهش تعداد ${productName}`} className={`${buttonClass} ${productCount === 1 ? "text-error" : ""}`}>
             <span className="material-symbols-rounded" aria-hidden="true">{productCount === 1 ? "delete" : "remove"}</span>
           </button>
-          <span className="min-w-10 text-center text-sm font-bold tabular-nums" aria-live="polite" aria-label={`تعداد: ${productCount}`}>{productCount}</span>
+          <span className="grid min-w-10 place-items-center text-center text-sm font-bold tabular-nums" aria-live="polite" aria-label={isPending ? "در حال به‌روزرسانی تعداد محصول" : `تعداد: ${productCount}`}>
+            {isPending ? <span className="material-symbols-rounded animate-spin text-xl text-primary motion-reduce:animate-none" aria-hidden="true">progress_activity</span> : productCount}
+          </span>
           <button type="button" onClick={() => change("increase")} disabled={isPending || outOfStock || atStockLimit} aria-label={`افزایش تعداد ${productName}`} className={buttonClass}>
             <span className="material-symbols-rounded" aria-hidden="true">add</span>
           </button>
         </div>
-        <button type="button" onClick={() => change("remove")} disabled={isPending} aria-label={`حذف ${productName} از سبد`} className={`${buttonClass} text-error`}>
-          <span className="material-symbols-rounded" aria-hidden="true">delete</span>
-        </button>
-        {isPending && <span role="status" className="text-xs text-muted-foreground">در حال به‌روزرسانی…</span>}
       </div>
       {outOfStock && <p role="status" className="mt-2 text-xs font-bold text-error">ناموجود — امکان افزایش تعداد نیست.</p>}
       {!outOfStock && atStockLimit && <p role="status" className="mt-2 text-xs text-muted-foreground">حداکثر موجودی در سبد است.</p>}
