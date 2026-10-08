@@ -172,6 +172,9 @@ export function StoreHeader() {
           <Link href="/" aria-label="خانه فروشگاه" className="absolute left-1/2 flex min-h-11 min-w-0 -translate-x-1/2 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl] md:static md:translate-x-0">
             <Image src="/images/zaryvan-logo.png" alt="" width={64} height={64} className="size-14 rounded-full object-contain sm:size-16" />
           </Link>
+          <Link href="/" aria-label="رفتن به صفحه اصلی" className="absolute left-[calc(50%+2.25rem)] grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:left-[calc(50%+2.5rem)] md:static">
+            <span className="material-symbols-rounded text-2xl" aria-hidden="true">home</span>
+          </Link>
         </div>
 
         <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">

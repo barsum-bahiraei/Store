@@ -44,7 +44,9 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const { data: categoryTree = [] } = useCategories();
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const productsStartRef = useRef<HTMLDivElement>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [showScrollToProducts, setShowScrollToProducts] = useState(false);
   const [mobileFiltersMaxHeight, setMobileFiltersMaxHeight] = useState(0);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [openCategoryId, setOpenCategoryId] = useState<number | null>(null);
@@ -58,6 +60,15 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
       window.location.replace("/shop");
     }
   }, []);
+
+  const scrollToProductsStart = () => {
+    const target = productsStartRef.current;
+    if (!target) return;
+    const storeHeader = document.querySelector<HTMLElement>("[data-store-header]");
+    const headerHeight = storeHeader?.getBoundingClientRect().height ?? 0;
+    const targetTop = window.scrollY + target.getBoundingClientRect().top - headerHeight - 16;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+  };
 
   const products = useMemo(() => {
     const uniqueProducts = new Map<number, ProductSearchItem>();
@@ -79,6 +90,30 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
     observer.observe(target);
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetching, isError, products.length]);
+
+  useEffect(() => {
+    let animationFrame = 0;
+
+    const updateScrollButton = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        const target = productsStartRef.current;
+        if (!target) return;
+        const storeHeader = document.querySelector<HTMLElement>("[data-store-header]");
+        const headerHeight = storeHeader?.getBoundingClientRect().height ?? 0;
+        setShowScrollToProducts(window.scrollY > 240 && target.getBoundingClientRect().top < headerHeight + 16);
+      });
+    };
+
+    updateScrollButton();
+    window.addEventListener("scroll", updateScrollButton, { passive: true });
+    window.addEventListener("resize", updateScrollButton);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", updateScrollButton);
+      window.removeEventListener("resize", updateScrollButton);
+    };
+  }, []);
 
   useEffect(() => {
     function closeCategoryFilter(event: PointerEvent) {
@@ -216,7 +251,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
       </aside></>}
       <section aria-labelledby="search-results-title" aria-busy={isFetching} className="min-w-0 self-start">
         <h2 id="search-results-title" className="sr-only">محصولات</h2>
-        <nav aria-label="مرتب‌سازی محصولات" className="mb-4 flex shrink-0 items-stretch gap-2 overflow-x-auto border-b border-border pb-0">
+        <nav aria-label="مرتب‌سازی محصولات" className="mb-4 flex shrink-0 items-stretch gap-2 overflow-x-auto border-b border-border pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="flex min-h-11 shrink-0 items-center px-2 text-sm font-bold text-muted-foreground">مرتب‌سازی:</span>
           <div className="flex shrink-0 items-stretch">
             {sortOptions.map((option) => (
@@ -231,6 +266,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
             ))}
           </div>
         </nav>
+        <div ref={productsStartRef} className="h-px scroll-mt-40" aria-hidden="true" />
         <div role="region" aria-label="فهرست محصولات">
           {isFetching && !isPending && <span role="status" className="sr-only">در حال به‌روزرسانی محصولات…</span>}
           {isPending ? <div role="status" className="grid grid-cols-2 gap-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4 min-[1700px]:grid-cols-5">      <span className="sr-only">در حال بارگذاری محصولات</span>{Array.from({ length: 10 }, (_, index) => <span key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />)}</div>
@@ -245,6 +281,11 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
                 </>}
         </div>
       </section>
+      {showFilters && showScrollToProducts && !isFiltersOpen && (
+        <button type="button" onClick={scrollToProductsStart} aria-label="بازگشت به ابتدای محصولات" title="بازگشت به ابتدای محصولات" className="fixed bottom-20 right-4 z-30 grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground shadow-xl shadow-primary-shadow outline-none transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:bottom-6 lg:right-6">
+          <span className="material-symbols-rounded text-2xl" aria-hidden="true">arrow_upward</span>
+        </button>
+      )}
     </div>
   );
 }
