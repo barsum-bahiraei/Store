@@ -14,6 +14,7 @@ public class UserEntity : BaseEntity
     public string? BirthDate { get; set; }
     public GenderTypeEnum Gender { get; set; }
     public string? Address { get; set; }
+    public string? PostalCode { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public bool IsEmailVerified { get; set; }

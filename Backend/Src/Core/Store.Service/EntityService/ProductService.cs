@@ -17,6 +17,9 @@ public class ProductService(
     IFileRepository fileRepository,
     IConfiguration configuration)
 {
+    private readonly BrandService brandService = new(productRepository, fileService);
+    private readonly ProductInteractionService productInteractionService = new(productRepository, fileService);
+
     public async Task<Result<ProductTorobOutput>> TorobListAsync(ProductTorobInput input,
         CancellationToken cancellation)
     {
@@ -429,35 +432,8 @@ public class ProductService(
     }
 
     public async Task<Result<ProductCommentCreateOutput>> CommentCreateAsync(int productId, int userId,
-        ProductCommentCreateInput input, CancellationToken cancellation)
-    {
-        if (input.Rating is < 1 or > 5)
-            return Result<ProductCommentCreateOutput>.Failure("Rating must be between 1 and 5");
-
-        if (await productRepository.GetAsync(productId, cancellation) == null)
-            return Result<ProductCommentCreateOutput>.Failure("Product not found");
-
-        var entity = new ProductCommentEntity
-        {
-            Text = input.Text,
-            Rating = input.Rating,
-            IsShow = true,
-            UserId = userId,
-            ProductId = productId
-        };
-
-        var created = await productRepository.CommentCreateAsync(entity, cancellation);
-        return Result<ProductCommentCreateOutput>.Success(new ProductCommentCreateOutput
-        {
-            Id = created.Id,
-            Text = created.Text,
-            Rating = created.Rating,
-            IsShow = created.IsShow,
-            UserId = created.UserId,
-            ProductId = created.ProductId,
-            CreatedAt = created.CreatedAt
-        });
-    }
+        ProductCommentCreateInput input, CancellationToken cancellation) =>
+        await productInteractionService.CommentCreateAsync(productId, userId, input, cancellation);
 
     public async Task<Result<ProductGetOutput?>> GetAsync(int id, int userId, CancellationToken cancellation)
     {
@@ -757,190 +733,29 @@ public class ProductService(
         return Result<bool>.Success(true);
     }
 
-    public async Task<Result<List<ProductBrandListOutput>>> BrandListAsync(CancellationToken cancellation)
-    {
-        var entities = await productRepository.BrandListAsync(cancellation);
-        var result = new List<ProductBrandListOutput>();
+    public async Task<Result<List<ProductBrandListOutput>>> BrandListAsync(CancellationToken cancellation) =>
+        await brandService.BrandListAsync(cancellation);
 
-        foreach (var entity in entities)
-        {
-            var imageResult = await fileService.GetAsync(
-                TableNameEnum.ProductBrands,
-                TargetNameEnum.ProductBrandId,
-                entity.Id,
-                cancellation);
-
-            result.Add(new ProductBrandListOutput
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Image = imageResult.Data == null
-                    ? null
-                    : new ProductBrandImageOutput
-                    {
-                        Id = imageResult.Data.Id,
-                        Name = imageResult.Data.Name,
-                        Url = imageResult.Data.Url,
-                        IsMain = imageResult.Data.IsMain,
-                        FileType = imageResult.Data.FileType
-                    }
-            });
-        }
-
-        return Result<List<ProductBrandListOutput>>.Success(result);
-    }
-
-    public async Task<Result<ProductBrandGetOutput?>> BrandGetAsync(int id, CancellationToken cancellation)
-    {
-        var entity = await productRepository.BrandGetAsync(id, cancellation);
-        if (entity == null)
-            return Result<ProductBrandGetOutput?>.Failure("Product brand not found");
-
-        var imageResult = await fileService.GetAsync(
-            TableNameEnum.ProductBrands,
-            TargetNameEnum.ProductBrandId,
-            entity.Id,
-            cancellation);
-
-        return Result<ProductBrandGetOutput?>.Success(new ProductBrandGetOutput
-        {
-            Id = entity.Id,
-            Name = entity.Name,
-            Image = imageResult.Data == null
-                ? null
-                : new ProductBrandImageOutput
-                {
-                    Id = imageResult.Data.Id,
-                    Name = imageResult.Data.Name,
-                    Url = imageResult.Data.Url,
-                    IsMain = imageResult.Data.IsMain,
-                    FileType = imageResult.Data.FileType
-                }
-        });
-    }
+    public async Task<Result<ProductBrandGetOutput?>> BrandGetAsync(int id, CancellationToken cancellation) =>
+        await brandService.BrandGetAsync(id, cancellation);
 
     public async Task<Result<ProductBrandCreateOutput>> BrandCreateAsync(ProductBrandCreateInput input,
-        CancellationToken cancellation)
-    {
-        var created = await productRepository.BrandCreateAsync(new ProductBrandEntity
-        {
-            Name = input.Name
-        }, cancellation);
-
-        return Result<ProductBrandCreateOutput>.Success(new ProductBrandCreateOutput
-        {
-            Id = created.Id,
-            Name = created.Name
-        });
-    }
+        CancellationToken cancellation) => await brandService.BrandCreateAsync(input, cancellation);
 
     public async Task<Result<ProductBrandUpdateOutput>> BrandUpdateAsync(int id, ProductBrandUpdateInput input,
-        CancellationToken cancellation)
-    {
-        var entity = await productRepository.BrandGetAsync(id, cancellation);
-        if (entity == null)
-            return Result<ProductBrandUpdateOutput>.Failure("Product brand not found");
+        CancellationToken cancellation) => await brandService.BrandUpdateAsync(id, input, cancellation);
 
-        entity.Name = input.Name;
-        var updated = await productRepository.BrandUpdateAsync(entity, cancellation);
-        return Result<ProductBrandUpdateOutput>.Success(new ProductBrandUpdateOutput
-        {
-            Id = updated.Id,
-            Name = updated.Name
-        });
-    }
+    public async Task<Result<bool>> BrandDeleteAsync(int id, CancellationToken cancellation) =>
+        await brandService.BrandDeleteAsync(id, cancellation);
 
-    public async Task<Result<bool>> BrandDeleteAsync(int id, CancellationToken cancellation)
-    {
-        var entity = await productRepository.BrandGetAsync(id, cancellation);
-        if (entity == null)
-            return Result<bool>.Failure("Product brand not found");
+    public async Task<Result<List<ProductBookmarkListOutput>>> BookmarkListAsync(int userId,
+        CancellationToken cancellation) => await productInteractionService.BookmarkListAsync(userId, cancellation);
 
-        if (entity.Products.Count != 0)
-            return Result<bool>.Failure("Product brand is in use");
+    public async Task<Result<bool>> BookmarkCreateAsync(int productId, int userId, CancellationToken cancellation) =>
+        await productInteractionService.BookmarkCreateAsync(productId, userId, cancellation);
 
-        await productRepository.BrandDeleteAsync(entity, cancellation);
-        return Result<bool>.Success(true);
-    }
-
-    public async Task<Result<List<ProductBookmarkListOutput>>> BookmarkListAsync(int userId, CancellationToken cancellation)
-    {
-        var entities = await productRepository.BookmarkListAsync(userId, cancellation);
-        var result = new List<ProductBookmarkListOutput>();
-
-        foreach (var entity in entities)
-        {
-            var imageResult = await fileService.GetAsync(
-                TableNameEnum.Products,
-                TargetNameEnum.ProductId,
-                entity.ProductId,
-                cancellation);
-
-            ProductBookmarkImageOutput? image = null;
-
-            if (imageResult.Data != null)
-            {
-                image = new ProductBookmarkImageOutput
-                {
-                    Id = imageResult.Data.Id,
-                    Url = imageResult.Data.Url,
-                    IsMain = imageResult.Data.IsMain,
-                    Name = imageResult.Data.Name,
-                    FileType = imageResult.Data.FileType
-                };
-            }
-
-            result.Add(new ProductBookmarkListOutput
-            {
-                Id = entity.Id,
-                ProductId = entity.ProductId,
-                UserId = entity.UserId,
-                CreatedAt = entity.CreatedAt,
-                Product = new ProductBookmarkProductOutput
-                {
-                    Id = entity.Product.Id,
-                    Name = entity.Product.Name,
-                    ShortDescription = entity.Product.ShortDescription,
-                    Price = GetDisplayPrice(entity.Product),
-                    Discount = entity.Product.Discount,
-                    CategoryId = entity.Product.CategoryId,
-                    CategoryTitle = entity.Product.Category.Name,
-                    Image = image
-                }
-            });
-        }
-
-        return Result<List<ProductBookmarkListOutput>>.Success(result);
-    }
-
-    public async Task<Result<bool>> BookmarkCreateAsync(int productId, int userId, CancellationToken cancellation)
-    {
-        if (await productRepository.GetAsync(productId, cancellation) == null)
-            return Result<bool>.Failure("Product not found");
-
-        var existing = await productRepository.BookmarkGetAsync(productId, userId, cancellation);
-        if (existing != null)
-            return Result<bool>.Failure("Already bookmarked");
-
-        var entity = new ProductBookmarkEntity
-        {
-            ProductId = productId,
-            UserId = userId
-        };
-
-        await productRepository.BookmarkCreateAsync(entity, cancellation);
-        return Result<bool>.Success(true);
-    }
-
-    public async Task<Result<bool>> BookmarkDeleteAsync(int productId, int userId, CancellationToken cancellation)
-    {
-        var entity = await productRepository.BookmarkGetAsync(productId, userId, cancellation);
-        if (entity == null)
-            return Result<bool>.Failure("Bookmark not found");
-
-        await productRepository.BookmarkDeleteAsync(entity, cancellation);
-        return Result<bool>.Success(true);
-    }
+    public async Task<Result<bool>> BookmarkDeleteAsync(int productId, int userId, CancellationToken cancellation) =>
+        await productInteractionService.BookmarkDeleteAsync(productId, userId, cancellation);
 
     private static string? ValidateCombinations(List<ProductCombinationData> combinations)
     {
