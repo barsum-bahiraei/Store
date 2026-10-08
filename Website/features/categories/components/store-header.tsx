@@ -191,7 +191,7 @@ export function StoreHeader() {
           </Link>
           <Link href={isAuthenticated ? "/account?tab=cart" : "/login"} aria-label="سبد خرید" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
             <span className="material-symbols-rounded" aria-hidden="true">shopping_bag</span>
-            {cartCount !== undefined && !isCartError && <span aria-live="polite" className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-emerald-200 px-1 text-[9px] font-black text-emerald-950 ring-1 ring-white/60">{cartCount}</span>}
+            {cartCount !== undefined && !isCartError && <span aria-live="polite" className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-white px-1 text-[9px] font-black text-secondary ring-1 ring-white/90">{cartCount}</span>}
           </Link>
         </nav>
       </div>
