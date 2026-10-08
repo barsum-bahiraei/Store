@@ -10,6 +10,7 @@ import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/thumbs";
 import { useCart, useCartItemActions } from "@/features/cart/hooks/use-cart";
+import { BookmarkButton } from "@/features/bookmarks/components/bookmark-button";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { isUserRole } from "@/features/auth/types/account";
 import { useProductDetail } from "../hooks/use-products";
@@ -98,7 +99,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
 
       <div className="grid min-w-0 gap-8 lg:grid-cols-2 lg:gap-12">
         <section aria-label="تصاویر محصول" className="min-w-0 overflow-hidden">
-          <div className="overflow-hidden rounded-xl border border-primary/25 bg-surface">
+          <div className="relative overflow-hidden rounded-xl border border-primary/25 bg-surface">
             <Swiper
               modules={[A11y, Keyboard, Thumbs]}
               onSwiper={setMainSwiper}
@@ -131,6 +132,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                 </SwiperSlide>
               ))}
             </Swiper>
+            <BookmarkButton productId={product.id} productName={product.name} />
           </div>
 
           {images.length > 1 && (

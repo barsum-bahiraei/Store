@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+.product-card-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
 :root {
   --background: #f4f7f5;
   --foreground: #092328;

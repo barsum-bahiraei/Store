@@ -13,13 +13,13 @@ const storeBenefits = [
 export function StoreFooter() {
   return (
     <footer className="mt-auto border-t border-border bg-surface text-foreground">
-      <section aria-label="مزایای خرید از زریوان" className="mx-auto grid w-full max-w-7xl grid-cols-1 border-b border-border px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-12">
+      <section aria-label="مزایای خرید از زریوان" className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-12">
         {storeBenefits.map((benefit) => (
-          <div key={benefit.title} className="flex min-h-24 items-center justify-center gap-4 border-b border-border py-4 last:border-b-0 sm:px-4 sm:odd:border-l sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0 lg:border-l lg:px-5 lg:last:border-l-0">
-            <span className="material-symbols-rounded shrink-0 text-4xl text-primary" aria-hidden="true">{benefit.icon}</span>
+          <div key={benefit.title} className="flex min-h-24 items-center justify-center gap-4 rounded-xl border border-white/20 bg-secondary/70 px-4 py-4 text-secondary-foreground shadow-sm lg:px-5">
+            <span className="material-symbols-rounded shrink-0 text-4xl text-primary-foreground" aria-hidden="true">{benefit.icon}</span>
             <span className="text-right">
               <span className="block text-sm font-black">{benefit.title}</span>
-              <span className="mt-1 block text-xs leading-5 text-muted-foreground">{benefit.description}</span>
+              <span className="mt-1 block text-xs leading-5 text-secondary-foreground/75">{benefit.description}</span>
             </span>
           </div>
         ))}

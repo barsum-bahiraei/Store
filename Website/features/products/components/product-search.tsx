@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCategories } from "@/features/categories/hooks/use-categories";
 import type { Category } from "@/features/categories/types/category";
@@ -42,6 +43,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const { data, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } = useInfiniteProductSearch(filters);
   const { data: brands = [], isPending: areBrandsPending, isError: isBrandsError } = useProductBrands();
   const { data: categoryTree = [] } = useCategories();
+  const searchParams = useSearchParams();
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const productsStartRef = useRef<HTMLDivElement>(null);
@@ -51,7 +53,12 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [openCategoryId, setOpenCategoryId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(filters.categoryId ? String(filters.categoryId) : "");
-  const selectedCategoryLabel = descendants(categoryTree).find((category) => String(category.id) === selectedCategoryId)?.name ?? (selectedCategoryId ? `دسته‌بندی ${selectedCategoryId}` : "همه دسته‌بندی‌ها");
+  const [selectedBrandId, setSelectedBrandId] = useState(filters.productBrandId ? String(filters.productBrandId) : "");
+  const [selectedCategoryLabelOverride, setSelectedCategoryLabelOverride] = useState<string | null>(null);
+  const selectedCategoryFromTree = descendants(categoryTree).find((category) => String(category.id) === selectedCategoryId)?.name;
+  const selectedCategoryLabel = selectedCategoryLabelOverride !== null
+    ? selectedCategoryLabelOverride || "همه دسته‌بندی‌ها"
+    : searchParams.get("categoryName") ?? selectedCategoryFromTree ?? (selectedCategoryId ? `دسته‌بندی ${selectedCategoryId}` : "همه دسته‌بندی‌ها");
 
   useEffect(() => {
     const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
@@ -202,13 +209,14 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
           <fieldset>
             <legend className="text-sm font-bold">دسته‌بندی</legend>
             <input type="hidden" name="category" value={selectedCategoryId} readOnly />
+            <input type="hidden" name="categoryName" value={selectedCategoryLabel} readOnly />
             <div ref={categoryDropdownRef} className="relative mt-2">
             <button type="button" aria-expanded={isCategoryDropdownOpen} onClick={() => setIsCategoryDropdownOpen((isOpen) => !isOpen)} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 text-right text-sm font-bold outline-none transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-primary/15">
               <span className={selectedCategoryId ? "text-foreground" : "text-muted-foreground"}>{selectedCategoryLabel}</span>
               <span className={`material-symbols-rounded text-lg transition-transform duration-200 ${isCategoryDropdownOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
             </button>
             {isCategoryDropdownOpen && <div className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-border bg-surface shadow-xl shadow-primary-shadow">
-              <button type="button" onClick={() => { setSelectedCategoryId(""); setOpenCategoryId(null); setIsCategoryDropdownOpen(false); }} className={`flex min-h-11 w-full items-center px-3 text-right text-sm font-bold outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedCategoryId === "" ? "bg-primary/10 text-primary" : ""}`}>همه دسته‌بندی‌ها</button>
+              <button type="button" onClick={() => { setSelectedCategoryId(""); setSelectedCategoryLabelOverride(""); setOpenCategoryId(null); setIsCategoryDropdownOpen(false); }} className={`flex min-h-11 w-full items-center px-3 text-right text-sm font-bold outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedCategoryId === "" ? "bg-primary/10 text-primary" : ""}`}>همه دسته‌بندی‌ها</button>
               <div className="max-h-72 divide-y divide-border/70 overflow-y-auto">
                 {categoryTree.map((category) => {
                   const isOpen = openCategoryId === category.id;
@@ -216,14 +224,14 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
                   return (
                     <div key={category.id}>
                       <div className="flex items-center">
-                        <button type="button" onClick={() => { setSelectedCategoryId(String(category.id)); setOpenCategoryId(null); setIsCategoryDropdownOpen(false); }} className={`min-h-11 min-w-0 flex-1 px-3 text-right text-sm font-black outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedCategoryId === String(category.id) ? "bg-primary/10 text-primary" : ""}`}>
+                        <button type="button" onClick={() => { setSelectedCategoryId(String(category.id)); setSelectedCategoryLabelOverride(category.name); setOpenCategoryId(null); setIsCategoryDropdownOpen(false); }} className={`min-h-11 min-w-0 flex-1 px-3 text-right text-sm font-black outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedCategoryId === String(category.id) ? "bg-primary/10 text-primary" : ""}`}>
                           {category.name}
                         </button>
                         {hasChildren && <button type="button" aria-label={`زیرمجموعه‌های ${category.name}`} aria-expanded={isOpen} onClick={() => setOpenCategoryId(isOpen ? null : category.id)} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"><span className={`material-symbols-rounded text-lg transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span></button>}
                       </div>
                       <div className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                         <div className="min-h-0">
-                          {descendants(category.children).map((child) => <button key={child.id} type="button" onClick={() => { setSelectedCategoryId(String(child.id)); setOpenCategoryId(null); setIsCategoryDropdownOpen(false); }} className={`block min-h-10 w-full px-5 text-right text-sm outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedCategoryId === String(child.id) ? "bg-primary/10 font-bold text-primary" : "text-muted-foreground"}`}>{child.name}</button>)}
+                          {descendants(category.children).map((child) => <button key={child.id} type="button" onClick={() => { setSelectedCategoryId(String(child.id)); setSelectedCategoryLabelOverride(child.name); setOpenCategoryId(null); setIsCategoryDropdownOpen(false); }} className={`block min-h-10 w-full px-5 text-right text-sm outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedCategoryId === String(child.id) ? "bg-primary/10 font-bold text-primary" : "text-muted-foreground"}`}>{child.name}</button>)}
                         </div>
                       </div>
                     </div>
@@ -235,7 +243,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
           </fieldset>
           <div>
             <label htmlFor="filter-brand" className="text-sm font-bold">برند</label>
-            <select id="filter-brand" name="productBrandId" defaultValue={filters.productBrandId ?? ""} disabled={areBrandsPending || isBrandsError} aria-describedby={isBrandsError ? "brand-filter-error" : undefined} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60">
+            <select id="filter-brand" name="productBrandId" value={selectedBrandId} onChange={(event) => setSelectedBrandId(event.target.value)} disabled={areBrandsPending || isBrandsError} aria-describedby={isBrandsError ? "brand-filter-error" : undefined} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60">
               <option value="">{areBrandsPending ? "در حال بارگذاری برندها…" : isBrandsError ? "برندها در دسترس نیستند" : "همه برندها"}</option>
               {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
             </select>
