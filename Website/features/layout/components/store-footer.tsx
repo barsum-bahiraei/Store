@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const trustSealImage = "https://Trustseal.eNamad.ir/logo.aspx?id=261898&Code=fAmxCvuhBi7lav0BUQhk";
+const trustSealImage = "/images/enamad.png";
 const trustSealLink = "https://trustseal.enamad.ir/?id=261898&Code=fAmxCvuhBi7lav0BUQhk";
 const storeBenefits = [
   { icon: "local_shipping", title: "تحویل اکسپرس", description: "در کمترین زمان" },

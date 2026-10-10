@@ -43,13 +43,15 @@ function DesktopCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
 }
 
 function MobileCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [expandedCategoryByLevel, setExpandedCategoryByLevel] = useState<Record<number, number>>({});
 
-  const toggleCategory = (categoryId: number) => {
-    setExpandedIds((current) => {
-      const next = new Set(current);
-      if (next.has(categoryId)) next.delete(categoryId);
-      else next.add(categoryId);
+  const toggleCategory = (categoryId: number, level: number) => {
+    setExpandedCategoryByLevel((current) => {
+      const next = Object.fromEntries(
+        Object.entries(current).filter(([expandedLevel]) => Number(expandedLevel) < level),
+      ) as Record<number, number>;
+
+      if (current[level] !== categoryId) next[level] = categoryId;
       return next;
     });
   };
@@ -58,7 +60,7 @@ function MobileCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
     return (
       <ul className={level === 0 ? "grid gap-1" : "mr-3 grid gap-1 border-r-2 border-primary/20 pr-3"}>
         {items.map((category) => {
-          const isExpanded = expandedIds.has(category.id);
+          const isExpanded = expandedCategoryByLevel[level] === category.id;
           const hasChildren = category.children.length > 0;
 
           return (
@@ -67,7 +69,7 @@ function MobileCategoryTree({ categories, onNavigate }: CategoryTreeProps) {
                 <Link href={`/shop?category=${category.id}`} onClick={onNavigate} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-sm font-black outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
                   <span className="truncate">{category.name}</span>
                 </Link>
-                {hasChildren && <button type="button" aria-label={`زیرمجموعه‌های ${category.name}`} aria-expanded={isExpanded} onClick={() => toggleCategory(category.id)} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span></button>}
+                {hasChildren && <button type="button" aria-label={`زیرمجموعه‌های ${category.name}`} aria-expanded={isExpanded} onClick={() => toggleCategory(category.id, level)} className="grid size-11 shrink-0 place-items-center rounded-lg outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span></button>}
               </div>
 
               {hasChildren && (
@@ -173,7 +175,7 @@ export function StoreHeader() {
           <Link href="/" aria-label="خانه فروشگاه" className="absolute left-1/2 flex min-h-11 min-w-0 -translate-x-1/2 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl] md:static md:translate-x-0">
             <Image src="/images/zaryvan-logo.png" alt="" width={64} height={64} className="size-14 rounded-full object-contain shadow-lg shadow-black/25 ring-2 ring-white/25 sm:size-16" />
           </Link>
-          <Link href="/" aria-label="رفتن به صفحه اصلی" className="absolute left-[calc(50%+2.25rem)] grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 sm:left-[calc(50%+2.5rem)] md:static">
+          <Link href="/" aria-label="رفتن به صفحه اصلی" className="absolute right-12 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 md:static">
             <span className="material-symbols-rounded text-2xl" aria-hidden="true">home</span>
           </Link>
         </div>

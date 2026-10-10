@@ -7,6 +7,7 @@ import {
   AUTH_TOKEN_KEY,
   clearAuthToken,
   getAuthToken,
+  getAuthTokenExpiresAt,
   setAuthToken,
 } from "@/lib/auth-token";
 import { getUserProfile, sendOtp, verifyOtp, updateUserProfile } from "../services/account-service";
@@ -16,29 +17,74 @@ export const accountKeys = {
   profile: ["account", "profile"] as const,
 };
 
+const MAX_TIMEOUT_DELAY_MS = 2_147_000_000;
+
 function subscribeToAuthToken(onStoreChange: () => void) {
   let currentToken = getAuthToken();
+  let expirationTimer: number | undefined;
+
+  const scheduleExpiration = (token: string | null) => {
+    if (expirationTimer !== undefined) window.clearTimeout(expirationTimer);
+    expirationTimer = undefined;
+    if (!token) return;
+
+    const expiresAt = getAuthTokenExpiresAt(token);
+    if (expiresAt === null) return;
+    const remainingTime = expiresAt - Date.now();
+    if (remainingTime <= 0) {
+      clearAuthToken();
+      return;
+    }
+
+    expirationTimer = window.setTimeout(() => {
+      const activeToken = getAuthToken();
+      if (activeToken !== token) {
+        currentToken = activeToken;
+        scheduleExpiration(activeToken);
+        onStoreChange();
+        return;
+      }
+
+      const activeExpiresAt = getAuthTokenExpiresAt(activeToken);
+      if (activeExpiresAt !== null && activeExpiresAt <= Date.now()) {
+        clearAuthToken();
+        return;
+      }
+
+      scheduleExpiration(activeToken);
+    }, Math.min(remainingTime, MAX_TIMEOUT_DELAY_MS));
+  };
+
   const checkCookie = () => {
     const nextToken = getAuthToken();
     if (nextToken === currentToken) return;
     currentToken = nextToken;
+    scheduleExpiration(nextToken);
+    onStoreChange();
+  };
+
+  const handleAuthTokenChange = () => {
+    currentToken = getAuthToken();
+    scheduleExpiration(currentToken);
     onStoreChange();
   };
 
   function handleStorage(event: StorageEvent) {
-    if (event.key === AUTH_TOKEN_KEY) onStoreChange();
+    if (event.key === AUTH_TOKEN_KEY) handleAuthTokenChange();
   }
 
   window.addEventListener("storage", handleStorage);
-  window.addEventListener(AUTH_TOKEN_EVENT, onStoreChange);
+  window.addEventListener(AUTH_TOKEN_EVENT, handleAuthTokenChange);
   window.addEventListener("focus", checkCookie);
   const interval = window.setInterval(checkCookie, 1000);
+  scheduleExpiration(currentToken);
 
   return () => {
     window.removeEventListener("storage", handleStorage);
-    window.removeEventListener(AUTH_TOKEN_EVENT, onStoreChange);
+    window.removeEventListener(AUTH_TOKEN_EVENT, handleAuthTokenChange);
     window.removeEventListener("focus", checkCookie);
     window.clearInterval(interval);
+    if (expirationTimer !== undefined) window.clearTimeout(expirationTimer);
   };
 }
 
