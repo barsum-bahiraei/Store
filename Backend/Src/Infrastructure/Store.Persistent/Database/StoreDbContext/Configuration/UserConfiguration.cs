@@ -9,8 +9,8 @@ public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
     public void Configure(EntityTypeBuilder<UserEntity> builder)
     {
         builder.ToTable("Users");
-        builder.Property(x => x.FirstName).HasMaxLength(100);
-        builder.Property(x => x.LastName).HasMaxLength(100);
+        builder.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.LastName).IsRequired().HasMaxLength(100);
         builder.Property(x => x.Email).HasMaxLength(320);
         builder.Property(x => x.PhoneNumber).IsRequired().HasMaxLength(32);
         builder.Property(x => x.NationalCode).HasMaxLength(32);
