@@ -56,10 +56,6 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
       showError("لطفاً موارد اجباری را تکمیل کنید.");
       return;
     }
-    if (!hasValidLocation) {
-      showError("لطفاً موقعیت دقیق تحویل را روی نقشه انتخاب کنید.");
-      return;
-    }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       showError("ایمیل واردشده معتبر نیست.");
       return;
@@ -80,8 +76,8 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
         email: form.email.trim() || null,
         address: form.address.trim(),
         postalCode: form.postalCode,
-        latitude,
-        longitude,
+        latitude: hasValidLocation ? latitude : null,
+        longitude: hasValidLocation ? longitude : null,
         gender: form.gender,
         nationalCode: form.nationalCode || null,
         birthDate: form.birthDate || null,
@@ -101,7 +97,7 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
     <div className="p-5 sm:p-7">
       <div className="mb-6">
         <h2 id="edit-profile-title" className="text-xl font-black">ویرایش اطلاعات پروفایل</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">نام، نشانی و کد پستی خود را ویرایش کنید و نقطه دقیق تحویل را روی نقشه انتخاب کنید.</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">نام، نشانی و کد پستی خود را ویرایش کنید. انتخاب موقعیت دقیق روی نقشه اختیاری است.</p>
       </div>
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {error && <p ref={errorRef} tabIndex={-1} role="alert" className="scroll-mt-40 flex items-start gap-2 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-bold text-error outline-none focus-visible:ring-2 focus-visible:ring-error"><span className="material-symbols-rounded text-lg" aria-hidden="true">error</span>{error}</p>}
@@ -147,7 +143,10 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
           </div>
         </div>
 
-        <LocationPicker value={mapLocation} onChange={(location) => setForm((current) => ({ ...current, latitude: location.latitude.toFixed(6), longitude: location.longitude.toFixed(6) }))} />
+        <div>
+          <p className="mb-2 text-sm font-bold">موقعیت مکانی <span className="font-normal text-muted-foreground">(اختیاری)</span></p>
+          <LocationPicker value={mapLocation} onChange={(location) => setForm((current) => ({ ...current, latitude: location.latitude.toFixed(6), longitude: location.longitude.toFixed(6) }))} />
+        </div>
 
         {isSaved && <p role="status" className="flex items-start gap-2 rounded-xl bg-muted px-4 py-3 text-sm font-bold text-success"><span className="material-symbols-rounded text-lg" aria-hidden="true">check_circle</span>اطلاعات پروفایل ذخیره شد.</p>}
 

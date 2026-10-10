@@ -18,3 +18,15 @@ export type CheckoutOutput = {
   refId: string;
   gatewayUrl: string;
 };
+
+export type DiscountValidationInput = {
+  discountCode: string;
+};
+
+export type DiscountValidationOutput = {
+  code: string;
+  discountAmount: number;
+  minimumPurchaseAmount: number;
+  paymentMethod: PaymentMethod | null;
+  expireAt: string | null;
+};
