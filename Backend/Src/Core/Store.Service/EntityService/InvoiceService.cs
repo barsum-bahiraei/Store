@@ -54,14 +54,40 @@ public class InvoiceService(
         return Result<List<InvoiceListOutput>>.Success(result);
     }
 
+    public async Task<Result<DiscountCodeValidateOutput>> DiscountCodeValidateAsync(int userId,
+        DiscountCodeValidateInput input,
+        CancellationToken cancellation)
+    {
+        if (string.IsNullOrWhiteSpace(input.DiscountCode))
+            return Result<DiscountCodeValidateOutput>.Failure("Discount code is invalid");
+
+        var userDiscountCode = await invoiceRepository.UserDiscountCodeGetAsync(
+            userId, input.DiscountCode.Trim(), cancellation);
+        if (userDiscountCode == null)
+            return Result<DiscountCodeValidateOutput>.Failure("Discount code is invalid for this user");
+
+        var discountCode = userDiscountCode.DiscountCode;
+        if (!discountCode.IsActive || userDiscountCode.IsUsed ||
+            discountCode.ExpireAt.HasValue && discountCode.ExpireAt.Value < DateTime.UtcNow ||
+            discountCode.MaxDiscountAmount <= 0 || discountCode.MinimumPurchaseAmount < 0)
+            return Result<DiscountCodeValidateOutput>.Failure("Discount code is not valid");
+
+        return Result<DiscountCodeValidateOutput>.Success(new DiscountCodeValidateOutput
+        {
+            Code = discountCode.Code,
+            DiscountAmount = discountCode.MaxDiscountAmount,
+            MinimumPurchaseAmount = discountCode.MinimumPurchaseAmount,
+            PaymentMethod = discountCode.PaymentMethod,
+            ExpireAt = discountCode.ExpireAt
+        });
+    }
+
     public async Task<Result<CheckoutOutput>> CheckoutAsync(int userId, CheckoutInput input,
         CancellationToken cancellation)
     {
-        if (!Enum.IsDefined(input.PaymentMethod))
-            return Result<CheckoutOutput>.Failure("Payment method is invalid");
-
-        if (input.PaymentMethod != PaymentMethodEnum.Online)
-            return Result<CheckoutOutput>.Failure("Only online payment is currently available");
+        var paymentMethodError = ValidatePaymentMethod(input.PaymentMethod);
+        if (paymentMethodError != null)
+            return Result<CheckoutOutput>.Failure(paymentMethodError);
 
         if (!Enum.IsDefined(input.DeliveryMethod))
             return Result<CheckoutOutput>.Failure("Delivery method is invalid");
@@ -75,61 +101,16 @@ public class InvoiceService(
 
         if (input.DeliveryMethod != DeliveryMethodEnum.Pickup)
         {
-            if (string.IsNullOrWhiteSpace(user.Address) ||
-                !user.Latitude.HasValue ||
-                !user.Longitude.HasValue)
+            if (string.IsNullOrWhiteSpace(user.Address))
                 return Result<CheckoutOutput>.Failure("Delivery address must be completed");
         }
 
-        var carts = await invoiceRepository.CartListAsync(userId, cancellation);
-        if (carts.Count == 0)
-            return Result<CheckoutOutput>.Failure("Cart is empty");
+        var pricingResult = await CalculatePricingAsync(userId, input.PaymentMethod, input.DiscountCode, cancellation);
+        if (!pricingResult.IsSuccess)
+            return Result<CheckoutOutput>.Failure(pricingResult.ErrorMessage!);
 
-        if (carts.Any(x => x.ProductCount <= 0))
-            return Result<CheckoutOutput>.Failure("Cart contains an invalid product count");
-
-        if (carts.Any(x => x.ProductVariant.Price < 0))
-            return Result<CheckoutOutput>.Failure("Cart contains an invalid product price");
-
-        if (carts.Any(x => x.ProductVariant.ProductId != x.ProductId))
-            return Result<CheckoutOutput>.Failure("Cart contains an invalid product variant");
-
-        if (carts.Any(x => x.ProductVariant.Stock < x.ProductCount))
-            return Result<CheckoutOutput>.Failure("Cart contains a product variant with insufficient stock");
-
-        var subtotal = carts.Sum(x => GetUnitPrice(x.ProductVariant, x.Product) * x.ProductCount);
-        decimal discountAmount = 0;
-        int? discountCodeId = null;
-
-        if (input.DiscountCode != null)
-        {
-            var code = input.DiscountCode.Trim();
-            if (code.Length == 0)
-                return Result<CheckoutOutput>.Failure("Discount code is invalid");
-
-            var userDiscountCode = await invoiceRepository.UserDiscountCodeGetAsync(userId, code, cancellation);
-            if (userDiscountCode == null)
-                return Result<CheckoutOutput>.Failure("Discount code is invalid for this user");
-
-            var discountCode = userDiscountCode.DiscountCode;
-            var now = DateTime.UtcNow;
-            if (!discountCode.IsActive || userDiscountCode.IsUsed ||
-                discountCode.ExpireAt.HasValue && discountCode.ExpireAt.Value < now ||
-                discountCode.PaymentMethod.HasValue && discountCode.PaymentMethod.Value != input.PaymentMethod ||
-                discountCode.MaxDiscountAmount <= 0 ||
-                discountCode.MinimumPurchaseAmount < 0 ||
-                subtotal < discountCode.MinimumPurchaseAmount)
-                return Result<CheckoutOutput>.Failure("Discount code is not valid");
-
-            discountAmount = discountCode.MaxDiscountAmount;
-
-            discountCodeId = discountCode.Id;
-        }
-
-        var amount = subtotal - discountAmount;
-        var amountInRials = amount * 10m;
-        if (amount <= 0 || amountInRials != decimal.Truncate(amountInRials) || amountInRials > long.MaxValue)
-            return Result<CheckoutOutput>.Failure("Payment amount is invalid");
+        var pricing = pricingResult.Data!;
+        var amountInRials = pricing.Amount * 10m;
 
         MellatPaymentOptions mellatSettings;
         try
@@ -150,8 +131,8 @@ public class InvoiceService(
             PaymentStatus = PaymentStatusEnum.New,
             ExpiresAt = DateTime.UtcNow.AddHours(
                 Math.Max(1, configuration.GetValue("Invoice:PaymentRetryHours", 12))),
-            DiscountCodeId = discountCodeId,
-            InvoiceItems = carts.Select(x => new InvoiceItemEntity
+            DiscountCodeId = pricing.DiscountCodeId,
+            InvoiceItems = pricing.Carts.Select(x => new InvoiceItemEntity
             {
                 ProductId = x.ProductId,
                 ProductVariantId = x.ProductVariantId,
@@ -161,13 +142,13 @@ public class InvoiceService(
         };
         var payment = new PaymentEntity
         {
-            Amount = amount,
+            Amount = pricing.Amount,
             PaymentMethod = input.PaymentMethod,
             PaymentStatus = PaymentStatusEnum.New,
             Invoice = invoice
         };
 
-        var created = await invoiceRepository.CheckoutCreateAsync(invoice, payment, carts, cancellation);
+        var created = await invoiceRepository.CheckoutCreateAsync(invoice, payment, pricing.Carts, cancellation);
         created.Payment.OrderId = created.Payment.Id;
         await invoiceRepository.SavePaymentAsync(created.Payment, cancellation);
 
@@ -201,8 +182,8 @@ public class InvoiceService(
         {
             InvoiceId = created.Invoice.Id,
             PaymentId = created.Payment.Id,
-            Subtotal = subtotal,
-            DiscountAmount = discountAmount,
+            Subtotal = pricing.Subtotal,
+            DiscountAmount = pricing.DiscountAmount,
             Amount = created.Payment.Amount,
             PaymentStatus = created.Payment.PaymentStatus,
             RefId = created.Payment.RefId,
@@ -488,7 +469,84 @@ public class InvoiceService(
         InvoiceId = invoiceId
     };
 
+    private async Task<Result<CheckoutPricing>> CalculatePricingAsync(int userId, PaymentMethodEnum paymentMethod,
+        string? discountCodeValue, CancellationToken cancellation)
+    {
+        var carts = await invoiceRepository.CartListAsync(userId, cancellation);
+        if (carts.Count == 0)
+            return Result<CheckoutPricing>.Failure("Cart is empty");
+
+        if (carts.Any(x => x.ProductCount <= 0))
+            return Result<CheckoutPricing>.Failure("Cart contains an invalid product count");
+
+        if (carts.Any(x => x.ProductVariant.Price < 0))
+            return Result<CheckoutPricing>.Failure("Cart contains an invalid product price");
+
+        if (carts.Any(x => x.ProductVariant.ProductId != x.ProductId))
+            return Result<CheckoutPricing>.Failure("Cart contains an invalid product variant");
+
+        if (carts.Any(x => x.ProductVariant.Stock < x.ProductCount))
+            return Result<CheckoutPricing>.Failure("Cart contains a product variant with insufficient stock");
+
+        var subtotal = carts.Sum(x => GetUnitPrice(x.ProductVariant, x.Product) * x.ProductCount);
+        decimal discountAmount = 0;
+        int? discountCodeId = null;
+
+        if (discountCodeValue != null)
+        {
+            var code = discountCodeValue.Trim();
+            if (code.Length == 0)
+                return Result<CheckoutPricing>.Failure("Discount code is invalid");
+
+            var userDiscountCode = await invoiceRepository.UserDiscountCodeGetAsync(userId, code, cancellation);
+            if (userDiscountCode == null)
+                return Result<CheckoutPricing>.Failure("Discount code is invalid for this user");
+
+            var discountCode = userDiscountCode.DiscountCode;
+            var now = DateTime.UtcNow;
+            if (!discountCode.IsActive || userDiscountCode.IsUsed ||
+                discountCode.ExpireAt.HasValue && discountCode.ExpireAt.Value < now ||
+                discountCode.PaymentMethod.HasValue && discountCode.PaymentMethod.Value != paymentMethod ||
+                discountCode.MaxDiscountAmount <= 0 ||
+                discountCode.MinimumPurchaseAmount < 0 ||
+                subtotal < discountCode.MinimumPurchaseAmount)
+                return Result<CheckoutPricing>.Failure("Discount code is not valid");
+
+            discountAmount = discountCode.MaxDiscountAmount;
+            discountCodeId = discountCode.Id;
+        }
+
+        var amount = subtotal - discountAmount;
+        var amountInRials = amount * 10m;
+        if (amount <= 0 || amountInRials != decimal.Truncate(amountInRials) || amountInRials > long.MaxValue)
+            return Result<CheckoutPricing>.Failure("Payment amount is invalid");
+
+        return Result<CheckoutPricing>.Success(new CheckoutPricing(
+            carts,
+            subtotal,
+            discountAmount,
+            amount,
+            discountCodeId));
+    }
+
+    private static string? ValidatePaymentMethod(PaymentMethodEnum paymentMethod)
+    {
+        if (!Enum.IsDefined(paymentMethod))
+            return "Payment method is invalid";
+
+        return paymentMethod != PaymentMethodEnum.Online
+            ? "Only online payment is currently available"
+            : null;
+    }
+
     private static decimal GetUnitPrice(ProductVariantEntity variant, ProductEntity product) =>
         Math.Max(0, variant.Price - product.Discount);
+
+    private sealed record CheckoutPricing(
+        List<CartEntity> Carts,
+        decimal Subtotal,
+        decimal DiscountAmount,
+        decimal Amount,
+        int? DiscountCodeId);
 
 }

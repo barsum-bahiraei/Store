@@ -129,6 +129,12 @@ public class AccountService(
         if (entity == null)
             return Result<UserProfileUpdateOutput>.Failure("User not found");
 
+        if (string.IsNullOrWhiteSpace(input.FirstName))
+            return Result<UserProfileUpdateOutput>.Failure("First name is required");
+
+        if (string.IsNullOrWhiteSpace(input.LastName))
+            return Result<UserProfileUpdateOutput>.Failure("Last name is required");
+
         var email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim();
         if (email != null && !string.Equals(email, entity.Email, StringComparison.OrdinalIgnoreCase))
         {
@@ -138,8 +144,8 @@ public class AccountService(
             entity.IsEmailVerified = false;
         }
 
-        entity.FirstName = string.IsNullOrWhiteSpace(input.FirstName) ? null : input.FirstName.Trim();
-        entity.LastName = string.IsNullOrWhiteSpace(input.LastName) ? null : input.LastName.Trim();
+        entity.FirstName = input.FirstName.Trim();
+        entity.LastName = input.LastName.Trim();
         entity.Email = email;
         entity.Address = input.Address;
         entity.PostalCode = string.IsNullOrWhiteSpace(input.PostalCode) ? null : input.PostalCode.Trim();

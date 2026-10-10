@@ -59,6 +59,16 @@ public class InvoiceController(InvoiceService invoiceService, IOptions<MellatPay
     }
 
     [Authorize]
+    [HttpPost("Discount/Validate")]
+    public async Task<IActionResult> DiscountCodeValidate(DiscountCodeValidateInput input,
+        CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await invoiceService.DiscountCodeValidateAsync(userId, input, cancellation);
+        return Ok(result);
+    }
+
+    [Authorize]
     [HttpPost("Checkout")]
     public async Task<IActionResult> Checkout(CheckoutInput input, CancellationToken cancellation = default)
     {
