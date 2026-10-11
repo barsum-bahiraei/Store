@@ -2,6 +2,7 @@ import { httpClient } from "~/shared/http/http-client";
 import { dedupe } from "~/shared/http/dedupe";
 import { resolveResult } from "~/shared/http/resolve-result";
 import type { ApiResult } from "~/shared/models/api-result";
+import { dateTimeToUtcIso } from "~/shared/utils/date-time";
 import type {
   CategorySalesItem,
   DiscountStatisticsItem,
@@ -22,8 +23,12 @@ import type {
 
 function rangeQuery(range?: SellerDateRange): Record<string, string> {
   const query: Record<string, string> = {};
-  if (range?.from) query.From = range.from;
-  if (range?.to) query.To = range.to;
+  const from = dateTimeToUtcIso(range?.from);
+  const to = dateTimeToUtcIso(range?.to);
+  if (range?.from && !from) throw new Error("تاریخ شروع معتبر نیست.");
+  if (range?.to && !to) throw new Error("تاریخ پایان معتبر نیست.");
+  if (from) query.From = from;
+  if (to) query.To = to;
   return query;
 }
 

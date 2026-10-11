@@ -27,6 +27,7 @@ export default function SellerDashboardPage() {
   const [stats, setStats] = useState<SellerDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterError, setFilterError] = useState<string | null>(null);
   const [sellerMissing, setSellerMissing] = useState(false);
 
   useEffect(() => {
@@ -60,7 +61,13 @@ export default function SellerDashboardPage() {
   }, [range.from, range.to, refreshToken]);
 
   const applyFilters = () => {
-    setRange(toDateRange(fromDraft, toDraft));
+    const nextRange = toDateRange(fromDraft, toDraft);
+    if (!nextRange) {
+      setFilterError("بازه زمانی معتبر نیست. تاریخ شروع باید قبل از تاریخ پایان باشد.");
+      return;
+    }
+    setFilterError(null);
+    setRange(nextRange);
     setRefreshToken((token) => token + 1);
   };
 
@@ -68,6 +75,7 @@ export default function SellerDashboardPage() {
     setFromDraft("");
     setToDraft("");
     setRange({});
+    setFilterError(null);
     setRefreshToken((token) => token + 1);
   };
 
@@ -140,6 +148,11 @@ export default function SellerDashboardPage() {
             <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
               خالی بودن تاریخ‌ها یعنی محدودیت زمانی اعمال نمی‌شود.
             </p>
+            {filterError && (
+              <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+                {filterError}
+              </p>
+            )}
           </div>
 
           <StatCards stats={stats} />

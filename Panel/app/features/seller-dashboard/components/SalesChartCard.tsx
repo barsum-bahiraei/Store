@@ -3,7 +3,7 @@ import Highcharts from "highcharts";
 import HighchartsReactModule from "highcharts-react-official";
 import { sellerDashboardApi } from "../api/seller-dashboard-api";
 import type { SalesChartGroupBy, SalesChartPoint, SellerDateRange } from "../models/seller-dashboard";
-import { errorMessage, formatNumber } from "../utils/format";
+import { errorMessage, formatNumber, formatSalesChartDate } from "../utils/format";
 import { useTheme } from "~/contexts/theme-context";
 import { unwrapDefault } from "~/shared/utils/unwrap-default";
 import { EmptyState } from "./EmptyState";
@@ -59,6 +59,7 @@ export function SalesChartCard({ range, refreshToken }: SalesChartCardProps) {
   const textColor = isDark ? "#9ca3af" : "#6b7280";
   const gridColor = isDark ? "#374151" : "#e5e7eb";
   const barColor = isDark ? "#3b82f6" : "#2563eb";
+  const dateLabels = points.map((point) => formatSalesChartDate(point.date, groupBy));
 
   const options: Highcharts.Options = {
     chart: {
@@ -72,7 +73,7 @@ export function SalesChartCard({ range, refreshToken }: SalesChartCardProps) {
     credits: { enabled: false },
     legend: { enabled: false },
     xAxis: {
-      categories: points.map((point) => point.date),
+      categories: dateLabels,
       labels: { style: { color: textColor, fontSize: "11px" } },
       lineColor: gridColor,
       tickColor: gridColor,
@@ -97,7 +98,7 @@ export function SalesChartCard({ range, refreshToken }: SalesChartCardProps) {
         const data = points[point.index];
         if (!data) return "";
         return [
-          `<b>${data.date}</b>`,
+          `<b>${dateLabels[point.index]}</b>`,
           `فروش: ${formatNumber(data.salesAmount)} تومان`,
           `سفارش: ${formatNumber(data.orderCount)}`,
           `اقلام: ${formatNumber(data.itemsSoldCount)}`,

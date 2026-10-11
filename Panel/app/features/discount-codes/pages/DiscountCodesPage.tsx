@@ -3,6 +3,7 @@ import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { accessApi } from "~/features/access/api/access-api";
 import type { UserSummary } from "~/features/access/models/access";
+import { localDateTimeToUtcIso, utcDateTimeToLocalInput } from "~/shared/utils/date-time";
 import { discountCodeApi } from "../api/discount-code-api";
 import type {
   DiscountCodeListOutput,
@@ -130,14 +131,18 @@ export default function DiscountCodesPage() {
   const loadDetail = async (id: number) => {
     try {
       const detail = await discountCodeApi.get(id);
+      const expireAtLocal = utcDateTimeToLocalInput(detail.expireAt);
       setForm({
         code: detail.code,
         maxDiscountAmount: String(detail.maxDiscountAmount),
         minimumPurchaseAmount: String(detail.minimumPurchaseAmount),
         paymentMethod: detail.paymentMethod != null ? String(detail.paymentMethod) : "",
-        expireAt: detail.expireAt ? detail.expireAt.slice(0, 16) : "",
+        expireAt: expireAtLocal,
         isActive: detail.isActive,
       });
+      if (detail.expireAt && !expireAtLocal) {
+        setFormError("تاریخ انقضای دریافت‌شده از سرور معتبر نیست.");
+      }
       setSelectedUserIds(new Set(detail.users.map((u) => u.userId)));
     } catch (caughtError) {
       setFormError(errorMessage(caughtError));
@@ -167,6 +172,10 @@ export default function DiscountCodesPage() {
     }
     if (!Number.isFinite(minimumPurchase) || minimumPurchase < 0) {
       setFormError("حداقل مبلغ خرید نمی‌تواند منفی باشد.");
+      return;
+    }
+    if (form.expireAt && !localDateTimeToUtcIso(form.expireAt)) {
+      setFormError("تاریخ انقضا معتبر نیست.");
       return;
     }
     setFormError(null);
@@ -231,12 +240,19 @@ export default function DiscountCodesPage() {
   };
 
   const handleFinalSubmit = async () => {
+    const expireAtUtc = localDateTimeToUtcIso(form.expireAt);
+    if (form.expireAt && !expireAtUtc) {
+      setFormError("تاریخ انقضا معتبر نیست.");
+      setWizardStep(0);
+      return;
+    }
+
     const payload: DiscountCodeUpsertInput = {
       code: form.code.trim(),
       maxDiscountAmount: Number(form.maxDiscountAmount),
       minimumPurchaseAmount: Number(form.minimumPurchaseAmount),
       paymentMethod: form.paymentMethod !== "" ? (Number(form.paymentMethod) as PaymentMethod) : null,
-      expireAt: form.expireAt || null,
+      expireAt: expireAtUtc,
       isActive: form.isActive,
       userIds: Array.from(selectedUserIds),
     };

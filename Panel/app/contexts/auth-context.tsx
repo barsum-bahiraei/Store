@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "~/features/auth/api/auth-api";
-import type { AccountUser, UserProfileUpdateInput } from "~/features/auth/models/account";
+import type { AccountUser, OtpSendOutput, UserProfileUpdateInput } from "~/features/auth/models/account";
 import {
   clearAuthToken,
   getAuthToken,
@@ -12,7 +12,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isReady: boolean;
   currentUser: AccountUser | null;
-  sendOtp: (phoneNumber: string) => Promise<void>;
+  sendOtp: (phoneNumber: string) => Promise<OtpSendOutput>;
   verifyOtp: (phoneNumber: string, code: string) => Promise<AccountUser>;
   updateProfile: (input: UserProfileUpdateInput) => Promise<void>;
   logout: () => void;
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const sendOtp = async (phoneNumber: string) => {
-    await authApi.sendOtp({ phoneNumber });
+    return authApi.sendOtp({ phoneNumber });
   };
 
   const verifyOtp = async (phoneNumber: string, code: string) => {

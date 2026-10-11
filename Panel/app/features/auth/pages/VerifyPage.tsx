@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { useTheme } from "~/contexts/theme-context";
+import { secondsUntil } from "~/shared/utils/date-time";
 import {
   canAccessPanel,
 } from "~/features/auth/utils/authorization";
 import loginImage from "~/assets/images/login.png";
 
 const OTP_LENGTH = 5;
-const RESEND_COOLDOWN = 300;
-
 export default function VerifyPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,12 +21,14 @@ export default function VerifyPage() {
   } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const phoneNumber = (location.state as { phoneNumber?: string } | null)?.phoneNumber;
+  const navigationState = location.state as { phoneNumber?: string; expiresAt?: string } | null;
+  const phoneNumber = navigationState?.phoneNumber;
 
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [remainingSeconds, setRemainingSeconds] = useState(RESEND_COOLDOWN);
+  const [expiresAt, setExpiresAt] = useState(navigationState?.expiresAt ?? "");
+  const [remainingSeconds, setRemainingSeconds] = useState(() => secondsUntil(navigationState?.expiresAt));
 
   useEffect(() => {
     if (!isReady) return;
@@ -44,12 +45,11 @@ export default function VerifyPage() {
   }, [isReady, isAuthenticated, currentUser, phoneNumber, navigate]);
 
   useEffect(() => {
-    if (remainingSeconds <= 0) return;
-    const timer = setInterval(() => {
-      setRemainingSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
+    const updateRemainingTime = () => setRemainingSeconds(secondsUntil(expiresAt));
+    updateRemainingTime();
+    const timer = window.setInterval(updateRemainingTime, 1000);
     return () => clearInterval(timer);
-  }, [remainingSeconds]);
+  }, [expiresAt]);
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);
@@ -87,8 +87,8 @@ export default function VerifyPage() {
     if (!phoneNumber || remainingSeconds > 0) return;
     setError("");
     try {
-      await sendOtp(phoneNumber);
-      setRemainingSeconds(RESEND_COOLDOWN);
+      const result = await sendOtp(phoneNumber);
+      setExpiresAt(result.expiresAt);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "امکان ارسال مجدد کد وجود ندارد.");
     }

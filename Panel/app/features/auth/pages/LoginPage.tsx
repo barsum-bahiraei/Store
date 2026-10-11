@@ -39,8 +39,8 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      await sendOtp(cleaned);
-      navigate("/verify", { state: { phoneNumber: cleaned } });
+      const { expiresAt } = await sendOtp(cleaned);
+      navigate("/verify", { state: { phoneNumber: cleaned, expiresAt } });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "امکان ارسال کد تأیید وجود ندارد.");
     } finally {
