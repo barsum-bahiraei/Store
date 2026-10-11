@@ -20,14 +20,14 @@ const deliveryMethodLabels: Record<DeliveryMethod, string> = {
 };
 const paymentStatusDetails: Record<PaymentStatus, { label: string; className: string }> = {
   [PaymentStatus.New]: { label: "سفارش ثبت شده", className: "bg-muted text-foreground" },
-  [PaymentStatus.ProcessingPayment]: { label: "در انتظار پرداخت", className: "bg-white/15 text-white" },
+  [PaymentStatus.ProcessingPayment]: { label: "در حال پرداخت", className: "bg-white/15 text-white" },
   [PaymentStatus.PaymentCompleted]: { label: "پرداخت موفق", className: "bg-success/10 text-success" },
   [PaymentStatus.Preparing]: { label: "در حال آماده‌سازی", className: "bg-primary/10 text-primary" },
   [PaymentStatus.ReadyForShipment]: { label: "آماده ارسال", className: "bg-primary/10 text-primary" },
-  [PaymentStatus.Shipping]: { label: "در حال ارسال", className: "bg-primary/10 text-primary" },
+  [PaymentStatus.Shipping]: { label: "تحویل به پست/پیک و در حال ارسال", className: "bg-primary/10 text-primary" },
   [PaymentStatus.Delivered]: { label: "تحویل مشتری", className: "bg-success/10 text-success" },
   [PaymentStatus.Cancelled]: { label: "لغو شده", className: "bg-muted text-muted-foreground" },
-  [PaymentStatus.Failed]: { label: "پرداخت ناموفق", className: "bg-error/10 text-error" },
+  [PaymentStatus.Failed]: { label: "خطا/ناموفق", className: "bg-error/10 text-error" },
 };
 
 function formatDate(value: string) {

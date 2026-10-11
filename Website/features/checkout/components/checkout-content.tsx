@@ -17,15 +17,15 @@ import { CheckoutAddress } from "./checkout-address";
 type UserWithAddress = AccountUser & { address: string; postalCode: string };
 
 const paymentStatusLabels: Record<PaymentStatus, string> = {
-  [PaymentStatus.New]: "جدید",
+  [PaymentStatus.New]: "سفارش ثبت شده",
   [PaymentStatus.ProcessingPayment]: "در حال پرداخت",
-  [PaymentStatus.PaymentCompleted]: "پرداخت‌شده",
+  [PaymentStatus.PaymentCompleted]: "پرداخت موفق",
   [PaymentStatus.Preparing]: "در حال آماده‌سازی",
   [PaymentStatus.ReadyForShipment]: "آماده ارسال",
-  [PaymentStatus.Shipping]: "در حال ارسال",
-  [PaymentStatus.Delivered]: "تحویل‌شده",
-  [PaymentStatus.Cancelled]: "لغوشده",
-  [PaymentStatus.Failed]: "ناموفق",
+  [PaymentStatus.Shipping]: "تحویل به پست/پیک و در حال ارسال",
+  [PaymentStatus.Delivered]: "تحویل مشتری",
+  [PaymentStatus.Cancelled]: "لغو شده",
+  [PaymentStatus.Failed]: "خطا/ناموفق",
 };
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
