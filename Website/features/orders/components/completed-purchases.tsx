@@ -7,6 +7,7 @@ import { useRetryPayment } from "../hooks/use-retry-payment";
 import { DeliveryMethod, PaymentMethod, PaymentStatus } from "../types/invoice";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
+const dateTimeFormatter = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" });
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   [PaymentMethod.Cash]: "نقدی",
   [PaymentMethod.Online]: "آنلاین",
@@ -20,19 +21,26 @@ const deliveryMethodLabels: Record<DeliveryMethod, string> = {
 };
 const paymentStatusDetails: Record<PaymentStatus, { label: string; className: string }> = {
   [PaymentStatus.New]: { label: "سفارش ثبت شده", className: "bg-muted text-foreground" },
-  [PaymentStatus.ProcessingPayment]: { label: "در انتظار پرداخت", className: "bg-white/15 text-white" },
+  [PaymentStatus.ProcessingPayment]: { label: "در حال پرداخت", className: "bg-white/15 text-white" },
   [PaymentStatus.PaymentCompleted]: { label: "پرداخت موفق", className: "bg-success/10 text-success" },
   [PaymentStatus.Preparing]: { label: "در حال آماده‌سازی", className: "bg-primary/10 text-primary" },
   [PaymentStatus.ReadyForShipment]: { label: "آماده ارسال", className: "bg-primary/10 text-primary" },
-  [PaymentStatus.Shipping]: { label: "در حال ارسال", className: "bg-primary/10 text-primary" },
+  [PaymentStatus.Shipping]: { label: "تحویل به پست/پیک و در حال ارسال", className: "bg-primary/10 text-primary" },
   [PaymentStatus.Delivered]: { label: "تحویل مشتری", className: "bg-success/10 text-success" },
   [PaymentStatus.Cancelled]: { label: "لغو شده", className: "bg-muted text-muted-foreground" },
-  [PaymentStatus.Failed]: { label: "پرداخت ناموفق", className: "bg-error/10 text-error" },
+  [PaymentStatus.Failed]: { label: "خطا/ناموفق", className: "bg-error/10 text-error" },
 };
 
 function formatDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "تاریخ نامشخص" : dateFormatter.format(date);
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return "زمان نامشخص";
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "زمان نامشخص" : dateTimeFormatter.format(date);
 }
 
 function OrdersSkeleton() {
@@ -135,7 +143,7 @@ export function OrdersList() {
               </dl>
               {invoice.canRetryPayment && (
                 <footer className="flex flex-col gap-3 border-t border-border bg-muted/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                  <p className="flex items-center gap-2 text-xs font-bold text-muted-foreground"><span className="material-symbols-rounded text-lg text-warning" aria-hidden="true">schedule</span>مهلت پرداخت تا {formatDate(invoice.expiresAt!)}</p>
+                  <p className="flex items-center gap-2 text-xs font-bold text-muted-foreground"><span className="material-symbols-rounded text-lg text-warning" aria-hidden="true">schedule</span>مهلت پرداخت تا {formatDateTime(invoice.expiresAt)}</p>
                   <button type="button" onClick={() => retryPayment.mutate(invoice.id)} disabled={retryPayment.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                     <span className={`material-symbols-rounded ${isRetrying ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isRetrying ? "progress_activity" : "credit_card"}</span>
                     {isRetrying ? "در حال انتقال…" : "پرداخت مجدد"}
