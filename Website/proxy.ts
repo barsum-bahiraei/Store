@@ -232,7 +232,6 @@ export async function proxy(request: NextRequest) {
 
     const params = new URLSearchParams({
       category: String(category.id),
-      categoryName: category.label,
     });
     return redirect(request, `/shop?${params.toString()}`);
   }

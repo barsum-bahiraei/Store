@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCategories } from "@/features/categories/hooks/use-categories";
 import type { Category } from "@/features/categories/types/category";
@@ -43,7 +42,6 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const { data, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } = useInfiniteProductSearch(filters);
   const { data: brands = [], isPending: areBrandsPending, isError: isBrandsError } = useProductBrands();
   const { data: categoryTree = [] } = useCategories();
-  const searchParams = useSearchParams();
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const productsStartRef = useRef<HTMLDivElement>(null);
@@ -58,7 +56,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
   const selectedCategoryFromTree = descendants(categoryTree).find((category) => String(category.id) === selectedCategoryId)?.name;
   const selectedCategoryLabel = selectedCategoryLabelOverride !== null
     ? selectedCategoryLabelOverride || "همه دسته‌بندی‌ها"
-    : searchParams.get("categoryName") ?? selectedCategoryFromTree ?? (selectedCategoryId ? `دسته‌بندی ${selectedCategoryId}` : "همه دسته‌بندی‌ها");
+    : selectedCategoryFromTree ?? (selectedCategoryId ? `دسته‌بندی ${selectedCategoryId}` : "همه دسته‌بندی‌ها");
 
   useEffect(() => {
     const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
@@ -209,7 +207,6 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
           <fieldset>
             <legend className="text-sm font-bold">دسته‌بندی</legend>
             <input type="hidden" name="category" value={selectedCategoryId} readOnly />
-            <input type="hidden" name="categoryName" value={selectedCategoryLabel} readOnly />
             <div ref={categoryDropdownRef} className="relative mt-2">
             <button type="button" aria-expanded={isCategoryDropdownOpen} onClick={() => setIsCategoryDropdownOpen((isOpen) => !isOpen)} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 text-right text-sm font-bold outline-none transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-primary/15">
               <span className={selectedCategoryId ? "text-foreground" : "text-muted-foreground"}>{selectedCategoryLabel}</span>
