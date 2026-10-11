@@ -61,7 +61,7 @@ internal class SellerReportingService(
             return Result<List<SellerSalesChartOutput>>.Failure(sellerError);
 
         if (!Enum.IsDefined(input.GroupBy))
-            return Result<List<SellerSalesChartOutput>>.Failure("Group by is invalid");
+            return Result<List<SellerSalesChartOutput>>.Failure("نحوه گروه‌بندی نامعتبر است");
 
         var dateError = ValidateDateRange(input.From, input.To);
         if (dateError != null)
@@ -251,7 +251,7 @@ internal class SellerReportingService(
             return Result<SellerLowStockOutput>.Failure(sellerError);
 
         if (input.Threshold < 0)
-            return Result<SellerLowStockOutput>.Failure("Threshold cannot be negative");
+            return Result<SellerLowStockOutput>.Failure("آستانه نمی‌تواند منفی باشد");
 
         var page = input.Page < 1 ? 1 : input.Page;
         var pageSize = input.PageSize < 1 ? 10 : input.PageSize;
@@ -419,14 +419,14 @@ internal class SellerReportingService(
     {
         var sellers = await sellerRepository.ListAsync(userId, cancellation);
         if (sellers.Count == 0)
-            return (new HashSet<int>(), "Seller not found");
+            return (new HashSet<int>(), "فروشنده یافت نشد");
         return (sellers.Select(x => x.Id).ToHashSet(), null);
     }
 
     private static string? ValidateDateRange(DateTime? from, DateTime? to)
     {
         if (from.HasValue && to.HasValue && from.Value > to.Value)
-            return "From cannot be after to";
+            return "تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد";
         return null;
     }
 

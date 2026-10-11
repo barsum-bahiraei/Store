@@ -66,7 +66,7 @@ public class SellerService(
         var entity = await sellerRepository.GetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<SellerGetOutput>.Failure("Seller not found");
+            return Result<SellerGetOutput>.Failure("فروشنده یافت نشد");
 
         var imagesResult = await fileService.ListAsync(
             TableNameEnum.Sellers,
@@ -138,7 +138,7 @@ public class SellerService(
         var entity = await sellerRepository.GetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<SellerUpdateOutput>.Failure("Seller not found");
+            return Result<SellerUpdateOutput>.Failure("فروشنده یافت نشد");
 
         entity.Name = input.Name;
         entity.Description = input.Description;
@@ -166,7 +166,7 @@ public class SellerService(
         var entity = await sellerRepository.GetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<bool>.Failure("Seller not found");
+            return Result<bool>.Failure("فروشنده یافت نشد");
 
         await sellerRepository.DeleteAsync(entity, cancellation);
 
@@ -219,7 +219,7 @@ public class SellerService(
             return Result<List<SellerOrderAttentionListOutput>>.Failure(dateError);
 
         if (input.StuckDays < 1)
-            return Result<List<SellerOrderAttentionListOutput>>.Failure("Stuck days must be greater than zero");
+            return Result<List<SellerOrderAttentionListOutput>>.Failure("تعداد روزهای معطل‌ماندن باید بیشتر از صفر باشد");
 
         var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
 
@@ -270,14 +270,14 @@ public class SellerService(
             return Result<SellerOrderStatusUpdateOutput>.Failure(sellerError);
 
         if (!Enum.IsDefined(input.PaymentStatus))
-            return Result<SellerOrderStatusUpdateOutput>.Failure("Payment status is invalid");
+            return Result<SellerOrderStatusUpdateOutput>.Failure("وضعیت پرداخت نامعتبر است");
 
         var entity = await invoiceRepository.SellerGetAsync(id, userId, cancellation);
         if (entity == null)
-            return Result<SellerOrderStatusUpdateOutput>.Failure("Order not found");
+            return Result<SellerOrderStatusUpdateOutput>.Failure("سفارش یافت نشد");
 
         if (!IsAllowedOrderStatusTransition(entity.PaymentStatus, input.PaymentStatus))
-            return Result<SellerOrderStatusUpdateOutput>.Failure("Payment status transition is invalid");
+            return Result<SellerOrderStatusUpdateOutput>.Failure("تغییر وضعیت پرداخت نامعتبر است");
 
         entity.PaymentStatus = input.PaymentStatus;
         var updated = await invoiceRepository.UpdateAsync(entity, cancellation);
@@ -294,14 +294,14 @@ public class SellerService(
     {
         var sellers = await sellerRepository.ListAsync(userId, cancellation);
         if (sellers.Count == 0)
-            return (new HashSet<int>(), "Seller not found");
+            return (new HashSet<int>(), "فروشنده یافت نشد");
         return (sellers.Select(x => x.Id).ToHashSet(), null);
     }
 
     private static string? ValidateDateRange(DateTime? from, DateTime? to)
     {
         if (from.HasValue && to.HasValue && from.Value > to.Value)
-            return "From cannot be after to";
+            return "تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد";
         return null;
     }
 

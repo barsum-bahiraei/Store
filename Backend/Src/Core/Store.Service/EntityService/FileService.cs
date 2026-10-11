@@ -15,7 +15,7 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         CancellationToken cancellation)
     {
         if (!await IsOwnedByAsync(input.TableName, input.TargetId, userId, cancellation))
-            return Result<FileCreateOutput>.Failure("File target is invalid");
+            return Result<FileCreateOutput>.Failure("مقصد فایل نامعتبر است");
 
         var folder = input.TableName.ToString().Trim('/');
         var extension = Path.GetExtension(file.FileName);
@@ -64,7 +64,7 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         var entity = await fileRepository.GetAsync(id, cancellation);
 
         if (entity == null)
-            return Result<FileGetOutput>.Failure("File not found");
+            return Result<FileGetOutput>.Failure("فایل یافت نشد");
 
         return Result<FileGetOutput>.Success(new FileGetOutput
         {
@@ -92,7 +92,7 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             cancellation);
 
         if (entity == null)
-            return Result<FileGetOutput>.Failure("File not found");
+            return Result<FileGetOutput>.Failure("فایل یافت نشد");
 
         return Result<FileGetOutput>.Success(new FileGetOutput
         {
@@ -149,13 +149,13 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         var entity = await fileRepository.GetAsync(id, cancellation);
 
         if (entity == null)
-            return Result<FileUpdateOutput>.Failure("File not found");
+            return Result<FileUpdateOutput>.Failure("فایل یافت نشد");
 
         if (!await IsOwnedByAsync(entity.TableName, entity.TargetId, userId, cancellation))
-            return Result<FileUpdateOutput>.Failure("File not found");
+            return Result<FileUpdateOutput>.Failure("فایل یافت نشد");
 
         if (!await IsOwnedByAsync(input.TableName, input.TargetId, userId, cancellation))
-            return Result<FileUpdateOutput>.Failure("File target is invalid");
+            return Result<FileUpdateOutput>.Failure("مقصد فایل نامعتبر است");
 
         var folder = input.TableName.ToString().Trim('/');
         var extension = Path.GetExtension(file.FileName);
@@ -205,10 +205,10 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         var entity = await fileRepository.GetAsync(id, cancellation);
 
         if (entity == null)
-            return Result<bool>.Failure("File not found");
+            return Result<bool>.Failure("فایل یافت نشد");
 
         if (!await IsOwnedByAsync(entity.TableName, entity.TargetId, userId, cancellation))
-            return Result<bool>.Failure("File not found");
+            return Result<bool>.Failure("فایل یافت نشد");
 
         await minioStorage.DeleteAsync(entity.Url, cancellation);
         await fileRepository.DeleteAsync(entity, cancellation);

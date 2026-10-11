@@ -26,7 +26,7 @@ public class AttributeService(IAttributeRepository attributeRepository)
         var entity = await attributeRepository.GetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<AttributeGetOutput?>.Failure("Attribute not found!");
+            return Result<AttributeGetOutput?>.Failure("ویژگی یافت نشد");
         }
 
         var result = new AttributeGetOutput

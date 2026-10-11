@@ -58,18 +58,18 @@ internal class CartService(
         CancellationToken cancellation)
     {
         if (input.ProductCount <= 0)
-            return Result<CartCreateOutput>.Failure("Product count must be greater than zero");
+            return Result<CartCreateOutput>.Failure("تعداد محصول باید بیشتر از صفر باشد");
 
         var product = await productRepository.GetAsync(input.ProductId, cancellation);
         if (product == null)
-            return Result<CartCreateOutput>.Failure("Product not found");
+            return Result<CartCreateOutput>.Failure("محصول یافت نشد");
 
         var productVariant = product.ProductVariants.FirstOrDefault(x => x.Id == input.ProductVariantId);
         if (productVariant == null)
-            return Result<CartCreateOutput>.Failure("Product variant is invalid");
+            return Result<CartCreateOutput>.Failure("تنوع محصول نامعتبر است");
 
         if (productVariant.Stock < input.ProductCount)
-            return Result<CartCreateOutput>.Failure("Product variant stock is insufficient");
+            return Result<CartCreateOutput>.Failure("موجودی تنوع محصول کافی نیست");
 
         var created = await invoiceRepository.CartAddAsync(new CartEntity
         {
@@ -79,7 +79,7 @@ internal class CartService(
             ProductCount = input.ProductCount,
         }, cancellation);
         if (created == null)
-            return Result<CartCreateOutput>.Failure("Product variant stock is insufficient");
+                return Result<CartCreateOutput>.Failure("موجودی تنوع محصول کافی نیست");
         var imageResult =
             await fileService.GetAsync(TableNameEnum.Products, TargetNameEnum.ProductId, created.Product.Id,
                 cancellation);
@@ -118,17 +118,17 @@ internal class CartService(
         CancellationToken cancellation)
     {
         if (input.ProductCount <= 0)
-            return Result<CartUpdateOutput>.Failure("Product count must be greater than zero");
+            return Result<CartUpdateOutput>.Failure("تعداد محصول باید بیشتر از صفر باشد");
 
         var entity = await invoiceRepository.CartGetAsync(id, userId, cancellation);
         if (entity == null)
-            return Result<CartUpdateOutput>.Failure("Cart not found");
+            return Result<CartUpdateOutput>.Failure("سبد خرید یافت نشد");
 
         if (entity.ProductVariant.ProductId != entity.ProductId)
-            return Result<CartUpdateOutput>.Failure("Product variant is invalid");
+            return Result<CartUpdateOutput>.Failure("تنوع محصول نامعتبر است");
 
         if (entity.ProductVariant.Stock < input.ProductCount)
-            return Result<CartUpdateOutput>.Failure("Product variant stock is insufficient");
+            return Result<CartUpdateOutput>.Failure("موجودی تنوع محصول کافی نیست");
 
         entity.ProductCount = input.ProductCount;
 
@@ -172,7 +172,7 @@ internal class CartService(
         var entity = await invoiceRepository.CartGetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<bool>.Failure("Cart not found");
+            return Result<bool>.Failure("سبد خرید یافت نشد");
 
         await invoiceRepository.CartDeleteAsync(entity, cancellation);
 

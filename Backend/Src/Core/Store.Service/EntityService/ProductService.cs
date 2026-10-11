@@ -25,7 +25,7 @@ public class ProductService(
     {
         if (input.AdditionalData is { Count: > 0 })
             return Result<ProductTorobOutput>.Failure(
-                $"{input.AdditionalData.Keys.First()} parameter is not supported");
+                $"پارامتر «{input.AdditionalData.Keys.First()}» پشتیبانی نمی‌شود");
 
         var hasPageUrls = input.PageUrls != null;
         var hasPageUniques = input.PageUniques != null;
@@ -36,13 +36,13 @@ public class ProductService(
                         (hasPage ? 1 : 0) + (hasCursor ? 1 : 0) + (isFirstCursorPage ? 1 : 0);
         if (modeCount != 1)
             return Result<ProductTorobOutput>.Failure(
-                "provide exactly one of page_urls, page_uniques, page, or cursor pagination");
+                "برای صفحه‌بندی دقیقاً یکی از page_urls، page_uniques، page یا cursor را ارسال کنید");
 
         var websiteUrl = configuration["Torob:WebsiteUrl"]?.TrimEnd('/');
         var imageUrl = configuration["Torob:ImageUrl"]?.TrimEnd('/');
         var imageBucket = configuration["Minio:Bucket"]?.Trim('/');
         if (string.IsNullOrWhiteSpace(websiteUrl) || string.IsNullOrWhiteSpace(imageUrl))
-            return Result<ProductTorobOutput>.Failure("Torob website or image URL is not configured");
+            return Result<ProductTorobOutput>.Failure("نشانی وب‌سایت یا تصویر ترب پیکربندی نشده است");
         imageBucket = string.IsNullOrWhiteSpace(imageBucket) ? "store" : imageBucket;
 
         string ProductUrl(int id) => $"{websiteUrl}/products/{id}";
@@ -51,12 +51,12 @@ public class ProductService(
         {
             if (input.Sort != null || input.Page.HasValue || input.Cursor != null)
                 return Result<ProductTorobOutput>.Failure(
-                    "lookup requests cannot contain page, sort, or cursor parameters");
+                    "درخواست جست‌وجوی مستقیم نمی‌تواند شامل پارامترهای page، sort یا cursor باشد");
 
             var values = hasPageUrls ? input.PageUrls! : input.PageUniques!;
             if (values.Count == 0 || values.Any(string.IsNullOrWhiteSpace))
                 return Result<ProductTorobOutput>.Failure(
-                    $"{(hasPageUrls ? "page_urls" : "page_uniques")} must be a non-empty array of strings");
+                    $"{(hasPageUrls ? "page_urls" : "page_uniques")} باید آرایه‌ای غیرخالی از رشته‌ها باشد");
 
             input.ProductIds = [];
             foreach (var value in values.Distinct())
@@ -72,24 +72,24 @@ public class ProductService(
         else
         {
             if (string.IsNullOrWhiteSpace(input.Sort))
-                return Result<ProductTorobOutput>.Failure("sort parameter is not provided");
+                return Result<ProductTorobOutput>.Failure("پارامتر sort ارسال نشده است");
 
             if (hasPage)
             {
                 if (input.Page < 1)
-                    return Result<ProductTorobOutput>.Failure("page must be an integer greater than zero");
+                    return Result<ProductTorobOutput>.Failure("page باید عددی صحیح و بزرگ‌تر از صفر باشد");
                 if (input.Sort is not ("date_added_desc" or "date_updated_desc"))
                     return Result<ProductTorobOutput>.Failure(
-                        "sort must be date_added_desc or date_updated_desc for page pagination");
+                        "برای صفحه‌بندی مبتنی بر page، مقدار sort باید date_added_desc یا date_updated_desc باشد");
             }
             else
             {
                 if (input.Sort != "product_id_desc")
                     return Result<ProductTorobOutput>.Failure(
-                        "sort must be product_id_desc for cursor pagination");
+                        "برای صفحه‌بندی مبتنی بر cursor، مقدار sort باید product_id_desc باشد");
                 if (hasCursor && (!int.TryParse(input.Cursor, out var cursorId) || cursorId < 1))
                     return Result<ProductTorobOutput>.Failure(
-                        "cursor must be a positive integer encoded as a string");
+                        "cursor باید عدد صحیح مثبتی باشد که به‌صورت رشته ارسال شده است");
                 if (hasCursor)
                     input.CursorId = int.Parse(input.Cursor!);
             }
@@ -271,7 +271,7 @@ public class ProductService(
         var entity = await productRepository.GetAsync(id, cancellation);
 
         if (entity == null)
-            return Result<ProductDetailOutput?>.Failure("Product not found");
+            return Result<ProductDetailOutput?>.Failure("محصول یافت نشد");
 
         var categoryEntities = await categoryRepository.ListAsync(cancellation);
         var categories = new List<ProductCategoryDetailOutput>();
@@ -440,7 +440,7 @@ public class ProductService(
         var entity = await productRepository.GetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<ProductGetOutput?>.Failure("Product not found");
+            return Result<ProductGetOutput?>.Failure("محصول یافت نشد");
 
         var imagesResult = await fileService.ListAsync(
             TableNameEnum.Products,
@@ -527,11 +527,11 @@ public class ProductService(
     public async Task<Result<ProductCreateOutput>> CreateAsync(int userId, ProductCreateInput input, CancellationToken cancellation)
     {
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
-            return Result<ProductCreateOutput>.Failure("Seller not found");
+            return Result<ProductCreateOutput>.Failure("فروشنده یافت نشد");
 
         if (input.ProductBrandId is { } createBrandId &&
             await productRepository.BrandGetAsync(createBrandId, cancellation) == null)
-            return Result<ProductCreateOutput>.Failure("Product brand not found");
+            return Result<ProductCreateOutput>.Failure("برند محصول یافت نشد");
 
         var combinations = input.Variants?.Select(x => new ProductCombinationData(
             null,
@@ -546,7 +546,7 @@ public class ProductService(
             return Result<ProductCreateOutput>.Failure(validationError);
 
         if (input.Discount < 0 || combinations.Any(x => input.Discount > x.Price))
-            return Result<ProductCreateOutput>.Failure("Product discount is invalid");
+            return Result<ProductCreateOutput>.Failure("تخفیف محصول نامعتبر است");
 
         var entity = new ProductEntity
         {
@@ -605,14 +605,14 @@ public class ProductService(
         var entity = await productRepository.GetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<ProductUpdateOutput>.Failure("Product not found");
+            return Result<ProductUpdateOutput>.Failure("محصول یافت نشد");
 
         if (await sellerRepository.GetAsync(input.SellerId, userId, cancellation) == null)
-            return Result<ProductUpdateOutput>.Failure("Seller not found");
+            return Result<ProductUpdateOutput>.Failure("فروشنده یافت نشد");
 
         if (input.ProductBrandId is { } updateBrandId &&
             await productRepository.BrandGetAsync(updateBrandId, cancellation) == null)
-            return Result<ProductUpdateOutput>.Failure("Product brand not found");
+            return Result<ProductUpdateOutput>.Failure("برند محصول یافت نشد");
 
         var combinations = input.Variants?.Select(x => new ProductCombinationData(
             x.Id,
@@ -627,12 +627,12 @@ public class ProductService(
             return Result<ProductUpdateOutput>.Failure(validationError);
 
         if (input.Discount < 0 || combinations.Any(x => input.Discount > x.Price))
-            return Result<ProductUpdateOutput>.Failure("Product discount is invalid");
+            return Result<ProductUpdateOutput>.Failure("تخفیف محصول نامعتبر است");
 
         var inputIds = combinations.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToList();
         if (inputIds.Count != inputIds.Distinct().Count() ||
             inputIds.Any(inputId => entity.ProductVariants.All(x => x.Id != inputId)))
-            return Result<ProductUpdateOutput>.Failure("Product variant is invalid");
+            return Result<ProductUpdateOutput>.Failure("تنوع محصول نامعتبر است");
 
         entity.Name = input.Name;
         entity.ShortDescription = input.ShortDescription;
@@ -656,7 +656,7 @@ public class ProductService(
             if (item == null)
             {
                 if (await productRepository.ProductVariantIsInUseAsync(existing.Id, cancellation))
-                    return Result<ProductUpdateOutput>.Failure("An in-use product variant cannot be removed");
+                    return Result<ProductUpdateOutput>.Failure("تنوع محصولی که در حال استفاده است قابل حذف نیست");
 
                 entity.ProductVariants.Remove(existing);
                 continue;
@@ -665,7 +665,7 @@ public class ProductService(
             var newKey = CreateCombinationKey(item.Values);
             if (newKey != existing.CombinationKey &&
                 await productRepository.ProductVariantIsInUseAsync(existing.Id, cancellation))
-                return Result<ProductUpdateOutput>.Failure("The values of an in-use product variant cannot be changed");
+                return Result<ProductUpdateOutput>.Failure("مقادیر تنوع محصولی که در حال استفاده است قابل تغییر نیست");
 
             existing.Price = item.Price;
             existing.Stock = item.Stock;
@@ -696,7 +696,7 @@ public class ProductService(
 
         var updated = await productRepository.UpdateAsync(entity, cancellation);
         if (updated == null)
-            return Result<ProductUpdateOutput>.Failure("Product variant stock changed; reload the product and try again");
+            return Result<ProductUpdateOutput>.Failure("موجودی تنوع محصول تغییر کرده است؛ محصول را دوباره بارگذاری و مجدداً تلاش کنید");
 
         return Result<ProductUpdateOutput>.Success(new ProductUpdateOutput
         {
@@ -726,7 +726,7 @@ public class ProductService(
         var entity = await productRepository.GetAsync(id, userId, cancellation);
 
         if (entity == null)
-            return Result<bool>.Failure("Product not found");
+            return Result<bool>.Failure("محصول یافت نشد");
 
         await productRepository.DeleteAsync(entity, cancellation);
 
@@ -760,33 +760,33 @@ public class ProductService(
     private static string? ValidateCombinations(List<ProductCombinationData> combinations)
     {
         if (combinations.Count == 0)
-            return "At least one product variant is required";
+            return "حداقل یک تنوع محصول الزامی است";
 
         if (combinations.Any(x => x.Price < 0))
-            return "Product variant price cannot be negative";
+            return "قیمت تنوع محصول نمی‌تواند منفی باشد";
 
         if (combinations.Any(x => x.Stock < 0))
-            return "Product variant stock cannot be negative";
+            return "موجودی تنوع محصول نمی‌تواند منفی باشد";
 
         if (combinations.Any(x => x.Values.Count == 0 || x.Values.Any(value =>
                 string.IsNullOrWhiteSpace(value.Size) || value.Size.Trim().Length > 50 ||
                 string.IsNullOrWhiteSpace(value.ColorName) || value.ColorName.Trim().Length > 100 ||
                 string.IsNullOrWhiteSpace(value.ColorCode) || value.ColorCode.Trim().Length > 32 ||
                 !Regex.IsMatch(value.ColorCode.Trim(), "^#[0-9a-fA-F]{6}$"))))
-            return "Product variant values are invalid";
+            return "مقادیر تنوع محصول نامعتبر هستند";
 
         if (combinations.Any(combination => combination.Values
                 .Select(value => value.Size.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count() != combination.Values.Count))
-            return "A product variant cannot contain multiple values of the same type";
+            return "یک تنوع محصول نمی‌تواند چند مقدار از یک نوع یکسان داشته باشد";
 
         var keys = combinations.Select(x => CreateCombinationKey(x.Values)).ToList();
         if (keys.Any(x => x.Length > 500))
-            return "Product variant combination is too long";
+            return "ترکیب تنوع محصول بیش از حد طولانی است";
 
         if (keys.Count != keys.Distinct(StringComparer.Ordinal).Count())
-            return "Duplicate product variant combination";
+            return "ترکیب تنوع محصول تکراری است";
 
         return null;
     }

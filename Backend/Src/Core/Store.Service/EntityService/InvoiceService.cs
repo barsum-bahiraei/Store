@@ -59,18 +59,18 @@ public class InvoiceService(
         CancellationToken cancellation)
     {
         if (string.IsNullOrWhiteSpace(input.DiscountCode))
-            return Result<DiscountCodeValidateOutput>.Failure("Discount code is invalid");
+            return Result<DiscountCodeValidateOutput>.Failure("کد تخفیف نامعتبر است");
 
         var userDiscountCode = await invoiceRepository.UserDiscountCodeGetAsync(
             userId, input.DiscountCode.Trim(), cancellation);
         if (userDiscountCode == null)
-            return Result<DiscountCodeValidateOutput>.Failure("Discount code is invalid for this user");
+            return Result<DiscountCodeValidateOutput>.Failure("این کد تخفیف برای کاربر فعلی معتبر نیست");
 
         var discountCode = userDiscountCode.DiscountCode;
         if (!discountCode.IsActive || userDiscountCode.IsUsed ||
             discountCode.ExpireAt.HasValue && discountCode.ExpireAt.Value < DateTime.UtcNow ||
             discountCode.MaxDiscountAmount <= 0 || discountCode.MinimumPurchaseAmount < 0)
-            return Result<DiscountCodeValidateOutput>.Failure("Discount code is not valid");
+            return Result<DiscountCodeValidateOutput>.Failure("کد تخفیف معتبر نیست");
 
         return Result<DiscountCodeValidateOutput>.Success(new DiscountCodeValidateOutput
         {
@@ -90,19 +90,19 @@ public class InvoiceService(
             return Result<CheckoutOutput>.Failure(paymentMethodError);
 
         if (!Enum.IsDefined(input.DeliveryMethod))
-            return Result<CheckoutOutput>.Failure("Delivery method is invalid");
+            return Result<CheckoutOutput>.Failure("روش تحویل نامعتبر است");
 
         var user = await accountRepository.UserGetAsync(userId, cancellation);
         if (user == null)
-            return Result<CheckoutOutput>.Failure("User not found");
+            return Result<CheckoutOutput>.Failure("کاربر یافت نشد");
 
         if (string.IsNullOrWhiteSpace(user.PostalCode))
-            return Result<CheckoutOutput>.Failure("Postal code must be completed");
+            return Result<CheckoutOutput>.Failure("کد پستی باید تکمیل شود");
 
         if (input.DeliveryMethod != DeliveryMethodEnum.Pickup)
         {
             if (string.IsNullOrWhiteSpace(user.Address))
-                return Result<CheckoutOutput>.Failure("Delivery address must be completed");
+                return Result<CheckoutOutput>.Failure("نشانی تحویل باید تکمیل شود");
         }
 
         var pricingResult = await CalculatePricingAsync(userId, input.PaymentMethod, input.DiscountCode, cancellation);
@@ -120,7 +120,7 @@ public class InvoiceService(
         catch (InvalidOperationException exception)
         {
             logger.LogError(exception, "Mellat payment configuration is invalid");
-            return Result<CheckoutOutput>.Failure("Online payment is not available");
+            return Result<CheckoutOutput>.Failure("پرداخت آنلاین در دسترس نیست");
         }
 
         var invoice = new InvoiceEntity
@@ -162,14 +162,14 @@ public class InvoiceService(
         {
             logger.LogError(exception, "Mellat Pay request failed for payment {PaymentId}", created.Payment.Id);
             await FailPaymentAsync(created.Payment, cancellation);
-            return Result<CheckoutOutput>.Failure("Payment gateway did not respond");
+            return Result<CheckoutOutput>.Failure("درگاه پرداخت پاسخ نداد");
         }
 
         if (payResponse.ResponseCode != "0" || string.IsNullOrWhiteSpace(payResponse.RefId))
         {
             created.Payment.PayResponseCode = payResponse.ResponseCode;
             await FailPaymentAsync(created.Payment, cancellation);
-            return Result<CheckoutOutput>.Failure($"Payment gateway rejected the request ({payResponse.ResponseCode})");
+            return Result<CheckoutOutput>.Failure($"درگاه پرداخت درخواست را رد کرد (کد: {payResponse.ResponseCode})");
         }
 
         created.Payment.PayResponseCode = payResponse.ResponseCode;
@@ -196,25 +196,25 @@ public class InvoiceService(
     {
         var invoice = await invoiceRepository.GetAsync(invoiceId, userId, cancellation);
         if (invoice == null)
-            return Result<CheckoutOutput>.Failure("Invoice not found");
+            return Result<CheckoutOutput>.Failure("فاکتور یافت نشد");
 
         if (invoice.PaymentStatus is not (PaymentStatusEnum.Failed or PaymentStatusEnum.Cancelled))
-            return Result<CheckoutOutput>.Failure("Invoice is not available for payment retry");
+            return Result<CheckoutOutput>.Failure("امکان پرداخت مجدد این فاکتور وجود ندارد");
 
         if (!invoice.ExpiresAt.HasValue || invoice.ExpiresAt.Value <= DateTime.UtcNow)
-            return Result<CheckoutOutput>.Failure("Invoice payment time has expired");
+            return Result<CheckoutOutput>.Failure("مهلت پرداخت فاکتور به پایان رسیده است");
 
         if (invoice.PaymentMethod != PaymentMethodEnum.Online)
-            return Result<CheckoutOutput>.Failure("Only online payment is currently available");
+            return Result<CheckoutOutput>.Failure("در حال حاضر فقط پرداخت آنلاین در دسترس است");
 
         var amount = invoice.Payments.OrderBy(x => x.Id).FirstOrDefault()?.Amount;
         if (!amount.HasValue)
-            return Result<CheckoutOutput>.Failure("Payment amount is invalid");
+            return Result<CheckoutOutput>.Failure("مبلغ پرداخت نامعتبر است");
 
         var amountInRials = amount.Value * 10m;
         if (amount.Value <= 0 || amountInRials != decimal.Truncate(amountInRials) ||
             amountInRials > long.MaxValue)
-            return Result<CheckoutOutput>.Failure("Payment amount is invalid");
+            return Result<CheckoutOutput>.Failure("مبلغ پرداخت نامعتبر است");
 
         MellatPaymentOptions mellatSettings;
         try
@@ -224,7 +224,7 @@ public class InvoiceService(
         catch (InvalidOperationException exception)
         {
             logger.LogError(exception, "Mellat payment configuration is invalid");
-            return Result<CheckoutOutput>.Failure("Online payment is not available");
+            return Result<CheckoutOutput>.Failure("پرداخت آنلاین در دسترس نیست");
         }
 
         var payment = await invoiceRepository.PaymentCreateAsync(new PaymentEntity
@@ -248,14 +248,14 @@ public class InvoiceService(
         {
             logger.LogError(exception, "Mellat Pay request failed for payment {PaymentId}", payment.Id);
             await FailPaymentAsync(payment, cancellation);
-            return Result<CheckoutOutput>.Failure("Payment gateway did not respond");
+            return Result<CheckoutOutput>.Failure("درگاه پرداخت پاسخ نداد");
         }
 
         if (payResponse.ResponseCode != "0" || string.IsNullOrWhiteSpace(payResponse.RefId))
         {
             payment.PayResponseCode = payResponse.ResponseCode;
             await FailPaymentAsync(payment, cancellation);
-            return Result<CheckoutOutput>.Failure($"Payment gateway rejected the request ({payResponse.ResponseCode})");
+            return Result<CheckoutOutput>.Failure($"درگاه پرداخت درخواست را رد کرد (کد: {payResponse.ResponseCode})");
         }
 
         payment.PayResponseCode = payResponse.ResponseCode;
@@ -474,19 +474,19 @@ public class InvoiceService(
     {
         var carts = await invoiceRepository.CartListAsync(userId, cancellation);
         if (carts.Count == 0)
-            return Result<CheckoutPricing>.Failure("Cart is empty");
+            return Result<CheckoutPricing>.Failure("سبد خرید خالی است");
 
         if (carts.Any(x => x.ProductCount <= 0))
-            return Result<CheckoutPricing>.Failure("Cart contains an invalid product count");
+            return Result<CheckoutPricing>.Failure("تعداد یکی از محصولات سبد خرید نامعتبر است");
 
         if (carts.Any(x => x.ProductVariant.Price < 0))
-            return Result<CheckoutPricing>.Failure("Cart contains an invalid product price");
+            return Result<CheckoutPricing>.Failure("قیمت یکی از محصولات سبد خرید نامعتبر است");
 
         if (carts.Any(x => x.ProductVariant.ProductId != x.ProductId))
-            return Result<CheckoutPricing>.Failure("Cart contains an invalid product variant");
+            return Result<CheckoutPricing>.Failure("یکی از تنوع‌های محصول در سبد خرید نامعتبر است");
 
         if (carts.Any(x => x.ProductVariant.Stock < x.ProductCount))
-            return Result<CheckoutPricing>.Failure("Cart contains a product variant with insufficient stock");
+            return Result<CheckoutPricing>.Failure("موجودی یکی از تنوع‌های محصول در سبد خرید کافی نیست");
 
         var subtotal = carts.Sum(x => GetUnitPrice(x.ProductVariant, x.Product) * x.ProductCount);
         decimal discountAmount = 0;
@@ -496,11 +496,11 @@ public class InvoiceService(
         {
             var code = discountCodeValue.Trim();
             if (code.Length == 0)
-                return Result<CheckoutPricing>.Failure("Discount code is invalid");
+                return Result<CheckoutPricing>.Failure("کد تخفیف نامعتبر است");
 
             var userDiscountCode = await invoiceRepository.UserDiscountCodeGetAsync(userId, code, cancellation);
             if (userDiscountCode == null)
-                return Result<CheckoutPricing>.Failure("Discount code is invalid for this user");
+                return Result<CheckoutPricing>.Failure("این کد تخفیف برای کاربر فعلی معتبر نیست");
 
             var discountCode = userDiscountCode.DiscountCode;
             var now = DateTime.UtcNow;
@@ -510,7 +510,7 @@ public class InvoiceService(
                 discountCode.MaxDiscountAmount <= 0 ||
                 discountCode.MinimumPurchaseAmount < 0 ||
                 subtotal < discountCode.MinimumPurchaseAmount)
-                return Result<CheckoutPricing>.Failure("Discount code is not valid");
+                return Result<CheckoutPricing>.Failure("کد تخفیف معتبر نیست");
 
             discountAmount = discountCode.MaxDiscountAmount;
             discountCodeId = discountCode.Id;
@@ -519,7 +519,7 @@ public class InvoiceService(
         var amount = subtotal - discountAmount;
         var amountInRials = amount * 10m;
         if (amount <= 0 || amountInRials != decimal.Truncate(amountInRials) || amountInRials > long.MaxValue)
-            return Result<CheckoutPricing>.Failure("Payment amount is invalid");
+            return Result<CheckoutPricing>.Failure("مبلغ پرداخت نامعتبر است");
 
         return Result<CheckoutPricing>.Success(new CheckoutPricing(
             carts,
@@ -532,10 +532,10 @@ public class InvoiceService(
     private static string? ValidatePaymentMethod(PaymentMethodEnum paymentMethod)
     {
         if (!Enum.IsDefined(paymentMethod))
-            return "Payment method is invalid";
+            return "روش پرداخت نامعتبر است";
 
         return paymentMethod != PaymentMethodEnum.Online
-            ? "Only online payment is currently available"
+            ? "در حال حاضر فقط پرداخت آنلاین در دسترس است"
             : null;
     }
 

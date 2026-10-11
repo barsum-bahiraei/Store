@@ -11,10 +11,10 @@ internal class ProductInteractionService(IProductRepository productRepository, F
         ProductCommentCreateInput input, CancellationToken cancellation)
     {
         if (input.Rating is < 1 or > 5)
-            return Result<ProductCommentCreateOutput>.Failure("Rating must be between 1 and 5");
+            return Result<ProductCommentCreateOutput>.Failure("امتیاز باید بین ۱ تا ۵ باشد");
 
         if (await productRepository.GetAsync(productId, cancellation) == null)
-            return Result<ProductCommentCreateOutput>.Failure("Product not found");
+            return Result<ProductCommentCreateOutput>.Failure("محصول یافت نشد");
 
         var entity = new ProductCommentEntity
         {
@@ -92,11 +92,11 @@ internal class ProductInteractionService(IProductRepository productRepository, F
     public async Task<Result<bool>> BookmarkCreateAsync(int productId, int userId, CancellationToken cancellation)
     {
         if (await productRepository.GetAsync(productId, cancellation) == null)
-            return Result<bool>.Failure("Product not found");
+            return Result<bool>.Failure("محصول یافت نشد");
 
         var existing = await productRepository.BookmarkGetAsync(productId, userId, cancellation);
         if (existing != null)
-            return Result<bool>.Failure("Already bookmarked");
+            return Result<bool>.Failure("این محصول قبلاً به نشانک‌ها افزوده شده است");
 
         var entity = new ProductBookmarkEntity
         {
@@ -112,7 +112,7 @@ internal class ProductInteractionService(IProductRepository productRepository, F
     {
         var entity = await productRepository.BookmarkGetAsync(productId, userId, cancellation);
         if (entity == null)
-            return Result<bool>.Failure("Bookmark not found");
+            return Result<bool>.Failure("نشانک یافت نشد");
 
         await productRepository.BookmarkDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);

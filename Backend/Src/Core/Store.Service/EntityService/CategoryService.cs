@@ -49,7 +49,7 @@ public class CategoryService(ICategoryRepository categoryRepository, AttributeSe
         var eniity = await categoryRepository.GetAsync(id, cancellation);
         if (eniity == null)
         {
-            return Result<CategoryGetOutput?>.Failure("Category not found!");
+            return Result<CategoryGetOutput?>.Failure("دسته‌بندی یافت نشد");
         }
 
         var result = new CategoryGetOutput
@@ -127,19 +127,19 @@ public class CategoryService(ICategoryRepository categoryRepository, AttributeSe
             await categoryRepository.AttributeGetAsync(input.CategoryId, input.AttributeId, cancellation);
         if (categoryAttributeEntity != null)
         {
-            return Result<CategoryAttributeAddOutput>.Failure("parameters is exist!");
+            return Result<CategoryAttributeAddOutput>.Failure("پارامترها از قبل وجود دارند");
         }
 
         var categoryEntity = await categoryRepository.GetAsync(input.CategoryId, cancellation);
         if (categoryEntity == null)
         {
-            return Result<CategoryAttributeAddOutput>.Failure("parameters is not exist!");
+            return Result<CategoryAttributeAddOutput>.Failure("پارامترها وجود ندارند");
         }
 
         var attribute = await attributeService.GetAsync(input.AttributeId, cancellation);
         if (attribute.Data == null)
         {
-            return Result<CategoryAttributeAddOutput>.Failure("parameters is not exist!");
+            return Result<CategoryAttributeAddOutput>.Failure("پارامترها وجود ندارند");
         }
 
         var entity = new CategoryAttributeEntity

@@ -44,7 +44,7 @@ internal class BrandService(IProductRepository productRepository, FileService fi
     {
         var entity = await productRepository.BrandGetAsync(id, cancellation);
         if (entity == null)
-            return Result<ProductBrandGetOutput?>.Failure("Product brand not found");
+            return Result<ProductBrandGetOutput?>.Failure("برند محصول یافت نشد");
 
         var imageResult = await fileService.GetAsync(
             TableNameEnum.ProductBrands,
@@ -89,7 +89,7 @@ internal class BrandService(IProductRepository productRepository, FileService fi
     {
         var entity = await productRepository.BrandGetAsync(id, cancellation);
         if (entity == null)
-            return Result<ProductBrandUpdateOutput>.Failure("Product brand not found");
+            return Result<ProductBrandUpdateOutput>.Failure("برند محصول یافت نشد");
 
         entity.Name = input.Name;
         var updated = await productRepository.BrandUpdateAsync(entity, cancellation);
@@ -104,10 +104,10 @@ internal class BrandService(IProductRepository productRepository, FileService fi
     {
         var entity = await productRepository.BrandGetAsync(id, cancellation);
         if (entity == null)
-            return Result<bool>.Failure("Product brand not found");
+            return Result<bool>.Failure("برند محصول یافت نشد");
 
         if (entity.Products.Count != 0)
-            return Result<bool>.Failure("Product brand is in use");
+            return Result<bool>.Failure("برند محصول در حال استفاده است");
 
         await productRepository.BrandDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);

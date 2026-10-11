@@ -39,7 +39,7 @@ internal class RoleService(IAccountRepository accountRepository)
         var entity = await accountRepository.RoleGetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<RoleUpdateOutput>.Failure("Role not found");
+            return Result<RoleUpdateOutput>.Failure("نقش یافت نشد");
         }
 
         entity.Name = input.Name;
@@ -57,7 +57,7 @@ internal class RoleService(IAccountRepository accountRepository)
         var entity = await accountRepository.RoleGetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<bool>.Failure("Role not found");
+            return Result<bool>.Failure("نقش یافت نشد");
         }
 
         await accountRepository.RoleDeleteAsync(entity, cancellation);
@@ -87,7 +87,7 @@ internal class RoleService(IAccountRepository accountRepository)
         var entity = await accountRepository.UserRoleGetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<bool>.Failure("UserRole not found");
+            return Result<bool>.Failure("نقش کاربر یافت نشد");
         }
 
         await accountRepository.UserRoleDeleteAsync(entity, cancellation);
@@ -136,7 +136,7 @@ internal class RoleService(IAccountRepository accountRepository)
         var entity = await accountRepository.RoleAccessGetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<bool>.Failure("Role Access not found");
+            return Result<bool>.Failure("دسترسی نقش یافت نشد");
         }
 
         await accountRepository.RoleAccessDeleteAsync(entity, cancellation);

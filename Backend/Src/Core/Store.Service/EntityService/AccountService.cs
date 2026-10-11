@@ -56,7 +56,7 @@ public class AccountService(
         var entity = await accountRepository.UserGetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<UserGetOutput>.Failure("User not found");
+            return Result<UserGetOutput>.Failure("کاربر یافت نشد");
         }
 
         var roleAccessList = await accountRepository.RoleAccessListAsync(cancellation);
@@ -99,7 +99,7 @@ public class AccountService(
         var entity = await accountRepository.UserGetAsync(id, cancellation);
         if (entity == null)
         {
-            return Result<UserProfileGetOutput>.Failure("User not found");
+            return Result<UserProfileGetOutput>.Failure("کاربر یافت نشد");
         }
 
         var result = new UserProfileGetOutput
@@ -127,20 +127,20 @@ public class AccountService(
     {
         var entity = await accountRepository.UserGetAsync(id, cancellation);
         if (entity == null)
-            return Result<UserProfileUpdateOutput>.Failure("User not found");
+            return Result<UserProfileUpdateOutput>.Failure("کاربر یافت نشد");
 
         if (string.IsNullOrWhiteSpace(input.FirstName))
-            return Result<UserProfileUpdateOutput>.Failure("First name is required");
+            return Result<UserProfileUpdateOutput>.Failure("وارد کردن نام الزامی است");
 
         if (string.IsNullOrWhiteSpace(input.LastName))
-            return Result<UserProfileUpdateOutput>.Failure("Last name is required");
+            return Result<UserProfileUpdateOutput>.Failure("وارد کردن نام خانوادگی الزامی است");
 
         var email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim();
         if (email != null && !string.Equals(email, entity.Email, StringComparison.OrdinalIgnoreCase))
         {
             var emailOwner = await accountRepository.UserGetByEmailAsync(email, cancellation);
             if (emailOwner != null && emailOwner.Id != id)
-                return Result<UserProfileUpdateOutput>.Failure("Email is already in use");
+                return Result<UserProfileUpdateOutput>.Failure("این ایمیل قبلاً استفاده شده است");
             entity.IsEmailVerified = false;
         }
 
@@ -176,7 +176,7 @@ public class AccountService(
     {
         var phoneNumber = NormalizePhoneNumber(input.PhoneNumber);
         if (phoneNumber == null)
-            return Result<UserOtpSendOutput>.Failure("Phone number is invalid");
+            return Result<UserOtpSendOutput>.Failure("شماره تلفن نامعتبر است");
 
         var code = RandomNumberGenerator.GetInt32(10000, 100000).ToString();
         var entity = new VerificationCodeEntity
@@ -189,7 +189,7 @@ public class AccountService(
 
         var created = await accountRepository.VerificationCodeReplaceAsync(entity, cancellation);
         if (created == null)
-            return Result<UserOtpSendOutput>.Failure("Please wait before requesting another verification code");
+            return Result<UserOtpSendOutput>.Failure("لطفاً پیش از درخواست مجدد کد تأیید کمی صبر کنید");
 
         await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
 
@@ -206,12 +206,12 @@ public class AccountService(
         var phoneNumber = NormalizePhoneNumber(input.PhoneNumber);
         if (phoneNumber == null || string.IsNullOrWhiteSpace(input.Code) || input.Code.Length != 5 ||
             input.Code.Any(x => !char.IsDigit(x)))
-            return Result<UserOtpVerifyOutput>.Failure("Phone number or verification code is invalid");
+            return Result<UserOtpVerifyOutput>.Failure("شماره تلفن یا کد تأیید نامعتبر است");
 
         var verificationCode = await accountRepository.VerificationCodeGetAsync(phoneNumber, cancellation);
         if (verificationCode == null || verificationCode.ExpiresAt <= DateTime.UtcNow ||
             verificationCode.Code != input.Code)
-            return Result<UserOtpVerifyOutput>.Failure("Verification code is invalid or expired");
+            return Result<UserOtpVerifyOutput>.Failure("کد تأیید نامعتبر است یا منقضی شده است");
 
         var authentication = await accountRepository.VerificationCodeUseAsync(
             verificationCode.Id,
@@ -220,7 +220,7 @@ public class AccountService(
             cancellation);
 
         if (authentication == null)
-            return Result<UserOtpVerifyOutput>.Failure("Verification code is invalid or expired");
+            return Result<UserOtpVerifyOutput>.Failure("کد تأیید نامعتبر است یا منقضی شده است");
 
         var (user, isNewUser) = authentication.Value;
 
@@ -278,7 +278,7 @@ public class AccountService(
     {
         var entity = await accountRepository.DiscountCodeGetAsync(id, cancellation);
         return entity == null
-            ? Result<DiscountCodeOutput>.Failure("Discount code not found")
+            ? Result<DiscountCodeOutput>.Failure("کد تخفیف یافت نشد")
             : Result<DiscountCodeOutput>.Success(MapDiscountCode(entity));
     }
 
@@ -291,7 +291,7 @@ public class AccountService(
 
         var code = input.Code.Trim();
         if (await accountRepository.DiscountCodeExistsAsync(code, null, cancellation))
-            return Result<DiscountCodeOutput>.Failure("Discount code already exists");
+            return Result<DiscountCodeOutput>.Failure("این کد تخفیف از قبل وجود دارد");
 
         var usersResult = await GetDiscountCodeUsersAsync(input.UserIds, cancellation);
         if (usersResult.Error != null)
@@ -340,11 +340,11 @@ public class AccountService(
 
         var entity = await accountRepository.DiscountCodeGetAsync(id, cancellation);
         if (entity == null)
-            return Result<DiscountCodeOutput>.Failure("Discount code not found");
+            return Result<DiscountCodeOutput>.Failure("کد تخفیف یافت نشد");
 
         var code = input.Code.Trim();
         if (await accountRepository.DiscountCodeExistsAsync(code, id, cancellation))
-            return Result<DiscountCodeOutput>.Failure("Discount code already exists");
+            return Result<DiscountCodeOutput>.Failure("این کد تخفیف از قبل وجود دارد");
 
         var usersResult = await GetDiscountCodeUsersAsync(input.UserIds, cancellation);
         if (usersResult.Error != null)
@@ -381,10 +381,10 @@ public class AccountService(
     {
         var entity = await accountRepository.DiscountCodeGetAsync(id, cancellation);
         if (entity == null)
-            return Result<bool>.Failure("Discount code not found");
+            return Result<bool>.Failure("کد تخفیف یافت نشد");
 
         if (await accountRepository.DiscountCodeIsUsedAsync(id, cancellation))
-            return Result<bool>.Failure("Discount code is used by an invoice and cannot be deleted");
+            return Result<bool>.Failure("این کد تخفیف در یک فاکتور استفاده شده و قابل حذف نیست");
 
         await accountRepository.DiscountCodeDeleteAsync(entity, cancellation);
         return Result<bool>.Success(true);
@@ -482,7 +482,7 @@ public class AccountService(
         var userIds = requestedUserIds.Distinct().ToList();
         var users = await accountRepository.UserListAsync(userIds, cancellation);
         if (users.Count != userIds.Count)
-            return ([], "One or more users were not found");
+            return ([], "یک یا چند کاربر یافت نشدند");
 
         return (users, null);
     }
@@ -490,19 +490,19 @@ public class AccountService(
     private static string? ValidateDiscountCode(DiscountCodeUpsertInput input)
     {
         if (string.IsNullOrWhiteSpace(input.Code))
-            return "Discount code is required";
+            return "وارد کردن کد تخفیف الزامی است";
         if (input.Code.Trim().Length > 100)
-            return "Discount code cannot exceed 100 characters";
+            return "کد تخفیف نمی‌تواند بیش از ۱۰۰ نویسه باشد";
         if (input.MaxDiscountAmount <= 0)
-            return "Discount amount must be greater than zero";
+            return "مبلغ تخفیف باید بیشتر از صفر باشد";
         if (input.MinimumPurchaseAmount < 0)
-            return "Minimum purchase amount cannot be negative";
+            return "حداقل مبلغ خرید نمی‌تواند منفی باشد";
         if (input.PaymentMethod.HasValue && !Enum.IsDefined(input.PaymentMethod.Value))
-            return "Payment method is invalid";
+            return "روش پرداخت نامعتبر است";
         if (input.UserIds == null || input.UserIds.Count == 0)
-            return "At least one user must be selected";
+            return "باید حداقل یک کاربر انتخاب شود";
         if (input.UserIds.Any(x => x <= 0))
-            return "User id is invalid";
+            return "شناسه کاربر نامعتبر است";
         return null;
     }
 
