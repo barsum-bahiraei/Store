@@ -28,24 +28,6 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   [PaymentStatus.Failed]: "خطا/ناموفق",
 };
 
-const paymentMethodLabels: Record<PaymentMethod, string> = {
-  [PaymentMethod.Cash]: "پرداخت نقدی",
-  [PaymentMethod.Online]: "پرداخت آنلاین",
-  [PaymentMethod.Check]: "پرداخت با چک",
-};
-
-function formatExpirationDate(value: string | null) {
-  if (!value) return "بدون تاریخ انقضا";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "تاریخ نامشخص";
-
-  return new Intl.DateTimeFormat("fa-IR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 function hasCompleteAddress(user?: AccountUser): user is UserWithAddress {
   return Boolean(user?.address?.trim())
     && Boolean(user?.postalCode?.trim());
@@ -214,19 +196,10 @@ export function CheckoutContent() {
           {isValidatedCode && validatedDiscount && (
             <div className={`mt-3 rounded-lg border p-3 text-sm ${canApplyDiscount ? "border-primary/35 bg-primary/10" : "border-warning bg-warning/10"}`}>
               <p className={`font-black ${canApplyDiscount ? "text-primary" : "text-warning"}`}>{canApplyDiscount ? "کد تخفیف با موفقیت اعمال شد." : "این کد برای سفارش فعلی قابل استفاده نیست."}</p>
-              <dl className="mt-2 space-y-1.5 text-xs leading-6 text-muted-foreground">
-                <div className="flex justify-between gap-3"><dt>مبلغ تخفیف</dt><dd className="font-bold text-foreground">{formatToman(validatedDiscount.discountAmount)}</dd></div>
-                <div className="flex justify-between gap-3"><dt>حداقل خرید</dt><dd className="font-bold text-foreground">{formatToman(validatedDiscount.minimumPurchaseAmount)}</dd></div>
-                <div className="flex justify-between gap-3"><dt>روش پرداخت مجاز</dt><dd className="font-bold text-foreground">{validatedDiscount.paymentMethod === null ? "بدون محدودیت" : paymentMethodLabels[validatedDiscount.paymentMethod] ?? "نامشخص"}</dd></div>
-                <div className="flex justify-between gap-3"><dt>اعتبار تا</dt><dd className="text-left font-bold text-foreground">{formatExpirationDate(validatedDiscount.expireAt)}</dd></div>
-              </dl>
-              {!meetsMinimumPurchase && <p className="mt-2 text-xs font-bold text-warning">مبلغ سفارش به حداقل خرید لازم نرسیده است.</p>}
-              {!supportsPaymentMethod && <p className="mt-2 text-xs font-bold text-warning">این کد برای پرداخت آنلاین قابل استفاده نیست.</p>}
             </div>
           )}
         </div>
-        <dl className="mt-5 space-y-3 border-t border-border pt-4">
-          {canApplyDiscount && <><div className="flex items-center justify-between gap-4 text-sm"><dt className="text-muted-foreground">جمع سفارش</dt><dd className="font-bold">{formatToman(estimatedSubtotal)}</dd></div><div className="flex items-center justify-between gap-4 text-sm"><dt className="text-muted-foreground">تخفیف</dt><dd className="font-black text-primary">− {formatToman(discountAmount)}</dd></div></>}
+        <dl className="mt-5 border-t border-border pt-4">
           <div className="flex items-center justify-between gap-4"><dt className="font-bold">مبلغ نهایی</dt><dd className="text-lg font-black text-primary">{formatToman(finalAmount)}</dd></div>
         </dl>
         {(itemsError || checkout.error) && <p role="alert" className="mt-4 rounded-lg bg-error/10 p-3 text-sm font-bold text-error">{itemsError ?? checkout.error?.message}</p>}
