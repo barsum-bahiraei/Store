@@ -224,8 +224,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
   const [variantConfirmIndex, setVariantConfirmIndex] = useState<number | null>(null);
   const [bulkPrice, setBulkPrice] = useState("");
-  const [bulkStockDelta, setBulkStockDelta] = useState("");
-  const [bulkStockIncrease, setBulkStockIncrease] = useState(true);
+  const [bulkStock, setBulkStock] = useState("");
   const [bulkConfirmKind, setBulkConfirmKind] = useState<"price" | "stock" | null>(null);
 
   useEffect(() => {
@@ -480,9 +479,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const bulkPriceValue = parseNonNegative(bulkPrice);
-  const bulkStockDeltaValue = bulkStockDelta.trim() === "" ? null : Number(bulkStockDelta.trim());
-  const isBulkStockDeltaValid =
-    bulkStockDeltaValue !== null && Number.isFinite(bulkStockDeltaValue) && bulkStockDeltaValue >= 0;
+  const bulkStockValue = parseNonNegative(bulkStock);
 
   const requestBulkPrice = () => {
     if (productVariants.length === 0 || bulkPriceValue === null) return;
@@ -490,7 +487,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const requestBulkStock = () => {
-    if (productVariants.length === 0 || !isBulkStockDeltaValid) return;
+    if (productVariants.length === 0 || bulkStockValue === null) return;
     setBulkConfirmKind("stock");
   };
 
@@ -500,17 +497,12 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         current.map((variant) => ({ ...variant, price: String(bulkPriceValue) }))
       );
       setBulkPrice("");
-    } else if (bulkConfirmKind === "stock" && isBulkStockDeltaValid && bulkStockDeltaValue !== null) {
-      const delta = bulkStockDeltaValue;
-      const increase = bulkStockIncrease;
+    } else if (bulkConfirmKind === "stock" && bulkStockValue !== null) {
+      const nextStock = String(bulkStockValue);
       setProductVariants((current) =>
-        current.map((variant) => {
-          const stock = parseNonNegative(variant.stock) ?? 0;
-          const next = increase ? stock + delta : Math.max(0, stock - delta);
-          return { ...variant, stock: String(next) };
-        })
+        current.map((variant) => ({ ...variant, stock: nextStock }))
       );
-      setBulkStockDelta("");
+      setBulkStock("");
     }
     setBulkConfirmKind(null);
   };
@@ -822,7 +814,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                           <span className="material-symbols-outlined text-lg text-primary-600 dark:text-primary-400">bolt</span>
                           <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100">اعمال گروهی</h5>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت همه تنوع‌ها یکسان می‌شود؛ موجودی همه به همان مقدار کم یا زیاد می‌شود و کمتر از صفر نمی‌شود.</p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت و موجودی همه تنوع‌ها به همان عدد واردشده تنظیم می‌شود.</p>
                         <div className="mt-3 grid gap-3 lg:grid-cols-2">
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                             <label className="min-w-0 flex-1">
@@ -831,22 +823,12 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                             </label>
                             <button type="button" onClick={requestBulkPrice} disabled={submitting || bulkPriceValue === null} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال قیمت</button>
                           </div>
-                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                             <label className="min-w-0 flex-1">
-                              <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">تغییر موجودی همه</span>
-                              <input type="number" inputMode="decimal" min="0" step="1" value={bulkStockDelta} onChange={(event) => setBulkStockDelta(event.target.value)} placeholder="مثلاً 5" aria-label="مقدار تغییر موجودی تنوع‌ها" className={`${inputClasses} min-h-10 py-2`} disabled={submitting} />
+                              <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">موجودی همه</span>
+                              <input type="number" inputMode="numeric" min="0" step="1" value={bulkStock} onChange={(event) => setBulkStock(event.target.value)} placeholder="مثلاً 10" aria-label="موجودی همه تنوع‌ها" className={`${inputClasses} min-h-10 py-2`} disabled={submitting} />
                             </label>
-                            <div role="group" aria-label="جهت تغییر موجودی" className="grid min-h-10 shrink-0 grid-cols-2 items-center divide-x divide-gray-300 overflow-hidden rounded-xl border border-gray-300 dark:divide-gray-600 dark:border-gray-600 sm:flex">
-                              <button type="button" onClick={() => setBulkStockIncrease(true)} aria-pressed={bulkStockIncrease} disabled={submitting} aria-label="افزایش موجودی" className={`flex min-h-10 items-center gap-1 px-3 text-xs font-semibold transition-colors disabled:opacity-50 ${bulkStockIncrease ? "bg-primary-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
-                                <span className="material-symbols-outlined text-base">add</span>
-                                افزایش
-                              </button>
-                              <button type="button" onClick={() => setBulkStockIncrease(false)} aria-pressed={!bulkStockIncrease} disabled={submitting} aria-label="کاهش موجودی" className={`flex min-h-10 items-center gap-1 px-3 text-xs font-semibold transition-colors disabled:opacity-50 ${!bulkStockIncrease ? "bg-primary-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
-                                <span className="material-symbols-outlined text-base">remove</span>
-                                کاهش
-                              </button>
-                            </div>
-                            <button type="button" onClick={requestBulkStock} disabled={submitting || !isBulkStockDeltaValid} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال موجودی</button>
+                            <button type="button" onClick={requestBulkStock} disabled={submitting || bulkStockValue === null} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال موجودی</button>
                           </div>
                         </div>
                       </div>
@@ -1032,11 +1014,11 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
       <ConfirmDialog
         open={bulkConfirmKind !== null}
-        title={bulkConfirmKind === "price" ? "اعمال قیمت روی همه تنوع‌ها" : "تغییر موجودی همه تنوع‌ها"}
+        title={bulkConfirmKind === "price" ? "اعمال قیمت روی همه تنوع‌ها" : "تنظیم موجودی همه تنوع‌ها"}
         message={
           bulkConfirmKind === "price"
             ? `قیمت همهٔ ${productVariants.length} تنوع به ${formatPrice(bulkPriceValue ?? 0)} تومان تغییر می‌کند.`
-            : `موجودی همهٔ ${productVariants.length} تنوع ${formatPrice(bulkStockDeltaValue ?? 0)} عدد ${bulkStockIncrease ? "افزایش" : "کاهش"} می‌یابد.`
+            : `موجودی همهٔ ${productVariants.length} تنوع به ${formatPrice(bulkStockValue ?? 0)} عدد تنظیم می‌شود.`
         }
         confirmLabel="اعمال شود"
         danger={false}
