@@ -2,6 +2,9 @@ export const AUTH_TOKEN_KEY = "store.auth.token";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 const AUTH_TOKEN_CLEARED_EVENT = "store:auth-token-cleared";
+const SHARED_COOKIE_ATTRIBUTES = import.meta.env.PROD
+  ? "; domain=zaryvan.com; secure"
+  : "";
 
 function readTokenCookie(): string | null {
   if (typeof document === "undefined") return null;
@@ -18,7 +21,8 @@ export function getAuthToken(): string | null {
 
 export function setAuthToken(token: string): void {
   if (typeof window === "undefined") return;
-  document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
+  document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax${SHARED_COOKIE_ATTRIBUTES}`;
 }
 
 export function clearAuthToken(): void {
@@ -26,6 +30,7 @@ export function clearAuthToken(): void {
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
   window.localStorage.removeItem("store.panel.auth.token");
   document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax${SHARED_COOKIE_ATTRIBUTES}`;
   window.dispatchEvent(new Event(AUTH_TOKEN_CLEARED_EVENT));
 }
 
