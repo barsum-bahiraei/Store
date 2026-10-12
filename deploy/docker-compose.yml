@@ -39,10 +39,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__StoreDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      Minio__Endpoint: ${SERVER_PUBLIC_HOST}:${MINIO_PORT:-9000}
+      Minio__Endpoint: files.zaryvan.com
       Minio__AccessKey: ${MINIO_ROOT_USER}
       Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
-      Minio__UseSsl: "false"
+      Minio__UseSsl: "true"
       Minio__Bucket: ${MINIO_BUCKET}
       Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: ${JWT_ISSUER}
