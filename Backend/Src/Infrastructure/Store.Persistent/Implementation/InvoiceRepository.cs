@@ -111,6 +111,8 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     public Task<PaymentEntity?> PaymentGetByOrderIdAsync(long orderId, CancellationToken cancellation) =>
         context.Payments
             .Include(x => x.Invoice)
+            .ThenInclude(x => x.InvoiceItems)
+            .ThenInclude(x => x.ProductVariant)
             .FirstOrDefaultAsync(x => x.OrderId == orderId, cancellation);
 
     public Task<InvoiceEntity?> GetAsync(int id, int userId, CancellationToken cancellation) =>
@@ -135,14 +137,6 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     public async Task CompletePaymentAsync(PaymentEntity payment, CancellationToken cancellation)
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellation);
-        payment.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
-        if (payment.Invoice.PaymentStatus is not (PaymentStatusEnum.PaymentCompleted
-            or PaymentStatusEnum.Preparing
-            or PaymentStatusEnum.ReadyForShipment
-            or PaymentStatusEnum.Shipping
-            or PaymentStatusEnum.Delivered))
-            payment.Invoice.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
-
         if (payment.Invoice.DiscountCodeId.HasValue)
         {
             var userDiscountCode = await context.UserDiscountCodes.FirstOrDefaultAsync(x =>
