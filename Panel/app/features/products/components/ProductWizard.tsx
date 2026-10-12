@@ -189,7 +189,7 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
 }
 
 export function ProductWizard({ product, onClose, onComplete }: ProductWizardProps) {
-  const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, submitting } =
+  const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, setMainImage, submitting } =
     useProductStore();
   const editingProductId = product?.id;
   const isEditing = editingProductId !== undefined;
@@ -215,6 +215,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const imagesRef = useRef<SelectedImage[]>([]);
   const [mainImageId, setMainImageId] = useState<string | null>(null);
+  const [mainExistingId, setMainExistingId] = useState<number | null>(null);
   const [savedProductId, setSavedProductId] = useState<number | null>(product?.id ?? null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -267,6 +268,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             }))
           );
           setExistingImages(details.images ?? []);
+          setMainExistingId(details.images?.find((image) => image.isMain)?.id ?? null);
         })
       : Promise.all([categoryApi.list(), sellerApi.list(), brandApi.list()]).then(
           ([list, sellerList, brandList]) => {
@@ -580,7 +582,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       previewUrl: URL.createObjectURL(file),
     }));
     setImages((current) => [...current, ...next]);
-    setMainImageId((current) => current ?? next[0]?.id ?? null);
+    if (mainExistingId === null) {
+      setMainImageId((current) => current ?? next[0]?.id ?? null);
+    }
     event.target.value = "";
   };
 
@@ -589,17 +593,23 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       const image = current.find((item) => item.id === id);
       if (image) URL.revokeObjectURL(image.previewUrl);
       const next = current.filter((item) => item.id !== id);
-      if (mainImageId === id) setMainImageId(next[0]?.id ?? null);
+      if (mainImageId === id) {
+        const fallbackNew = next[0]?.id ?? null;
+        if (fallbackNew) {
+          setMainImageId(fallbackNew);
+        } else {
+          setMainImageId(null);
+          setMainExistingId(
+            existingImages.find((item) => !deletedImageIds.includes(item.id))?.id ?? null
+          );
+        }
+      }
       return next;
     });
   };
 
   const finish = async () => {
     if (savedProductId === null) return;
-    const hasExistingMain = existingImages.some(
-      (image) => image.isMain && !deletedImageIds.includes(image.id)
-    );
-    if (!hasExistingMain && (images.length === 0 || mainImageId === null)) return;
     setUploading(true);
     setError(null);
     try {
@@ -609,12 +619,19 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             file: image.file,
             name: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
             productId: savedProductId,
-            isMain: !hasExistingMain && image.id === mainImageId,
+            isMain: image.id === mainImageId,
             fileType: 0,
           })
         )
       );
       await Promise.all(deletedImageIds.map((id) => deleteImage(id)));
+      if (
+        mainExistingId !== null &&
+        mainExistingId !== currentMainExistingId &&
+        !deletedImageIds.includes(mainExistingId)
+      ) {
+        await setMainImage(mainExistingId);
+      }
       onComplete();
     } catch (reason) {
       setError(errorMessage(reason));
@@ -624,11 +641,23 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const toggleExistingImageDeletion = (image: ProductImage) => {
-    setDeletedImageIds((ids) =>
-      ids.includes(image.id) ? ids.filter((id) => id !== image.id) : [...ids, image.id]
-    );
-    if (image.isMain && !deletedImageIds.includes(image.id) && mainImageId === null) {
-      setMainImageId(images[0]?.id ?? null);
+    const willDelete = !deletedImageIds.includes(image.id);
+    const nextDeleted = willDelete
+      ? [...deletedImageIds, image.id]
+      : deletedImageIds.filter((id) => id !== image.id);
+    setDeletedImageIds(nextDeleted);
+    if (!willDelete && mainExistingId === null && mainImageId === null) {
+      setMainExistingId(image.id);
+    }
+    if (willDelete && mainExistingId === image.id) {
+      const fallbackExisting =
+        existingImages.find((item) => item.id !== image.id && !nextDeleted.includes(item.id))?.id ?? null;
+      if (fallbackExisting !== null) {
+        setMainExistingId(fallbackExisting);
+      } else {
+        setMainExistingId(null);
+        setMainImageId(images[0]?.id ?? null);
+      }
     }
   };
 
@@ -644,10 +673,21 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const canSubmitDetails =
     title.trim().length > 0 &&
     sellerId !== null;
-  const hasRetainedMainImage = existingImages.some(
+  const currentMainExistingId = existingImages.find(
     (image) => image.isMain && !deletedImageIds.includes(image.id)
-  );
-  const canSaveImages = hasRetainedMainImage || (images.length > 0 && mainImageId !== null);
+  )?.id ?? null;
+  const mainChanged = mainExistingId !== currentMainExistingId;
+  const hasImageWork = images.length > 0 || deletedImageIds.length > 0 || mainChanged;
+
+  const selectNewMain = (id: string) => {
+    setMainImageId(id);
+    setMainExistingId(null);
+  };
+
+  const selectExistingMain = (id: number) => {
+    setMainExistingId(id);
+    setMainImageId(null);
+  };
 
   const selectedSeller = sellers.find((s) => s.id === sellerId);
   const showErrors = attemptedSubmit;
@@ -926,7 +966,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
           {step === 2 && (
             <section>
-              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "جزئیات محصول به‌روزرسانی شد" : "محصول ایجاد شد"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "تصاویر فعلی را نگه دارید یا حذف کنید و در صورت نیاز تصاویر جدید اضافه کنید." : "حالا گالری آن را اضافه کنید و یک تصویر اصلی انتخاب کنید."}</p></div></div>
+              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "جزئیات محصول به‌روزرسانی شد" : "محصول ایجاد شد"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "تصویر اصلی را از بین تصاویر فعلی یا جدید انتخاب کنید. افزودن تصویر اختیاری است." : "افزودن تصویر اختیاری است؛ در صورت افزودن، یک تصویر اصلی انتخاب کنید."}</p></div></div>
               <label className="mt-6 flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/50 focus-within:ring-2 focus-within:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:hover:border-primary-600 dark:hover:bg-primary-950/20">
                 <span className="flex size-12 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400"><span className="material-symbols-outlined">add_photo_alternate</span></span>
                 <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">فقط WebP، JPG یا PNG — یک یا چند فایل انتخاب کنید</span>
@@ -938,11 +978,16 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                   <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {existingImages.map((image) => {
                       const isDeleted = deletedImageIds.includes(image.id);
+                      const isSelectedMain = mainExistingId === image.id;
                       return (
-                        <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${image.isMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
+                        <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!isDeleted && isSelectedMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
                            <img src={resolveProductImageUrl(image) ?? undefined} alt={image.name} className="aspect-square w-full object-cover" />
                             <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `نگه‌داشتن ${image.name}` : `حذف ${image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
-                          <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">{isDeleted ? "حذف خواهد شد" : image.isMain ? "تصویر اصلی" : "تصویر فعلی"}</span>
+                          {isDeleted ? (
+                            <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">حذف خواهد شد</span>
+                          ) : (
+                            <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={isSelectedMain} onChange={() => selectExistingMain(image.id)} className="size-4 accent-primary-600" />{isSelectedMain ? "تصویر اصلی" : "اصلی شود"}</label>
+                          )}
                         </div>
                       );
                     })}
@@ -952,14 +997,10 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               {images.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {images.map((image) => (
-                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!hasRetainedMainImage && mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
+                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
                       <img src={image.previewUrl} alt={image.file.name} className="aspect-square w-full object-cover" />
                       <button type="button" onClick={() => removeImage(image.id)} className="absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`حذف ${image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
-                      {hasRetainedMainImage ? (
-                        <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">تصویر جدید</span>
-                      ) : (
-                        <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => setMainImageId(image.id)} className="size-4 accent-primary-600" />تصویر اصلی</label>
-                      )}
+                      <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => selectNewMain(image.id)} className="size-4 accent-primary-600" />{mainImageId === image.id ? "تصویر اصلی" : "اصلی شود"}</label>
                     </div>
                   ))}
                 </div>
@@ -973,7 +1014,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           <div className="flex w-full items-center gap-2 sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
             {step === 0 && <button type="button" onClick={() => void loadAttributes()} disabled={categoryId === null || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">ادامه<span className="material-symbols-outlined text-[19px]">arrow_back</span></button>}
             {step === 1 && <button type="submit" form="product-details-form" disabled={!canSubmitDetails || submitting || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{(submitting || loading) && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{submitting ? "در حال ذخیره..." : loading ? "در حال بارگذاری..." : isEditing ? "ذخیره و مدیریت تصاویر" : "ایجاد محصول"}</button>}
-            {step === 2 && <button type="button" onClick={() => void finish()} disabled={!canSaveImages || uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "در حال ذخیره تصاویر..." : isEditing ? "ذخیره تغییرات تصویر" : "بارگذاری و اتمام"}</button>}
+            {step === 2 && <button type="button" onClick={() => void finish()} disabled={uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "در حال ذخیره..." : hasImageWork ? (isEditing ? "ذخیره تغییرات تصویر" : "بارگذاری و اتمام") : "ثبت و بستن"}</button>}
           </div>
         </footer>
       </div>

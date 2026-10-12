@@ -32,6 +32,7 @@ interface ProductStore {
   deleteProduct: (id: number) => Promise<void>;
   uploadImage: (input: ProductImageUploadInput) => Promise<void>;
   deleteImage: (id: number) => Promise<void>;
+  setMainImage: (id: number) => Promise<void>;
 }
 
 export const useProductStore = create<ProductStore>((set, get) => ({
@@ -111,5 +112,9 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
   deleteImage: async (id) => {
     await productApi.removeImage(id);
+  },
+
+  setMainImage: async (id) => {
+    await productApi.setMainImage(id);
   },
 }));

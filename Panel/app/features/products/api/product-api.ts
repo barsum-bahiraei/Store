@@ -103,4 +103,10 @@ export const productApi = {
     }
     productCache.clear();
   },
+
+  async setMainImage(id: number): Promise<void> {
+    const { data } = await httpClient.put<ApiResult<boolean>>(`/api/File/${id}/Main`);
+    resolveResult(data, "Failed to set main image");
+    productCache.clear();
+  },
 };

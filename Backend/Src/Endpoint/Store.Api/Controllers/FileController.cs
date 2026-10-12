@@ -56,4 +56,13 @@ public class FileController(FileService fileService) : ControllerBase
         var result = await fileService.DeleteAsync(id, userId, cancellation);
         return Ok(result);
     }
+
+    [HasAccess]
+    [HttpPut("{id}/Main")]
+    public async Task<IActionResult> SetMain(int id, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await fileService.SetMainAsync(id, userId, cancellation);
+        return Ok(result);
+    }
 }
