@@ -138,6 +138,11 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
                 <p className="px-4 py-3"><span className="text-gray-500">تحویل: </span><strong>{deliveryMethodLabels[order.deliveryMethod] ?? "نامشخص"}</strong></p>
               </div>
 
+              <div className="grid border-b border-gray-300 text-sm dark:border-gray-700 sm:grid-cols-2 sm:divide-x sm:divide-x-reverse sm:divide-gray-300 dark:sm:divide-gray-700">
+                <p className="px-4 py-3"><span className="text-gray-500">شناسه پرداخت: </span><strong dir="ltr" className="inline-block">{order.refId || "ثبت نشده"}</strong></p>
+                <p className="px-4 py-3"><span className="text-gray-500">شماره مرجع: </span><strong dir="ltr" className="inline-block">{order.saleReferenceId !== null && order.saleReferenceId !== undefined ? String(order.saleReferenceId) : "ثبت نشده"}</strong></p>
+              </div>
+
               <section className="border-b border-gray-300 p-4 dark:border-gray-700">
                 <h3 className="mb-3 text-sm font-black">مشخصات گیرنده</h3>
                 <div className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-3">

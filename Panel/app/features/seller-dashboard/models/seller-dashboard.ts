@@ -81,21 +81,12 @@ export const paymentStatusLabels: Record<number, string> = {
   [PaymentStatus.Failed]: "ناموفق",
 };
 
-export const paymentStatusTransitions: Record<number, PaymentStatus[]> = {
-  [PaymentStatus.New]: [],
-  [PaymentStatus.ProcessingPayment]: [],
-  [PaymentStatus.PaymentCompleted]: [PaymentStatus.Preparing],
-  [PaymentStatus.Preparing]: [PaymentStatus.ReadyForShipment],
-  [PaymentStatus.ReadyForShipment]: [PaymentStatus.Shipping],
-  [PaymentStatus.Shipping]: [PaymentStatus.Delivered],
-  [PaymentStatus.Delivered]: [],
-  [PaymentStatus.Cancelled]: [],
-  [PaymentStatus.Failed]: [],
-};
-
-export function allowedNextStatuses(current: number): PaymentStatus[] {
-  return paymentStatusTransitions[current] ?? [];
-}
+export const sellerSettableStatuses: PaymentStatus[] = [
+  PaymentStatus.Preparing,
+  PaymentStatus.ReadyForShipment,
+  PaymentStatus.Shipping,
+  PaymentStatus.Delivered,
+];
 
 export interface OrderStatusCountItem {
   paymentStatus: number;
@@ -198,6 +189,8 @@ export interface SellerOrderDetail {
   paymentStatus: number;
   paymentMethod: number;
   deliveryMethod: number;
+  refId: string | null;
+  saleReferenceId: number | null;
   customer: SellerOrderCustomer;
   items: SellerOrderItem[];
 }

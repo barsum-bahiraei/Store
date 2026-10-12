@@ -276,6 +276,8 @@ public class SellerService(
             });
         }
 
+        var payment = invoice.Payments.OrderBy(x => x.Id).FirstOrDefault();
+
         return Result<SellerOrderDetailOutput>.Success(new SellerOrderDetailOutput
         {
             Id = invoice.Id,
@@ -286,6 +288,8 @@ public class SellerService(
             PaymentStatus = invoice.PaymentStatus,
             PaymentMethod = invoice.PaymentMethod,
             DeliveryMethod = invoice.DeliveryMethod,
+            RefId = payment?.RefId,
+            SaleReferenceId = payment?.SaleReferenceId,
             Customer = new SellerOrderCustomerOutput
             {
                 FirstName = invoice.User.FirstName,
@@ -344,14 +348,13 @@ public class SellerService(
     }
 
     private static bool IsAllowedOrderStatusTransition(PaymentStatusEnum current, PaymentStatusEnum next) =>
-        current switch
-        {
-            PaymentStatusEnum.PaymentCompleted => next is PaymentStatusEnum.Preparing,
-            PaymentStatusEnum.Preparing => next is PaymentStatusEnum.ReadyForShipment,
-            PaymentStatusEnum.ReadyForShipment => next is PaymentStatusEnum.Shipping,
-            PaymentStatusEnum.Shipping => next is PaymentStatusEnum.Delivered,
-            _ => false
-        };
+        IsFulfillmentStatus(current) && IsSellerSettableStatus(next);
+
+    private static bool IsSellerSettableStatus(PaymentStatusEnum status) =>
+        status is PaymentStatusEnum.Preparing
+            or PaymentStatusEnum.ReadyForShipment
+            or PaymentStatusEnum.Shipping
+            or PaymentStatusEnum.Delivered;
 
     private static bool IsFulfillmentStatus(PaymentStatusEnum status) =>
         status is PaymentStatusEnum.PaymentCompleted

@@ -12,6 +12,8 @@ public class SellerOrderDetailOutput
     public PaymentStatusEnum PaymentStatus { get; set; }
     public PaymentMethodEnum PaymentMethod { get; set; }
     public DeliveryMethodEnum DeliveryMethod { get; set; }
+    public string? RefId { get; set; }
+    public long? SaleReferenceId { get; set; }
     public SellerOrderCustomerOutput Customer { get; set; }
     public List<SellerOrderItemOutput> Items { get; set; }
 }

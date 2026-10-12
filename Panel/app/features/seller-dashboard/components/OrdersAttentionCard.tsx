@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { sellerDashboardApi } from "../api/seller-dashboard-api";
 import type { OrderAttentionItem, PaymentStatus, SellerDateRange } from "../models/seller-dashboard";
-import { allowedNextStatuses, paymentStatusLabels } from "../models/seller-dashboard";
+import { sellerSettableStatuses, paymentStatusLabels } from "../models/seller-dashboard";
 import { errorMessage, formatDateTime, formatNumber } from "../utils/format";
 import { EmptyState } from "./EmptyState";
 import { ErrorBanner } from "./ErrorBanner";
@@ -100,7 +100,7 @@ export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps)
       ) : (
         <ul className="divide-y divide-gray-200 dark:divide-gray-800">
           {items.map((order) => {
-            const nextStatuses = allowedNextStatuses(order.paymentStatus);
+            const statusOptions = sellerSettableStatuses.filter((item) => item !== order.paymentStatus);
             return (
               <li key={order.id} className="space-y-3 p-4 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -127,33 +127,26 @@ export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps)
                      <button type="button" onClick={() => setDetailOrderId(order.id)} className="min-h-9 rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
                        مشاهده جزئیات
                      </button>
-                     {nextStatuses.length === 0 ? (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
-                        تغییر وضعیت مجاز نیست
-                      </span>
-                    ) : (
-                       <>
-                         <select
-                           value={selectedStatuses[order.id] ?? ""}
-                           onChange={(event) => setSelectedStatuses((current) => ({ ...current, [order.id]: event.target.value }))}
-                           className={inputClasses}
-                         >
-                           <option value="">وضعیت بعدی</option>
-                           {nextStatuses.map((next) => <option key={next} value={next}>{paymentStatusLabels[next]}</option>)}
-                         </select>
-                         <button
-                           type="button"
-                           disabled={updatingId === order.id || !selectedStatuses[order.id]}
-                            onClick={() => setPendingStatusChange({
-                              order,
-                              nextStatus: Number(selectedStatuses[order.id]) as PaymentStatus,
-                            })}
-                           className="min-h-9 rounded-lg bg-primary-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-                         >
-                           {updatingId === order.id ? "در حال بروزرسانی..." : "ثبت وضعیت"}
-                         </button>
-                       </>
-                    )}
+                      <select
+                        value={selectedStatuses[order.id] ?? ""}
+                        onChange={(event) => setSelectedStatuses((current) => ({ ...current, [order.id]: event.target.value }))}
+                        className={inputClasses}
+                        aria-label={`انتخاب وضعیت جدید سفارش ${order.id}`}
+                      >
+                        <option value="">انتخاب وضعیت</option>
+                        {statusOptions.map((next) => <option key={next} value={next}>{paymentStatusLabels[next]}</option>)}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={updatingId === order.id || !selectedStatuses[order.id]}
+                         onClick={() => setPendingStatusChange({
+                           order,
+                           nextStatus: Number(selectedStatuses[order.id]) as PaymentStatus,
+                         })}
+                        className="min-h-9 rounded-lg bg-primary-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {updatingId === order.id ? "در حال بروزرسانی..." : "ثبت وضعیت"}
+                      </button>
                   </div>
                 </div>
               </li>
@@ -167,7 +160,7 @@ export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps)
       open={pendingStatusChange !== null}
       title="تأیید تغییر وضعیت سفارش"
       message={pendingStatusChange
-        ? `وضعیت سفارش #${pendingStatusChange.order.id} به «${paymentStatusLabels[pendingStatusChange.nextStatus]}» تغییر کند؟`
+        ? `وضعیت سفارش #${pendingStatusChange.order.id} از «${paymentStatusLabels[pendingStatusChange.order.paymentStatus]}» به «${paymentStatusLabels[pendingStatusChange.nextStatus]}» تغییر کند؟`
         : ""}
       confirmLabel="بله، ثبت شود"
       danger={false}
