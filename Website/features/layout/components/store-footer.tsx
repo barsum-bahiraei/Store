@@ -1,35 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { whatsappSupportNumber, whatsappSupportUrl } from "../utils/social-links";
+import { socialLinks, whatsappSupportNumber, whatsappSupportUrl } from "../utils/social-links";
 
 const trustSealImage = "/images/enamad.png";
 const trustSealLink = "https://trustseal.enamad.ir/?id=261898&Code=fAmxCvuhBi7lav0BUQhk";
-const storeBenefits = [
-  { icon: "local_shipping", title: "تحویل اکسپرس", description: "در کمترین زمان" },
-  { icon: "support_agent", title: "پشتیبانی ۲۴ ساعته", description: "پشتیبانی هفت روز هفته" },
-  { icon: "timer", title: "۷ روز ضمانت بازگشت", description: "هفت روز مهلت دارید" },
-  { icon: "verified", title: "ضمانت اصالت کالا", description: "تأیید اصالت کالا" },
-] as const;
 
 export function StoreFooter() {
   return (
     <footer className="mt-auto border-t border-border bg-surface text-foreground">
-      <section aria-label="مزایای خرید از زریوان" className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-12">
-        {storeBenefits.map((benefit) => {
-          const isSupport = benefit.icon === "support_agent";
-          const content = <>
-            {isSupport ? <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-surface p-2"><Image src="/images/social/whatsapp.svg" alt="" width={40} height={40} className="size-9 object-contain" /></span> : <span className="material-symbols-rounded shrink-0 text-4xl text-primary-foreground" aria-hidden="true">{benefit.icon}</span>}
-            <span className="text-right">
-              <span className="block text-sm font-black">{benefit.title}</span>
-              <span className="mt-1 block text-xs leading-5 text-secondary-foreground/75">{benefit.description}</span>
-              {isSupport && <span dir="ltr" className="mt-1 block text-sm font-bold">{whatsappSupportNumber}</span>}
-            </span>
-          </>;
-          const className = "flex min-h-24 items-center justify-center gap-4 rounded-xl border border-white/20 bg-secondary/70 px-4 py-4 text-secondary-foreground shadow-sm lg:px-5";
-          return isSupport ? <a key={benefit.title} href={whatsappSupportUrl} target="_blank" rel="noreferrer" aria-label={`پشتیبانی واتساپ زریوان ${whatsappSupportNumber}`} className={`${className} outline-none transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring`}>{content}</a> : <div key={benefit.title} className={className}>{content}</div>;
-        })}
-      </section>
-      <div className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-center lg:px-12">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-10 sm:px-8 md:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(15rem,1fr)_auto] lg:items-start lg:px-12">
         <div className="max-w-3xl">
           <Link href="/" aria-label="خانه فروشگاه" className="inline-flex min-h-11 items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Image src="/images/zaryvan-logo.png" alt="" width={48} height={48} className="size-12 rounded-full object-contain" />
@@ -43,13 +22,27 @@ export function StoreFooter() {
           </p>
         </div>
 
+        <section aria-labelledby="footer-contact-title" className="min-w-0">
+          <h2 id="footer-contact-title" className="text-lg font-black">پشتیبانی و راه‌های ارتباطی</h2>
+          <div className="mt-4 space-y-1 text-sm">
+            <a href="tel:09306815858" className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-lg px-2 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className="text-muted-foreground">شماره همراه</span><span dir="ltr" className="font-bold">۰۹۳۰۶۸۱۵۸۵۸</span></a>
+            <a href="tel:01733552110" className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-lg px-2 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className="text-muted-foreground">شماره ثابت</span><span dir="ltr" className="font-bold">۰۱۷۳۳۵۵۲۱۱۰</span></a>
+            <a href={whatsappSupportUrl} target="_blank" rel="noreferrer" className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-lg px-2 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className="text-muted-foreground">پشتیبانی واتساپ</span><span dir="ltr" className="font-bold">{whatsappSupportNumber}</span></a>
+          </div>
+          <p className="mt-4 px-2 text-xs leading-6 text-muted-foreground">شنبه تا پنج‌شنبه: ۸ صبح تا ۹ شب<br />جمعه: ۱۱ صبح تا ۹ شب</p>
+          <nav aria-label="شبکه‌های اجتماعی زریوان" className="mt-5 grid grid-cols-4 gap-2">
+            {socialLinks.map((social) => <a key={social.label} href={social.href} target="_blank" rel="noreferrer" aria-label={social.label} title={social.label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface p-2 text-center outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><Image src={social.image} alt="" width={32} height={32} className="size-8 object-contain" /><span className="text-xs font-bold">{social.label}</span></a>)}
+          </nav>
+          <Link href="/contact" className="mt-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-bold text-primary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">تماس با ما<span className="material-symbols-rounded text-lg" aria-hidden="true">arrow_back</span></Link>
+        </section>
+
         <a
           referrerPolicy="origin"
           target="_blank"
           rel="noreferrer"
           href={trustSealLink}
           aria-label="مشاهده نماد اعتماد الکترونیکی زریوان"
-          className="mx-auto inline-flex min-h-32 min-w-32 items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring md:mx-0"
+          className="mx-auto inline-flex min-h-32 min-w-32 items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring md:col-span-2 lg:col-span-1"
         >
           <Image
             unoptimized

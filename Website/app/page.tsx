@@ -7,6 +7,7 @@ import { ClimbingToolsPromo } from "@/features/home/components/climbing-tools-pr
 import { CategoryPromos, OutdoorEssentialsPromos } from "@/features/home/components/category-promos";
 import { HeroSlider } from "@/features/home/components/hero-slider";
 import { StoreFooter } from "@/features/layout/components/store-footer";
+import { StoreBenefits } from "@/features/home/components/store-benefits";
 
 export const metadata: Metadata = {
   title: { absolute: "لوازم کمپ و کوه‌نوردی زریوان | تجهیزات طبیعت‌گردی" },
@@ -26,6 +27,7 @@ export default function Home() {
         <CategoryPromos />
         <BestSellingCategories />
         <OutdoorEssentialsPromos />
+        <StoreBenefits />
       </main>
       <StoreFooter />
     </div>
