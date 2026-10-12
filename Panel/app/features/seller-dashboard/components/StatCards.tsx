@@ -6,30 +6,28 @@ interface StatCardsProps {
 }
 
 const cards: { key: keyof SellerDashboardStats; label: string; icon: string; money?: boolean }[] = [
-  { key: "totalSales", label: "مجموع فروش", icon: "payments", money: true },
-  { key: "orderCount", label: "تعداد سفارش", icon: "shopping_cart" },
-  { key: "itemsSoldCount", label: "اقلام فروخته‌شده", icon: "inventory" },
-  { key: "averageOrderValue", label: "میانگین سفارش", icon: "avg_pace", money: true },
-  { key: "completedOrderCount", label: "سفارش تکمیل‌شده", icon: "check_circle" },
-  { key: "cancelledOrderCount", label: "سفارش لغوشده", icon: "cancel" },
-  { key: "discountAmount", label: "مجموع تخفیف", icon: "sell", money: true },
+  { key: "totalSales", label: "فروش دوره", icon: "payments", money: true },
+  { key: "orderCount", label: "سفارش موفق", icon: "shopping_bag" },
+  { key: "itemsSoldCount", label: "کالای فروخته‌شده", icon: "inventory_2" },
+  { key: "averageOrderValue", label: "میانگین ارزش سفارش", icon: "monitoring", money: true },
 ];
 
 export function StatCards({ stats }: StatCardsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-      {cards.map((card) => (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card, index) => (
         <div
           key={card.key}
-          className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+          className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-transform hover:-translate-y-0.5 dark:border-gray-800 dark:bg-gray-900"
         >
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px] text-primary-600 dark:text-primary-400">{card.icon}</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
+          <div className={`absolute inset-y-0 right-0 w-1 ${index === 0 ? "bg-emerald-500" : index === 1 ? "bg-blue-500" : index === 2 ? "bg-amber-500" : "bg-violet-500"}`} />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.label}</p>
+            <span className="material-symbols-outlined flex! size-10 items-center justify-center rounded-xl bg-gray-100 text-[21px] text-gray-700 dark:bg-gray-800 dark:text-gray-200">{card.icon}</span>
           </div>
-          <p className="mt-2 text-lg font-semibold text-gray-950 dark:text-white">
-            {card.money ? formatNumber(stats[card.key]) : formatNumber(stats[card.key])}
-            {card.money && <span className="mr-1 text-xs font-normal text-gray-400">تومان</span>}
+          <p className="mt-4 text-2xl font-black tracking-tight text-gray-950 dark:text-white">
+            {formatNumber(stats[card.key])}
+            {card.money && <span className="mr-1.5 text-xs font-normal text-gray-400">تومان</span>}
           </p>
         </div>
       ))}

@@ -7,6 +7,8 @@ import type {
   CategorySalesItem,
   DiscountStatisticsItem,
   OrderAttentionItem,
+  PaymentStatus,
+  SellerOrderDetail,
   OrderStatusCountItem,
   OrderStatusUpdateInput,
   OrderStatusUpdateOutput,
@@ -167,12 +169,10 @@ export const sellerDashboardApi = {
 
   async getOrdersAttention(
     range?: SellerDateRange,
-    stuckDays?: number,
+    paymentStatus?: PaymentStatus,
   ): Promise<OrderAttentionItem[]> {
-    const query = {
-      ...rangeQuery(range),
-      StuckDays: String(stuckDays ?? 3),
-    };
+    const query = rangeQuery(range);
+    if (paymentStatus !== undefined) query.PaymentStatus = String(paymentStatus);
     return dedupe(listKey("OrdersAttention", query), async () => {
       const { data } = await httpClient.get<ApiResult<OrderAttentionItem[]>>(
         "/api/Seller/Orders/Attention",
@@ -180,6 +180,13 @@ export const sellerDashboardApi = {
       );
       return resolveResult(data, "Unable to load orders needing attention");
     });
+  },
+
+  async getOrderDetails(id: number): Promise<SellerOrderDetail> {
+    const { data } = await httpClient.get<ApiResult<SellerOrderDetail>>(
+      `/api/Seller/Order/${id}`,
+    );
+    return resolveResult(data, "Unable to load order details");
   },
 
   async updateOrderStatus(

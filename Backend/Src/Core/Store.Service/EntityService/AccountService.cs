@@ -224,8 +224,8 @@ public class AccountService(
 
         var (user, isNewUser) = authentication.Value;
 
-        if (isNewUser)
-            await CreateWelcomeDiscountAsync(user, cancellation);
+        // if (isNewUser)
+        //     await CreateWelcomeDiscountAsync(user, cancellation);
 
         return Result<UserOtpVerifyOutput>.Success(new UserOtpVerifyOutput
         {

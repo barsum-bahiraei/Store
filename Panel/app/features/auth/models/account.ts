@@ -10,6 +10,7 @@ export interface AccountUser {
   email: string | null;
   gender: number;
   address: string | null;
+  postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
   birthDate: string | null;
@@ -25,6 +26,7 @@ export interface UserProfileUpdateInput {
   lastName?: string;
   email?: string;
   address: string | null;
+  postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
   gender: number;
@@ -37,6 +39,7 @@ export interface UserProfileUpdateOutput {
   lastName: string | null;
   email: string | null;
   address: string | null;
+  postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
   gender: number;

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAuthToken } from "./auth-token";
+import { clearAuthToken, getAuthToken } from "./auth-token";
 
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://5.10.248.182:8080/api",
@@ -18,3 +18,11 @@ apiClient.interceptors.request.use((config) => {
 
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) clearAuthToken();
+    return Promise.reject(error);
+  },
+);

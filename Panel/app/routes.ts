@@ -7,6 +7,7 @@ export default [
   layout("components/layout/DashboardLayout.tsx", [
     route("products", "features/products/pages/ProductsPage.tsx"),
     route("dashboard", "features/seller-dashboard/pages/SellerDashboardPage.tsx"),
+    route("orders-attention", "features/seller-dashboard/pages/OrdersAttentionPage.tsx"),
     route("brands", "features/brands/pages/BrandsPage.tsx"),
     route("sellers", "features/sellers/pages/SellersPage.tsx"),
     route("attributes", "features/attributes/pages/AttributesPage.tsx"),

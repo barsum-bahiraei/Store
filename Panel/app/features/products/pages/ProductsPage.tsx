@@ -98,7 +98,7 @@ export default function ProductsPage() {
           <h1 className="mt-1 text-2xl font-semibold text-gray-950 dark:text-white">محصولات</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ساخت و مدیریت فهرست محصولات فروشگاه.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
           <button
             onClick={() => setFilterOpen((prev) => !prev)}
             className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors ${filterOpen || hasActiveFilters ? "border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"}`}
@@ -155,7 +155,7 @@ export default function ProductsPage() {
               </select>
             </label>
           </div>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button onClick={applyFilters} className="min-h-11 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white hover:bg-primary-700">
               اعمال فیلتر
             </button>
@@ -176,7 +176,7 @@ export default function ProductsPage() {
       )}
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_7rem_7rem_6rem_5rem_6rem] border-b border-gray-200 bg-gray-50 px-5 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:grid dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400 gap-3">
+        <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_7rem_7rem_6rem_5rem_6rem] border-b border-gray-200 bg-gray-50 px-5 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500 lg:grid dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400 gap-3">
           <span></span>
           <span>نام</span>
           <span>دسته‌بندی</span>
@@ -200,24 +200,47 @@ export default function ProductsPage() {
         ) : (
           <ul className="divide-y divide-gray-200 dark:divide-gray-800">
             {products.map((product) => (
-              <li key={product.id} className="grid grid-cols-[2.5rem_minmax(0,1fr)_7rem_7rem_6rem_5rem_6rem] items-center gap-3 px-5 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-950 sm:px-5">
-                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+              <li key={product.id} className="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-950 lg:grid lg:grid-cols-[2.5rem_minmax(0,1fr)_7rem_7rem_6rem_5rem_6rem] lg:items-center lg:gap-3 lg:px-5 lg:py-3">
+                <div className="lg:hidden">
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+                      {resolveProductImageUrl(product.image) ? <img src={resolveProductImageUrl(product.image) ?? undefined} alt="" className="size-full object-cover" /> : <span className="material-symbols-outlined text-2xl text-gray-400">image</span>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="break-words text-sm font-bold text-gray-900 dark:text-white">{product.name}</p>
+                        <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${product.isAvailable ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"}`}>{product.isAvailable ? "موجود" : "ناموجود"}</span>
+                      </div>
+                      {product.shortDescription && <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-500 dark:text-gray-400">{product.shortDescription}</p>}
+                    </div>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-3 text-xs dark:bg-gray-800/50">
+                    <div><dt className="text-gray-400">دسته‌بندی</dt><dd className="mt-1 font-semibold text-gray-700 dark:text-gray-200">{product.categoryTitle}</dd></div>
+                    <div><dt className="text-gray-400">فروشنده</dt><dd className="mt-1 font-semibold text-gray-700 dark:text-gray-200">{product.seller.name}</dd></div>
+                    <div className="col-span-2"><dt className="text-gray-400">قیمت</dt><dd className="mt-1 text-base font-black text-primary-600 dark:text-primary-400">{formatPrice(product.price)} تومان</dd></div>
+                  </dl>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button onClick={() => { setEditingProduct(product); setWizardOpen(true); }} disabled={submitting} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-primary-200 text-sm font-semibold text-primary-700 disabled:opacity-50 dark:border-primary-800 dark:text-primary-300"><span className="material-symbols-outlined text-lg">edit</span>ویرایش</button>
+                    <button onClick={() => setConfirmData({ title: "حذف محصول", message: `آیا از حذف محصول «${product.name}» اطمینان دارید؟`, onConfirm: async () => { setConfirmData(null); await deleteProduct(product.id); } })} disabled={submitting} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 disabled:opacity-50 dark:border-red-900 dark:text-red-400"><span className="material-symbols-outlined text-lg">delete</span>حذف</button>
+                  </div>
+                </div>
+                <div className="hidden size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 lg:flex">
                   {resolveProductImageUrl(product.image) ? (
                     <img src={resolveProductImageUrl(product.image) ?? undefined} alt="" className="size-full object-cover" />
                   ) : (
                     <span className="material-symbols-outlined text-xl text-gray-400 dark:text-gray-500">image</span>
                   )}
                 </div>
-                <div className="min-w-0">
+                <div className="hidden min-w-0 lg:block">
                   <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{product.name}</p>
                   {product.shortDescription && <p className="mt-0.5 truncate text-xs text-gray-400">{product.shortDescription}</p>}
                 </div>
-                <span className="hidden truncate text-sm text-gray-600 sm:block dark:text-gray-300">{product.categoryTitle}</span>
-                <span className="hidden truncate text-sm text-gray-600 sm:block dark:text-gray-300">{product.seller.name}</span>
-                <div className="hidden text-center sm:block">
+                <span className="hidden truncate text-sm text-gray-600 lg:block dark:text-gray-300">{product.categoryTitle}</span>
+                <span className="hidden truncate text-sm text-gray-600 lg:block dark:text-gray-300">{product.seller.name}</span>
+                <div className="hidden text-center lg:block">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatPrice(product.price)}</span>
                 </div>
-                <div className="hidden text-center sm:block">
+                <div className="hidden text-center lg:block">
                   {product.isAvailable ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
                       <span className="size-1.5 rounded-full bg-green-500"></span>بله
@@ -228,7 +251,7 @@ export default function ProductsPage() {
                     </span>
                   )}
                 </div>
-                <div className="flex justify-center gap-1">
+                <div className="hidden justify-center gap-1 lg:flex">
                   <button onClick={() => { setEditingProduct(product); setWizardOpen(true); }} disabled={submitting} className="flex size-10 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800 dark:hover:text-primary-400" aria-label={`ویرایش ${product.name}`}><span className="material-symbols-outlined text-xl">edit</span></button>
                   <button onClick={() => {
                     setConfirmData({

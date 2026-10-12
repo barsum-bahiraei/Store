@@ -81,21 +81,12 @@ export const paymentStatusLabels: Record<number, string> = {
   [PaymentStatus.Failed]: "ناموفق",
 };
 
-export const paymentStatusTransitions: Record<number, PaymentStatus[]> = {
-  [PaymentStatus.New]: [PaymentStatus.Cancelled],
-  [PaymentStatus.ProcessingPayment]: [PaymentStatus.Cancelled],
-  [PaymentStatus.PaymentCompleted]: [PaymentStatus.Preparing, PaymentStatus.Cancelled],
-  [PaymentStatus.Preparing]: [PaymentStatus.ReadyForShipment, PaymentStatus.Cancelled],
-  [PaymentStatus.ReadyForShipment]: [PaymentStatus.Shipping, PaymentStatus.Cancelled],
-  [PaymentStatus.Shipping]: [PaymentStatus.Delivered, PaymentStatus.Cancelled],
-  [PaymentStatus.Delivered]: [],
-  [PaymentStatus.Cancelled]: [],
-  [PaymentStatus.Failed]: [],
-};
-
-export function allowedNextStatuses(current: number): PaymentStatus[] {
-  return paymentStatusTransitions[current] ?? [];
-}
+export const sellerSettableStatuses: PaymentStatus[] = [
+  PaymentStatus.Preparing,
+  PaymentStatus.ReadyForShipment,
+  PaymentStatus.Shipping,
+  PaymentStatus.Delivered,
+];
 
 export interface OrderStatusCountItem {
   paymentStatus: number;
@@ -151,4 +142,55 @@ export interface OrderStatusUpdateInput {
 export interface OrderStatusUpdateOutput {
   id: number;
   paymentStatus: number;
+}
+
+export const paymentMethodLabels: Record<number, string> = {
+  0: "نقدی",
+  1: "آنلاین",
+  2: "چک",
+};
+
+export const deliveryMethodLabels: Record<number, string> = {
+  0: "دریافت حضوری",
+  1: "چاپار",
+  2: "تیپاکس",
+  3: "پست",
+};
+
+export interface SellerOrderCustomer {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  address: string | null;
+  postalCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export interface SellerOrderItem {
+  id: number;
+  productId: number;
+  productName: string;
+  categoryName: string;
+  productVariantId: number;
+  productCount: number;
+  productPrice: number;
+  totalPrice: number;
+  imageUrl: string | null;
+  values: VariantValueOutput[];
+}
+
+export interface SellerOrderDetail {
+  id: number;
+  totalPrice: number;
+  totalCount: number;
+  createdAt: string;
+  updatedAt: string;
+  paymentStatus: number;
+  paymentMethod: number;
+  deliveryMethod: number;
+  refId: string | null;
+  saleReferenceId: number | null;
+  customer: SellerOrderCustomer;
+  items: SellerOrderItem[];
 }

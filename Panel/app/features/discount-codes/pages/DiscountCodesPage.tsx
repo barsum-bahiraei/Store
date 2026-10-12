@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { accessApi } from "~/features/access/api/access-api";
@@ -8,6 +8,7 @@ import { discountCodeApi } from "../api/discount-code-api";
 import type {
   DiscountCodeListOutput,
   DiscountCodeUpsertInput,
+  DiscountCodeUserOutput,
   PaymentMethod,
 } from "../models/discount-code";
 
@@ -75,7 +76,32 @@ export default function DiscountCodesPage() {
 
   const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [selectedUsers, setSelectedUsers] = useState<DiscountCodeUserOutput[]>([]);
+  const [knownUsers, setKnownUsers] = useState<Record<number, UserSummary>>({});
+  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
+
+  const rememberUsers = (users: UserSummary[]) => {
+    setKnownUsers((prev) => {
+      const next = { ...prev };
+      for (const user of users) next[user.id] = user;
+      return next;
+    });
+  };
+
+  const mergeWithSelected = (fetched: UserSummary[], selectedIds: Set<number>, known: Record<number, UserSummary>): UserSummary[] => {
+    const seen = new Set(fetched.map((u) => u.id));
+    const missing: UserSummary[] = [];
+    for (const id of selectedIds) {
+      if (!seen.has(id) && known[id]) {
+        missing.push(known[id]);
+        seen.add(id);
+      }
+    }
+    const selectedFirst = [...missing, ...fetched.filter((u) => selectedIds.has(u.id))];
+    const rest = fetched.filter((u) => !selectedIds.has(u.id));
+    return [...selectedFirst, ...rest];
+  };
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterFirstName, setFilterFirstName] = useState("");
   const [filterLastName, setFilterLastName] = useState("");
@@ -119,6 +145,8 @@ export default function DiscountCodesPage() {
     setFormError(null);
     setWizardStep(0);
     setSelectedUserIds(new Set());
+    setSelectedUsers([]);
+    setShowSelectedOnly(false);
     setAllUsers([]);
     setFilterOpen(false);
     setFilterFirstName("");
@@ -144,6 +172,29 @@ export default function DiscountCodesPage() {
         setFormError("تاریخ انقضای دریافت‌شده از سرور معتبر نیست.");
       }
       setSelectedUserIds(new Set(detail.users.map((u) => u.userId)));
+      setSelectedUsers(detail.users);
+      setKnownUsers((prev) => {
+        const next = { ...prev };
+        for (const u of detail.users) {
+          next[u.userId] = {
+            id: u.userId,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: null,
+            phoneNumber: u.phoneNumber,
+            nationalCode: null,
+            birthDate: null,
+            gender: 2,
+            address: null,
+            latitude: null,
+            longitude: null,
+            isEmailVerified: false,
+            isPhoneNumberVerified: false,
+            roles: [],
+          };
+        }
+        return next;
+      });
     } catch (caughtError) {
       setFormError(errorMessage(caughtError));
     }
@@ -156,6 +207,8 @@ export default function DiscountCodesPage() {
     setForm(emptyForm);
     setFormError(null);
     setSelectedUserIds(new Set());
+    setSelectedUsers([]);
+    setShowSelectedOnly(false);
     setAllUsers([]);
   };
 
@@ -183,7 +236,9 @@ export default function DiscountCodesPage() {
     if (allUsers.length === 0) {
       setUsersLoading(true);
       try {
-        setAllUsers((await accessApi.listUsers({ pageSize: 100 })).items);
+        const fetched = (await accessApi.listUsers({ pageSize: 100 })).items;
+        rememberUsers(fetched);
+        setAllUsers(fetched);
       } catch (caughtError) {
         setFormError(errorMessage(caughtError));
       } finally {
@@ -206,7 +261,9 @@ export default function DiscountCodesPage() {
   const applyUserFilters = async () => {
     setUsersLoading(true);
     try {
-      setAllUsers((await accessApi.listUsers({ ...buildUserParams(), pageSize: 100 })).items);
+      const fetched = (await accessApi.listUsers({ ...buildUserParams(), pageSize: 100 })).items;
+      rememberUsers(fetched);
+      setAllUsers(fetched);
     } catch (caughtError) {
       setFormError(errorMessage(caughtError));
     } finally {
@@ -219,10 +276,19 @@ export default function DiscountCodesPage() {
     setFilterLastName("");
     setFilterEmail("");
     setFilterPhoneNumber("");
-    void accessApi.listUsers({ pageSize: 100 }).then((result) => setAllUsers(result.items));
+    setUsersLoading(true);
+    void accessApi.listUsers({ pageSize: 100 })
+      .then((result) => {
+        rememberUsers(result.items);
+        setAllUsers(result.items);
+      })
+      .catch((caughtError: unknown) => setFormError(errorMessage(caughtError)))
+      .finally(() => setUsersLoading(false));
   };
 
   const toggleUser = (userId: number) => {
+    const user = allUsers.find((u) => u.id === userId);
+    if (user) rememberUsers([user]);
     setSelectedUserIds((prev) => {
       const next = new Set(prev);
       if (next.has(userId)) next.delete(userId);
@@ -231,11 +297,26 @@ export default function DiscountCodesPage() {
     });
   };
 
+  const orderedUsers = useMemo(
+    () => mergeWithSelected(allUsers, selectedUserIds, knownUsers),
+    [allUsers, selectedUserIds, knownUsers],
+  );
+
+  const visibleUsers = showSelectedOnly
+    ? orderedUsers.filter((u) => selectedUserIds.has(u.id))
+    : orderedUsers;
+
   const toggleAllUsers = () => {
-    if (selectedUserIds.size === allUsers.length) {
-      setSelectedUserIds(new Set());
+    const allVisibleSelected = allUsers.length > 0 && allUsers.every((u) => selectedUserIds.has(u.id));
+    if (allVisibleSelected) {
+      setSelectedUserIds((prev) => {
+        const next = new Set(prev);
+        for (const u of allUsers) next.delete(u.id);
+        return next;
+      });
     } else {
-      setSelectedUserIds(new Set(allUsers.map((u) => u.id)));
+      rememberUsers(allUsers);
+      setSelectedUserIds((prev) => new Set([...prev, ...allUsers.map((u) => u.id)]));
     }
   };
 
@@ -282,7 +363,7 @@ export default function DiscountCodesPage() {
     }
   };
 
-  const allSelected = allUsers.length > 0 && selectedUserIds.size === allUsers.length;
+  const allSelected = allUsers.length > 0 && allUsers.every((u) => selectedUserIds.has(u.id));
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -314,7 +395,7 @@ export default function DiscountCodesPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 sm:grid sm:grid-cols-[1fr_140px_100px_100px_120px_100px] sm:gap-4">
+          <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 lg:grid lg:grid-cols-[1fr_140px_100px_100px_120px_100px] lg:gap-4">
             <span>کد</span>
             <span className="text-center">مبلغ تخفیف</span>
             <span className="text-center">تعداد کاربران</span>
@@ -324,7 +405,7 @@ export default function DiscountCodesPage() {
           </div>
           <ul className="divide-y divide-gray-200 dark:divide-gray-800">
             {codes.map((item) => (
-              <li key={item.id} className="flex flex-col gap-3 p-4 sm:grid sm:grid-cols-[1fr_140px_100px_100px_120px_100px] sm:items-center sm:gap-4 sm:px-6">
+              <li key={item.id} className="flex flex-col gap-3 p-4 lg:grid lg:grid-cols-[1fr_140px_100px_100px_120px_100px] lg:items-center lg:gap-4 lg:px-6">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-gray-900 dark:text-white">{item.code}</p>
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
@@ -332,10 +413,11 @@ export default function DiscountCodesPage() {
                     {` · حداقل خرید ${item.minimumPurchaseAmount.toLocaleString("fa-IR")} تومان`}
                   </p>
                 </div>
-                <p className="text-center text-sm font-semibold text-primary-600 dark:text-primary-400">{item.maxDiscountAmount.toLocaleString("fa-IR")} تومان</p>
-                <p className="text-center text-sm text-gray-600 dark:text-gray-300">{item.assignedUserCount}</p>
-                <p className="text-center text-sm text-gray-600 dark:text-gray-300">{item.usedUserCount}</p>
-                <div className="flex justify-center">
+                <p className="flex justify-between text-sm font-semibold text-primary-600 dark:text-primary-400 lg:block lg:text-center"><span className="font-normal text-gray-400 lg:hidden">مبلغ تخفیف</span><span>{item.maxDiscountAmount.toLocaleString("fa-IR")} تومان</span></p>
+                <p className="flex justify-between text-sm text-gray-600 dark:text-gray-300 lg:block lg:text-center"><span className="text-gray-400 lg:hidden">تعداد کاربران</span><span>{item.assignedUserCount}</span></p>
+                <p className="flex justify-between text-sm text-gray-600 dark:text-gray-300 lg:block lg:text-center"><span className="text-gray-400 lg:hidden">تعداد استفاده</span><span>{item.usedUserCount}</span></p>
+                <div className="flex items-center justify-between lg:justify-center">
+                  <span className="text-sm text-gray-400 lg:hidden">وضعیت</span>
                   <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${item.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
                     <span className={`size-1.5 rounded-full ${item.isActive ? "bg-emerald-500" : "bg-gray-400"}`} />
                     {item.isActive ? "فعال" : "غیرفعال"}
@@ -357,7 +439,7 @@ export default function DiscountCodesPage() {
 
       {wizardOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" onMouseDown={closeWizard}>
-          <div onMouseDown={(e) => e.stopPropagation()} className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-3xl">
+          <div onMouseDown={(e) => e.stopPropagation()} className="flex h-dvh max-h-dvh w-full max-w-3xl flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-3xl">
             <header className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7 sm:py-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{editingId ? "ویرایش کد تخفیف" : "کد تخفیف جدید"}</p>
@@ -436,6 +518,30 @@ export default function DiscountCodesPage() {
                   <h3 className="text-lg font-semibold text-gray-950 dark:text-white">انتخاب کاربران</h3>
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">کاربرانی که می‌توانند از این کد تخفیف استفاده کنند را انتخاب کنید.</p>
 
+                  {selectedUserIds.size > 0 && (
+                    <div className="mt-4 rounded-xl border border-primary-200 bg-primary-50/60 p-3 dark:border-primary-900 dark:bg-primary-950/20">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-primary-800 dark:text-primary-300">
+                          کاربران انتخاب‌شده ({selectedUserIds.size})
+                        </p>
+                        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-primary-700 dark:text-primary-300">
+                          <input type="checkbox" checked={showSelectedOnly} onChange={(e) => setShowSelectedOnly(e.target.checked)} className="size-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                          فقط انتخاب‌شده‌ها
+                        </label>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {orderedUsers.filter((u) => selectedUserIds.has(u.id)).map((u) => (
+                          <span key={u.id} className="inline-flex items-center gap-1 rounded-full bg-primary-600 py-1 pl-2 pr-1 text-xs font-medium text-white">
+                            {u.firstName} {u.lastName}
+                            <button type="button" onClick={() => toggleUser(u.id)} className="flex size-5 items-center justify-center rounded-full hover:bg-primary-700" aria-label={`حذف ${u.firstName} ${u.lastName}`}>
+                              <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-4 flex items-center gap-2">
                     <button onClick={() => setFilterOpen((prev) => !prev)} className={`flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${filterOpen || hasActiveUserFilters ? "border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"}`}>
                       <span className="material-symbols-outlined text-xl">filter_list</span>
@@ -477,17 +583,26 @@ export default function DiscountCodesPage() {
                         )}
                       </label>
                       <ul className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-                        {allUsers.map((user) => (
-                          <li key={user.id}>
-                            <label className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                              <input type="checkbox" checked={selectedUserIds.has(user.id)} onChange={() => toggleUser(user.id)} className="size-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{user.firstName} {user.lastName}</p>
-                                <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user.phoneNumber}</p>
-                              </div>
-                            </label>
+                        {visibleUsers.length === 0 && (
+                          <li className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            {showSelectedOnly ? "کاربری انتخاب نشده است." : "کاربری یافت نشد."}
                           </li>
-                        ))}
+                        )}
+                        {visibleUsers.map((user) => {
+                          const checked = selectedUserIds.has(user.id);
+                          return (
+                            <li key={user.id}>
+                              <label className={`flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${checked ? "bg-primary-50/70 dark:bg-primary-950/20" : ""}`}>
+                                <input type="checkbox" checked={checked} onChange={() => toggleUser(user.id)} className="size-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{user.firstName} {user.lastName}</p>
+                                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user.phoneNumber}</p>
+                                </div>
+                                {checked && <span className="material-symbols-outlined shrink-0 text-lg text-primary-600 dark:text-primary-400">check_circle</span>}
+                              </label>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   )}

@@ -31,6 +31,9 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             objectName,
             cancellation);
 
+        if (input.IsMain)
+            await DemoteOtherMainsAsync(input.TableName, input.TargetName, input.TargetId, null, cancellation);
+
         var entity = new FileEntity
         {
             Name = input.Name,
@@ -214,6 +217,43 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         await fileRepository.DeleteAsync(entity, cancellation);
 
         return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<bool>> SetMainAsync(
+        int id,
+        int userId,
+        CancellationToken cancellation)
+    {
+        var entity = await fileRepository.GetAsync(id, cancellation);
+
+        if (entity == null)
+            return Result<bool>.Failure("فایل یافت نشد");
+
+        if (!await IsOwnedByAsync(entity.TableName, entity.TargetId, userId, cancellation))
+            return Result<bool>.Failure("فایل یافت نشد");
+
+        await DemoteOtherMainsAsync(entity.TableName, entity.TargetName, entity.TargetId, entity.Id, cancellation);
+
+        entity.IsMain = true;
+        await fileRepository.UpdateAsync(entity, cancellation);
+
+        return Result<bool>.Success(true);
+    }
+
+    private async Task DemoteOtherMainsAsync(
+        TableNameEnum tableName,
+        TargetNameEnum targetName,
+        int targetId,
+        int? exceptId,
+        CancellationToken cancellation)
+    {
+        var files = await fileRepository.ListAsync(tableName, targetName, targetId, cancellation);
+
+        foreach (var file in files.Where(x => x.IsMain && x.Id != exceptId))
+        {
+            file.IsMain = false;
+            await fileRepository.UpdateAsync(file, cancellation);
+        }
     }
 
     private async Task<bool> IsOwnedByAsync(TableNameEnum tableName, int targetId, int userId, CancellationToken cancellation)

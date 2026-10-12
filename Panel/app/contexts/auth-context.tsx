@@ -43,7 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void authApi.profile()
       .then(setCurrentUser)
       .catch(() => {
-        clearAuthToken();
         setCurrentUser(null);
       })
       .finally(() => {
@@ -63,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentUser(user);
       return user;
     } catch (error) {
-      clearAuthToken();
       setCurrentUser(null);
       throw error;
     }

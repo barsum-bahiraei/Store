@@ -210,7 +210,7 @@ public class SellerService(
     public async Task<Result<List<SellerOrderAttentionListOutput>>> OrdersAttentionAsync(int userId,
         SellerOrdersAttentionInput input, CancellationToken cancellation)
     {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
+        var (_, sellerError) = await GetSellerIdsAsync(userId, cancellation);
         if (sellerError != null)
             return Result<List<SellerOrderAttentionListOutput>>.Failure(sellerError);
 
@@ -218,48 +218,90 @@ public class SellerService(
         if (dateError != null)
             return Result<List<SellerOrderAttentionListOutput>>.Failure(dateError);
 
-        if (input.StuckDays < 1)
-            return Result<List<SellerOrderAttentionListOutput>>.Failure("تعداد روزهای معطل‌ماندن باید بیشتر از صفر باشد");
+        if (input.PaymentStatus.HasValue && !IsFulfillmentStatus(input.PaymentStatus.Value))
+            return Result<List<SellerOrderAttentionListOutput>>.Failure("وضعیت سفارش برای فروشنده نامعتبر است");
 
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
+        PaymentStatusEnum[] paymentStatuses = input.PaymentStatus.HasValue
+            ? [input.PaymentStatus.Value]
+            :
+            [
+                PaymentStatusEnum.PaymentCompleted,
+                PaymentStatusEnum.Preparing,
+                PaymentStatusEnum.ReadyForShipment,
+                PaymentStatusEnum.Shipping
+            ];
 
-        var attentionStatuses = new HashSet<PaymentStatusEnum>
-        {
-            PaymentStatusEnum.New,
-            PaymentStatusEnum.Preparing,
-            PaymentStatusEnum.ReadyForShipment
-        };
-        var terminalStatuses = new HashSet<PaymentStatusEnum>
-        {
-            PaymentStatusEnum.Delivered,
-            PaymentStatusEnum.Cancelled,
-            PaymentStatusEnum.Failed
-        };
-        var stuckBefore = DateTime.UtcNow.AddDays(-input.StuckDays);
-
-        var result = invoices
-            .Where(x => attentionStatuses.Contains(x.PaymentStatus) ||
-                        (!terminalStatuses.Contains(x.PaymentStatus) && x.UpdatedAt <= stuckBefore))
-            .OrderBy(x => x.CreatedAt)
-            .Select(x =>
-            {
-                var items = GetSellerItems(x, sellerIds);
-                return new SellerOrderAttentionListOutput
-                {
-                    Id = x.Id,
-                    TotalPrice = GetItemsAmount(items),
-                    TotalCount = items.Sum(item => item.ProductCount),
-                    CreatedAt = x.CreatedAt,
-                    UpdatedAt = x.UpdatedAt,
-                    PaymentStatus = x.PaymentStatus,
-                    PaymentMethod = x.PaymentMethod,
-                    DeliveryMethod = x.DeliveryMethod,
-                    Address = x.User.Address!
-                };
-            })
-            .ToList();
+        var result = await invoiceRepository.SellerOrdersAttentionListAsync(userId, input.From, input.To,
+            paymentStatuses, cancellation);
 
         return Result<List<SellerOrderAttentionListOutput>>.Success(result);
+    }
+
+    public async Task<Result<SellerOrderDetailOutput>> OrderGetAsync(int id, int userId,
+        CancellationToken cancellation)
+    {
+        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
+        if (sellerError != null)
+            return Result<SellerOrderDetailOutput>.Failure(sellerError);
+
+        var invoice = await invoiceRepository.SellerGetAsync(id, userId, cancellation);
+        if (invoice == null || !IsFulfillmentStatus(invoice.PaymentStatus))
+            return Result<SellerOrderDetailOutput>.Failure("سفارش یافت نشد");
+
+        var sellerItems = GetSellerItems(invoice, sellerIds);
+        var items = new List<SellerOrderItemOutput>();
+        foreach (var item in sellerItems)
+        {
+            var image = await fileService.GetAsync(TableNameEnum.Products, TargetNameEnum.ProductId,
+                item.ProductId, cancellation);
+            items.Add(new SellerOrderItemOutput
+            {
+                Id = item.Id,
+                ProductId = item.ProductId,
+                ProductName = item.Product.Name,
+                CategoryName = item.Product.Category.Name,
+                ProductVariantId = item.ProductVariantId,
+                ProductCount = item.ProductCount,
+                ProductPrice = item.ProductPrice,
+                TotalPrice = item.ProductPrice * item.ProductCount,
+                ImageUrl = image.Data?.Url,
+                Values = item.ProductVariant.AttributeValues.Select(value =>
+                    new SellerOrderVariantValueOutput
+                    {
+                        Id = value.Id,
+                        Size = value.Size,
+                        ColorName = value.ColorName,
+                        ColorCode = value.ColorCode
+                    }).ToList()
+            });
+        }
+
+        var payment = invoice.Payments.OrderBy(x => x.Id).FirstOrDefault();
+
+        return Result<SellerOrderDetailOutput>.Success(new SellerOrderDetailOutput
+        {
+            Id = invoice.Id,
+            TotalPrice = GetItemsAmount(sellerItems),
+            TotalCount = sellerItems.Sum(item => item.ProductCount),
+            CreatedAt = invoice.CreatedAt,
+            UpdatedAt = invoice.UpdatedAt,
+            PaymentStatus = invoice.PaymentStatus,
+            PaymentMethod = invoice.PaymentMethod,
+            DeliveryMethod = invoice.DeliveryMethod,
+            RefId = payment?.RefId,
+            SaleReferenceId = payment?.SaleReferenceId,
+            Customer = new SellerOrderCustomerOutput
+            {
+                FirstName = invoice.User.FirstName,
+                LastName = invoice.User.LastName,
+                PhoneNumber = invoice.User.PhoneNumber,
+                Address = invoice.User.Address,
+                PostalCode = invoice.User.PostalCode,
+                Latitude = invoice.User.Latitude,
+                Longitude = invoice.User.Longitude
+            },
+            Items = items
+        });
     }
 
     public async Task<Result<SellerOrderStatusUpdateOutput>> OrderStatusUpdateAsync(int id, int userId,
@@ -306,20 +348,26 @@ public class SellerService(
     }
 
     private static bool IsAllowedOrderStatusTransition(PaymentStatusEnum current, PaymentStatusEnum next) =>
-        current switch
-        {
-            PaymentStatusEnum.New => next is PaymentStatusEnum.Cancelled,
-            PaymentStatusEnum.ProcessingPayment => next is PaymentStatusEnum.Cancelled,
-            PaymentStatusEnum.PaymentCompleted =>
-                next is PaymentStatusEnum.Preparing or PaymentStatusEnum.Cancelled,
-            PaymentStatusEnum.Preparing =>
-                next is PaymentStatusEnum.ReadyForShipment or PaymentStatusEnum.Cancelled,
-            PaymentStatusEnum.ReadyForShipment =>
-                next is PaymentStatusEnum.Shipping or PaymentStatusEnum.Cancelled,
-            PaymentStatusEnum.Shipping =>
-                next is PaymentStatusEnum.Delivered or PaymentStatusEnum.Cancelled,
-            _ => false
-        };
+        IsFulfillmentStatus(current) && IsSellerSettableStatus(next);
+
+    private static bool IsSellerSettableStatus(PaymentStatusEnum status) =>
+        status is PaymentStatusEnum.Preparing
+            or PaymentStatusEnum.ReadyForShipment
+            or PaymentStatusEnum.Shipping
+            or PaymentStatusEnum.Delivered;
+
+    private static bool IsFulfillmentStatus(PaymentStatusEnum status) =>
+        status is PaymentStatusEnum.PaymentCompleted
+            or PaymentStatusEnum.Preparing
+            or PaymentStatusEnum.ReadyForShipment
+            or PaymentStatusEnum.Shipping
+            or PaymentStatusEnum.Delivered;
+
+    private static bool IsActiveFulfillmentStatus(PaymentStatusEnum status) =>
+        status is PaymentStatusEnum.PaymentCompleted
+            or PaymentStatusEnum.Preparing
+            or PaymentStatusEnum.ReadyForShipment
+            or PaymentStatusEnum.Shipping;
 
     private static List<InvoiceItemEntity> GetSellerItems(InvoiceEntity invoice, HashSet<int> sellerIds) =>
         invoice.InvoiceItems.Where(x => sellerIds.Contains(x.Product.SellerId)).ToList();

@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
+import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { sellerDashboardApi } from "../api/seller-dashboard-api";
 import type { OrderAttentionItem, PaymentStatus, SellerDateRange } from "../models/seller-dashboard";
-import { allowedNextStatuses, paymentStatusLabels } from "../models/seller-dashboard";
+import { sellerSettableStatuses, paymentStatusLabels } from "../models/seller-dashboard";
 import { errorMessage, formatDateTime, formatNumber } from "../utils/format";
 import { EmptyState } from "./EmptyState";
 import { ErrorBanner } from "./ErrorBanner";
 import { LoadingState } from "./LoadingState";
+import { OrderDetailsModal } from "./OrderDetailsModal";
 import { SectionCard } from "./SectionCard";
 
 interface OrdersAttentionCardProps {
   range: SellerDateRange;
-  refreshToken: number;
+  status?: PaymentStatus;
 }
 
 const statusColors: Record<number, string> = {
@@ -25,25 +27,27 @@ const statusColors: Record<number, string> = {
   8: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
 };
 
-const DEFAULT_STUCK_DAYS = 3;
-
 const inputClasses =
-  "min-h-9 w-20 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-900 outline-none transition-colors focus:border-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white";
+  "min-h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-900 outline-none transition-colors focus:border-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white";
 
-export function OrdersAttentionCard({ range, refreshToken }: OrdersAttentionCardProps) {
+export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps) {
   const [items, setItems] = useState<OrderAttentionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stuckDaysInput, setStuckDaysInput] = useState(String(DEFAULT_STUCK_DAYS));
-  const [stuckDays, setStuckDays] = useState(DEFAULT_STUCK_DAYS);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<Record<number, string>>({});
+  const [detailOrderId, setDetailOrderId] = useState<number | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    order: OrderAttentionItem;
+    nextStatus: PaymentStatus;
+  } | null>(null);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      setItems(await sellerDashboardApi.getOrdersAttention(range, stuckDays));
+      setItems(await sellerDashboardApi.getOrdersAttention(range, status));
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     } finally {
@@ -53,24 +57,21 @@ export function OrdersAttentionCard({ range, refreshToken }: OrdersAttentionCard
 
   useEffect(() => {
     void load();
-  }, [range.from, range.to, stuckDays, refreshToken]);
-
-  const applyStuckDays = () => {
-    const parsed = Number(stuckDaysInput);
-    if (!Number.isFinite(parsed) || parsed < 0) return;
-    setStuckDays(parsed);
-  };
+  }, [range.from, range.to, status]);
 
   const changeStatus = async (order: OrderAttentionItem, next: PaymentStatus) => {
     setUpdatingId(order.id);
     setActionError(null);
     try {
-      await sellerDashboardApi.updateOrderStatus(order.id, { PaymentStatus: next });
+      const updated = await sellerDashboardApi.updateOrderStatus(order.id, { PaymentStatus: next });
       setItems((current) =>
-        current.map((item) =>
-          item.id === order.id ? { ...item, paymentStatus: next } : item,
-        ),
+        status !== undefined && status !== updated.paymentStatus
+          ? current.filter((item) => item.id !== order.id)
+          : current.map((item) =>
+            item.id === order.id ? { ...item, paymentStatus: updated.paymentStatus } : item,
+          ),
       );
+      setSelectedStatuses((current) => ({ ...current, [order.id]: "" }));
     } catch (caughtError) {
       setActionError(errorMessage(caughtError));
     } finally {
@@ -79,35 +80,8 @@ export function OrdersAttentionCard({ range, refreshToken }: OrdersAttentionCard
   };
 
   return (
-    <SectionCard
-      title="سفارش‌های نیازمند اقدام"
-      icon="pending_actions"
-      action={
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500 dark:text-gray-400" htmlFor="stuck-days">
-            روز ماندگاری
-          </label>
-          <input
-            id="stuck-days"
-            type="number"
-            min="0"
-            value={stuckDaysInput}
-            onChange={(event) => setStuckDaysInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") applyStuckDays();
-            }}
-            className={inputClasses}
-          />
-          <button
-            type="button"
-            onClick={applyStuckDays}
-            className="min-h-9 rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            اعمال
-          </button>
-        </div>
-      }
-    >
+    <>
+    <SectionCard title="سفارش‌های پرداخت‌شده" icon="local_shipping">
       {actionError && (
         <div className="mx-4 mt-4 sm:mx-6">
           <ErrorBanner message={actionError} onRetry={() => setActionError(null)} />
@@ -126,15 +100,15 @@ export function OrdersAttentionCard({ range, refreshToken }: OrdersAttentionCard
       ) : (
         <ul className="divide-y divide-gray-200 dark:divide-gray-800">
           {items.map((order) => {
-            const nextStatuses = allowedNextStatuses(order.paymentStatus);
+            const statusOptions = sellerSettableStatuses.filter((item) => item !== order.paymentStatus);
             return (
               <li key={order.id} className="space-y-3 p-4 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        سفارش #{order.id}
-                      </p>
+                       <button type="button" onClick={() => setDetailOrderId(order.id)} className="text-sm font-semibold text-primary-700 hover:underline dark:text-primary-300">
+                         سفارش #{order.id}
+                       </button>
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
                           statusColors[order.paymentStatus] ?? statusColors[8]
@@ -149,30 +123,30 @@ export function OrdersAttentionCard({ range, refreshToken }: OrdersAttentionCard
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{order.address}</p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {nextStatuses.length === 0 ? (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
-                        تغییر وضعیت مجاز نیست
-                      </span>
-                    ) : (
-                      nextStatuses.map((next) => (
-                        <button
-                          key={next}
-                          type="button"
-                          disabled={updatingId === order.id}
-                          onClick={() => void changeStatus(order, next)}
-                          className={`min-h-9 rounded-lg px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                            next === 7
-                              ? "border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30"
-                              : "bg-primary-600 text-white hover:bg-primary-700"
-                          }`}
-                        >
-                          {updatingId === order.id
-                            ? "در حال بروزرسانی..."
-                            : `به ${paymentStatusLabels[next]}`}
-                        </button>
-                      ))
-                    )}
+                   <div className="flex flex-wrap items-center gap-2">
+                     <button type="button" onClick={() => setDetailOrderId(order.id)} className="min-h-9 rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                       مشاهده جزئیات
+                     </button>
+                      <select
+                        value={selectedStatuses[order.id] ?? ""}
+                        onChange={(event) => setSelectedStatuses((current) => ({ ...current, [order.id]: event.target.value }))}
+                        className={inputClasses}
+                        aria-label={`انتخاب وضعیت جدید سفارش ${order.id}`}
+                      >
+                        <option value="">انتخاب وضعیت</option>
+                        {statusOptions.map((next) => <option key={next} value={next}>{paymentStatusLabels[next]}</option>)}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={updatingId === order.id || !selectedStatuses[order.id]}
+                         onClick={() => setPendingStatusChange({
+                           order,
+                           nextStatus: Number(selectedStatuses[order.id]) as PaymentStatus,
+                         })}
+                        className="min-h-9 rounded-lg bg-primary-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {updatingId === order.id ? "در حال بروزرسانی..." : "ثبت وضعیت"}
+                      </button>
                   </div>
                 </div>
               </li>
@@ -181,5 +155,23 @@ export function OrdersAttentionCard({ range, refreshToken }: OrdersAttentionCard
         </ul>
       )}
     </SectionCard>
+    <OrderDetailsModal orderId={detailOrderId} onClose={() => setDetailOrderId(null)} />
+    <ConfirmDialog
+      open={pendingStatusChange !== null}
+      title="تأیید تغییر وضعیت سفارش"
+      message={pendingStatusChange
+        ? `وضعیت سفارش #${pendingStatusChange.order.id} از «${paymentStatusLabels[pendingStatusChange.order.paymentStatus]}» به «${paymentStatusLabels[pendingStatusChange.nextStatus]}» تغییر کند؟`
+        : ""}
+      confirmLabel="بله، ثبت شود"
+      danger={false}
+      onConfirm={() => {
+        if (!pendingStatusChange) return;
+        const { order, nextStatus } = pendingStatusChange;
+        setPendingStatusChange(null);
+        void changeStatus(order, nextStatus);
+      }}
+      onCancel={() => setPendingStatusChange(null)}
+    />
+    </>
   );
 }

@@ -47,11 +47,11 @@ export default function BrandsPage() {
 
   const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && (file.type === "image/webp" || /\.webp$/i.test(file.name))) {
+    if (file && (["image/webp", "image/jpeg", "image/png"].includes(file.type) || /\.(webp|jpe?g|png)$/i.test(file.name))) {
       setImageError(null);
       setSelectedImage({ file, previewUrl: URL.createObjectURL(file) });
     } else if (file) {
-      setImageError("فقط فایل تصویری WebP (.webp) پذیرفته می‌شود.");
+      setImageError("فقط فایل تصویری WebP، JPG یا PNG پذیرفته می‌شود.");
     }
     event.target.value = "";
   };
@@ -140,9 +140,9 @@ export default function BrandsPage() {
                 <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
                   <span className="material-symbols-outlined text-xl">add_photo_alternate</span>
                   {previewUrl ? "جایگزینی تصویر" : "انتخاب تصویر"}
-                  <input type="file" accept=".webp,image/webp" onChange={selectImage} className="sr-only" disabled={submitting} />
+                  <input type="file" accept=".webp,.jpg,.jpeg,.png,image/webp,image/jpeg,image/png" onChange={selectImage} className="sr-only" disabled={submitting} />
                 </label>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">اختیاری. فقط فایل WebP (.webp) — از لوگوی مربعی یا افقی با پس‌زمینه شفاف استفاده کنید.</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">اختیاری. فقط WebP، JPG یا PNG — از لوگوی مربعی یا افقی با پس‌زمینه شفاف استفاده کنید.</p>
                 {imageError && <p role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400">{imageError}</p>}
                 {selectedImage && <button type="button" onClick={() => setSelectedImage(null)} className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400">لغو انتخاب تصویر</button>}
               </div>

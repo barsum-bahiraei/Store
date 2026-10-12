@@ -39,7 +39,7 @@ export function SellerPickerModal({ open, selectedId, onSelect, onClose }: Selle
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" onMouseDown={onClose}>
-      <div onMouseDown={(event) => event.stopPropagation()} className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[70vh] sm:rounded-3xl">
+      <div onMouseDown={(event) => event.stopPropagation()} className="flex h-dvh max-h-dvh w-full max-w-lg flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:h-auto sm:max-h-[70dvh] sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">انتخاب فروشنده</h2>
           <button type="button" onClick={onClose} className="flex size-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">

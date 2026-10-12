@@ -152,7 +152,7 @@ export default function CategoriesPage() {
   };
 
   const renderTree = (items: CategoryListOutput[], depth = 0) => (
-    <ul className={depth > 0 ? "mr-5 border-r border-gray-200 pr-2 dark:border-gray-700" : "space-y-1"}>
+    <ul className={depth > 0 ? "mr-3 border-r border-gray-200 pr-1.5 sm:mr-5 sm:pr-2 dark:border-gray-700" : "space-y-1"}>
       {items.map((category) => {
         const children = category.children ?? [];
         const hasChildren = children.length > 0;
@@ -213,7 +213,7 @@ export default function CategoriesPage() {
       <div className="grid items-start gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
         <aside className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800"><h2 className="text-sm font-semibold text-gray-900 dark:text-white">درخت دسته‌بندی</h2><p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">یک دسته‌بندی را برای مدیریت انتخاب کنید</p></div>
-          <div className="max-h-[65vh] overflow-y-auto p-2">
+          <div className="max-h-[65dvh] overflow-auto p-2">
             {loading && categories.length === 0 ? <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-500"><span className="material-symbols-outlined animate-spin">progress_activity</span>در حال بارگذاری...</div> : categories.length === 0 ? <div className="px-4 py-12 text-center text-sm text-gray-500">هنوز دسته‌بندی‌ای وجود ندارد</div> : renderTree(categories)}
           </div>
         </aside>

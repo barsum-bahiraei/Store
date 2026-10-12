@@ -189,7 +189,7 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
 }
 
 export function ProductWizard({ product, onClose, onComplete }: ProductWizardProps) {
-  const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, submitting } =
+  const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, setMainImage, submitting } =
     useProductStore();
   const editingProductId = product?.id;
   const isEditing = editingProductId !== undefined;
@@ -215,6 +215,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const imagesRef = useRef<SelectedImage[]>([]);
   const [mainImageId, setMainImageId] = useState<string | null>(null);
+  const [mainExistingId, setMainExistingId] = useState<number | null>(null);
   const [savedProductId, setSavedProductId] = useState<number | null>(product?.id ?? null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -222,6 +223,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number>>(new Set());
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
   const [variantConfirmIndex, setVariantConfirmIndex] = useState<number | null>(null);
+  const [bulkPrice, setBulkPrice] = useState("");
+  const [bulkStock, setBulkStock] = useState("");
+  const [bulkConfirmKind, setBulkConfirmKind] = useState<"price" | "stock" | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -263,6 +267,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             }))
           );
           setExistingImages(details.images ?? []);
+          setMainExistingId(details.images?.find((image) => image.isMain)?.id ?? null);
         })
       : Promise.all([categoryApi.list(), sellerApi.list(), brandApi.list()]).then(
           ([list, sellerList, brandList]) => {
@@ -473,6 +478,35 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     setProductVariants((current) => current.filter((_, i) => i !== index));
   };
 
+  const bulkPriceValue = parseNonNegative(bulkPrice);
+  const bulkStockValue = parseNonNegative(bulkStock);
+
+  const requestBulkPrice = () => {
+    if (productVariants.length === 0 || bulkPriceValue === null) return;
+    setBulkConfirmKind("price");
+  };
+
+  const requestBulkStock = () => {
+    if (productVariants.length === 0 || bulkStockValue === null) return;
+    setBulkConfirmKind("stock");
+  };
+
+  const confirmBulkApply = () => {
+    if (bulkConfirmKind === "price" && bulkPriceValue !== null) {
+      setProductVariants((current) =>
+        current.map((variant) => ({ ...variant, price: String(bulkPriceValue) }))
+      );
+      setBulkPrice("");
+    } else if (bulkConfirmKind === "stock" && bulkStockValue !== null) {
+      const nextStock = String(bulkStockValue);
+      setProductVariants((current) =>
+        current.map((variant) => ({ ...variant, stock: nextStock }))
+      );
+      setBulkStock("");
+    }
+    setBulkConfirmKind(null);
+  };
+
   const updateVariantField = (index: number, field: "price" | "stock", value: string) => {
     setProductVariants((current) =>
       current.map((variant, i) => (i === index ? { ...variant, [field]: value } : variant))
@@ -520,11 +554,11 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const selectImages = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files ?? []);
     const files = selectedFiles.filter(
-      (file) => file.type === "image/webp" || /\.webp$/i.test(file.name)
+      (file) => ["image/webp", "image/jpeg", "image/png"].includes(file.type) || /\.(webp|jpe?g|png)$/i.test(file.name)
     );
 
     if (files.length === 0) {
-      setError("فقط فایل تصویری WebP (.webp) پذیرفته می‌شود.");
+      setError("فقط فایل تصویری WebP، JPG یا PNG پذیرفته می‌شود.");
       event.target.value = "";
       return;
     }
@@ -532,7 +566,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     setError(
       files.length === selectedFiles.length
         ? null
-        : "فقط فایل‌های WebP اضافه شدند؛ بقیه فایل‌ها نادیده گرفته شدند."
+        : "فقط فایل‌های WebP، JPG و PNG اضافه شدند؛ بقیه فایل‌ها نادیده گرفته شدند."
     );
     const next = files.map((file) => ({
       id: createClientId(),
@@ -540,7 +574,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       previewUrl: URL.createObjectURL(file),
     }));
     setImages((current) => [...current, ...next]);
-    setMainImageId((current) => current ?? next[0]?.id ?? null);
+    if (mainExistingId === null) {
+      setMainImageId((current) => current ?? next[0]?.id ?? null);
+    }
     event.target.value = "";
   };
 
@@ -549,17 +585,23 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       const image = current.find((item) => item.id === id);
       if (image) URL.revokeObjectURL(image.previewUrl);
       const next = current.filter((item) => item.id !== id);
-      if (mainImageId === id) setMainImageId(next[0]?.id ?? null);
+      if (mainImageId === id) {
+        const fallbackNew = next[0]?.id ?? null;
+        if (fallbackNew) {
+          setMainImageId(fallbackNew);
+        } else {
+          setMainImageId(null);
+          setMainExistingId(
+            existingImages.find((item) => !deletedImageIds.includes(item.id))?.id ?? null
+          );
+        }
+      }
       return next;
     });
   };
 
   const finish = async () => {
     if (savedProductId === null) return;
-    const hasExistingMain = existingImages.some(
-      (image) => image.isMain && !deletedImageIds.includes(image.id)
-    );
-    if (!hasExistingMain && (images.length === 0 || mainImageId === null)) return;
     setUploading(true);
     setError(null);
     try {
@@ -569,12 +611,19 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             file: image.file,
             name: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
             productId: savedProductId,
-            isMain: !hasExistingMain && image.id === mainImageId,
+            isMain: image.id === mainImageId,
             fileType: 0,
           })
         )
       );
       await Promise.all(deletedImageIds.map((id) => deleteImage(id)));
+      if (
+        mainExistingId !== null &&
+        mainExistingId !== currentMainExistingId &&
+        !deletedImageIds.includes(mainExistingId)
+      ) {
+        await setMainImage(mainExistingId);
+      }
       onComplete();
     } catch (reason) {
       setError(errorMessage(reason));
@@ -584,11 +633,23 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const toggleExistingImageDeletion = (image: ProductImage) => {
-    setDeletedImageIds((ids) =>
-      ids.includes(image.id) ? ids.filter((id) => id !== image.id) : [...ids, image.id]
-    );
-    if (image.isMain && !deletedImageIds.includes(image.id) && mainImageId === null) {
-      setMainImageId(images[0]?.id ?? null);
+    const willDelete = !deletedImageIds.includes(image.id);
+    const nextDeleted = willDelete
+      ? [...deletedImageIds, image.id]
+      : deletedImageIds.filter((id) => id !== image.id);
+    setDeletedImageIds(nextDeleted);
+    if (!willDelete && mainExistingId === null && mainImageId === null) {
+      setMainExistingId(image.id);
+    }
+    if (willDelete && mainExistingId === image.id) {
+      const fallbackExisting =
+        existingImages.find((item) => item.id !== image.id && !nextDeleted.includes(item.id))?.id ?? null;
+      if (fallbackExisting !== null) {
+        setMainExistingId(fallbackExisting);
+      } else {
+        setMainExistingId(null);
+        setMainImageId(images[0]?.id ?? null);
+      }
     }
   };
 
@@ -604,17 +665,28 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const canSubmitDetails =
     title.trim().length > 0 &&
     sellerId !== null;
-  const hasRetainedMainImage = existingImages.some(
+  const currentMainExistingId = existingImages.find(
     (image) => image.isMain && !deletedImageIds.includes(image.id)
-  );
-  const canSaveImages = hasRetainedMainImage || (images.length > 0 && mainImageId !== null);
+  )?.id ?? null;
+  const mainChanged = mainExistingId !== currentMainExistingId;
+  const hasImageWork = images.length > 0 || deletedImageIds.length > 0 || mainChanged;
+
+  const selectNewMain = (id: string) => {
+    setMainImageId(id);
+    setMainExistingId(null);
+  };
+
+  const selectExistingMain = (id: number) => {
+    setMainExistingId(id);
+    setMainImageId(null);
+  };
 
   const selectedSeller = sellers.find((s) => s.id === sellerId);
   const showErrors = attemptedSubmit;
   const discountNumber = discount.trim() === "" ? 0 : Number(discount);
 
   const renderCategoryTree = (items: CategoryListOutput[], depth = 0) => (
-    <ul className={depth > 0 ? "mr-5 border-r border-gray-200 pr-2 dark:border-gray-700" : "space-y-1"}>
+    <ul className={depth > 0 ? "mr-3 border-r border-gray-200 pr-1.5 sm:mr-5 sm:pr-2 dark:border-gray-700" : "space-y-1"}>
       {items.map((category) => {
         const children = category.children ?? [];
         const hasChildren = children.length > 0;
@@ -641,7 +713,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
-      <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-3xl">
+      <div className="flex h-dvh max-h-dvh w-full max-w-4xl flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-3xl">
         <header className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7 sm:py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{isEditing ? "ویرایش محصول" : "محصول جدید"}</p>
@@ -666,7 +738,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           </ol>
         </div>
 
-        <div className="overflow-y-auto px-5 py-6 sm:px-7 sm:py-7">
+        <div className="min-w-0 overflow-y-auto px-4 py-5 sm:px-7 sm:py-7">
           {error && (
             <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300" role="alert">
               <span className="material-symbols-outlined text-[20px]">error</span><span>{error}</span>
@@ -682,7 +754,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               ) : categories.length === 0 ? (
                 <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-10 text-center dark:border-gray-700"><span className="material-symbols-outlined text-4xl text-gray-400">category</span><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">قبل از افزودن محصول، یک دسته‌بندی ایجاد کنید.</p></div>
               ) : (
-                <div className="mt-6 max-h-[50vh] overflow-y-auto rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <div className="mt-6 max-h-[50dvh] overflow-auto rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                   {renderCategoryTree(categories)}
                 </div>
               )}
@@ -734,9 +806,35 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                        افزودن تنوع
                      </button>
                    </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و مقادیر (سایز، نام رنگ، کد رنگ) هر تنوع را وارد کنید. حداقل یک تنوع با حداقل یک مقدار لازم است. کد رنگ باید مانند #e11d48 باشد.</p>
+                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و مقادیر (سایز، نام رنگ، کد رنگ) هر تنوع را وارد کنید. حداقل یک تنوع با حداقل یک مقدار لازم است. کد رنگ باید مانند #e11d48 باشد.</p>
 
-                   {showErrors && validation.variants && (
+                    {productVariants.length > 0 && (
+                      <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/40">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-lg text-primary-600 dark:text-primary-400">bolt</span>
+                          <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100">اعمال گروهی</h5>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت و موجودی همه تنوع‌ها به همان عدد واردشده تنظیم می‌شود.</p>
+                        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <label className="min-w-0 flex-1">
+                              <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">قیمت همه (تومان)</span>
+                              <input type="number" inputMode="decimal" min="0" step="0.01" value={bulkPrice} onChange={(event) => setBulkPrice(event.target.value)} placeholder="مثلاً 200000" aria-label="قیمت گروهی تنوع‌ها" className={`${inputClasses} min-h-10 py-2`} disabled={submitting} />
+                            </label>
+                            <button type="button" onClick={requestBulkPrice} disabled={submitting || bulkPriceValue === null} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال قیمت</button>
+                          </div>
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <label className="min-w-0 flex-1">
+                              <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">موجودی همه</span>
+                              <input type="number" inputMode="numeric" min="0" step="1" value={bulkStock} onChange={(event) => setBulkStock(event.target.value)} placeholder="مثلاً 10" aria-label="موجودی همه تنوع‌ها" className={`${inputClasses} min-h-10 py-2`} disabled={submitting} />
+                            </label>
+                            <button type="button" onClick={requestBulkStock} disabled={submitting || bulkStockValue === null} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال موجودی</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {showErrors && validation.variants && (
                      <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">{validation.variants}</p>
                    )}
 
@@ -749,7 +847,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                        const variantErrors = showErrors ? validation.variantErrors[variant.key] : undefined;
                        const priceNumber = parseNonNegative(variant.price);
                        return (
-                         <div key={variant.key} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
+                          <div key={variant.key} className="rounded-xl border border-gray-200 bg-gray-50/50 p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-800/30">
                            <div className="flex items-center justify-between gap-3">
                              <h5 className="text-sm font-semibold text-gray-900 dark:text-white">تنوع {variantIndex + 1}</h5>
                              <button type="button" onClick={() => requestRemoveVariant(variantIndex)} disabled={submitting} className="flex size-9 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف تنوع ${variantIndex + 1}`}>
@@ -800,7 +898,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                           {valueErrors?.colorName && <span role="alert" className={errorTextClasses}>{valueErrors.colorName}</span>}
                                         </div>
                                         <div>
-                                          <div className="flex items-center gap-2">
+                                           <div className="flex min-w-0 items-center gap-2">
                                             <input
                                               type="color"
                                               value={isValidColorCode(value.colorCode) ? value.colorCode.trim() : "#000000"}
@@ -850,11 +948,11 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
           {step === 2 && (
             <section>
-              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "جزئیات محصول به‌روزرسانی شد" : "محصول ایجاد شد"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "تصاویر فعلی را نگه دارید یا حذف کنید و در صورت نیاز تصاویر جدید اضافه کنید." : "حالا گالری آن را اضافه کنید و یک تصویر اصلی انتخاب کنید."}</p></div></div>
+              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30"><span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span><div><h3 className="font-semibold text-green-900 dark:text-green-200">{isEditing ? "جزئیات محصول به‌روزرسانی شد" : "محصول ایجاد شد"}</h3><p className="mt-0.5 text-sm text-green-700 dark:text-green-300">{isEditing ? "تصویر اصلی را از بین تصاویر فعلی یا جدید انتخاب کنید. افزودن تصویر اختیاری است." : "افزودن تصویر اختیاری است؛ در صورت افزودن، یک تصویر اصلی انتخاب کنید."}</p></div></div>
               <label className="mt-6 flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/50 focus-within:ring-2 focus-within:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:hover:border-primary-600 dark:hover:bg-primary-950/20">
                 <span className="flex size-12 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400"><span className="material-symbols-outlined">add_photo_alternate</span></span>
-                <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">فقط فایل WebP (.webp) — یک یا چند فایل انتخاب کنید</span>
-                <input type="file" accept=".webp,image/webp" multiple onChange={selectImages} className="sr-only" />
+                <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">فقط WebP، JPG یا PNG — یک یا چند فایل انتخاب کنید</span>
+                <input type="file" accept=".webp,.jpg,.jpeg,.png,image/webp,image/jpeg,image/png" multiple onChange={selectImages} className="sr-only" />
               </label>
               {existingImages.length > 0 && (
                 <div className="mt-6">
@@ -862,11 +960,16 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                   <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {existingImages.map((image) => {
                       const isDeleted = deletedImageIds.includes(image.id);
+                      const isSelectedMain = mainExistingId === image.id;
                       return (
-                        <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${image.isMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
+                        <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!isDeleted && isSelectedMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
                            <img src={resolveProductImageUrl(image) ?? undefined} alt={image.name} className="aspect-square w-full object-cover" />
                             <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `نگه‌داشتن ${image.name}` : `حذف ${image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
-                          <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">{isDeleted ? "حذف خواهد شد" : image.isMain ? "تصویر اصلی" : "تصویر فعلی"}</span>
+                          {isDeleted ? (
+                            <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">حذف خواهد شد</span>
+                          ) : (
+                            <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={isSelectedMain} onChange={() => selectExistingMain(image.id)} className="size-4 accent-primary-600" />{isSelectedMain ? "تصویر اصلی" : "اصلی شود"}</label>
+                          )}
                         </div>
                       );
                     })}
@@ -876,14 +979,10 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               {images.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {images.map((image) => (
-                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!hasRetainedMainImage && mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
+                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
                       <img src={image.previewUrl} alt={image.file.name} className="aspect-square w-full object-cover" />
                       <button type="button" onClick={() => removeImage(image.id)} className="absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`حذف ${image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
-                      {hasRetainedMainImage ? (
-                        <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">تصویر جدید</span>
-                      ) : (
-                        <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => setMainImageId(image.id)} className="size-4 accent-primary-600" />تصویر اصلی</label>
-                      )}
+                      <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => selectNewMain(image.id)} className="size-4 accent-primary-600" />{mainImageId === image.id ? "تصویر اصلی" : "اصلی شود"}</label>
                     </div>
                   ))}
                 </div>
@@ -892,12 +991,12 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           )}
         </div>
 
-        <footer className="mt-auto flex items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-900 sm:px-7">
-          <button type="button" onClick={step === 0 || step === 2 ? onClose : () => setStep(0)} className="min-h-11 rounded-xl px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800">{step === 0 || step === 2 ? "لغو" : "بازگشت"}</button>
-          <div className="flex items-center gap-2">
+        <footer className="mt-auto flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-4">
+          <button type="button" onClick={step === 0 || step === 2 ? onClose : () => setStep(0)} className="min-h-11 w-full rounded-xl px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800 sm:w-auto">{step === 0 || step === 2 ? "لغو" : "بازگشت"}</button>
+          <div className="flex w-full items-center gap-2 sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
             {step === 0 && <button type="button" onClick={() => void loadAttributes()} disabled={categoryId === null || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">ادامه<span className="material-symbols-outlined text-[19px]">arrow_back</span></button>}
             {step === 1 && <button type="submit" form="product-details-form" disabled={!canSubmitDetails || submitting || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{(submitting || loading) && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{submitting ? "در حال ذخیره..." : loading ? "در حال بارگذاری..." : isEditing ? "ذخیره و مدیریت تصاویر" : "ایجاد محصول"}</button>}
-            {step === 2 && <button type="button" onClick={() => void finish()} disabled={!canSaveImages || uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "در حال ذخیره تصاویر..." : isEditing ? "ذخیره تغییرات تصویر" : "بارگذاری و اتمام"}</button>}
+            {step === 2 && <button type="button" onClick={() => void finish()} disabled={uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "در حال ذخیره..." : hasImageWork ? (isEditing ? "ذخیره تغییرات تصویر" : "بارگذاری و اتمام") : "ثبت و بستن"}</button>}
           </div>
         </footer>
       </div>
@@ -911,6 +1010,20 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         confirmLabel="حذف"
         onConfirm={confirmRemoveVariant}
         onCancel={() => setVariantConfirmIndex(null)}
+      />
+
+      <ConfirmDialog
+        open={bulkConfirmKind !== null}
+        title={bulkConfirmKind === "price" ? "اعمال قیمت روی همه تنوع‌ها" : "تنظیم موجودی همه تنوع‌ها"}
+        message={
+          bulkConfirmKind === "price"
+            ? `قیمت همهٔ ${productVariants.length} تنوع به ${formatPrice(bulkPriceValue ?? 0)} تومان تغییر می‌کند.`
+            : `موجودی همهٔ ${productVariants.length} تنوع به ${formatPrice(bulkStockValue ?? 0)} عدد تنظیم می‌شود.`
+        }
+        confirmLabel="اعمال شود"
+        danger={false}
+        onConfirm={confirmBulkApply}
+        onCancel={() => setBulkConfirmKind(null)}
       />
     </div>
   );

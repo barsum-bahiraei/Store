@@ -114,11 +114,11 @@ export default function SellersPage() {
 
   const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && (file.type === "image/webp" || /\.webp$/i.test(file.name))) {
+    if (file && (["image/webp", "image/jpeg", "image/png"].includes(file.type) || /\.(webp|jpe?g|png)$/i.test(file.name))) {
       setFormError(null);
       setSelectedImage({ file, previewUrl: URL.createObjectURL(file) });
     } else if (file) {
-      setFormError("فقط فایل تصویری WebP (.webp) پذیرفته می‌شود.");
+      setFormError("فقط فایل تصویری WebP، JPG یا PNG پذیرفته می‌شود.");
     }
     event.target.value = "";
   };
@@ -217,7 +217,7 @@ export default function SellersPage() {
           <form
             onSubmit={save}
             onMouseDown={(event) => event.stopPropagation()}
-            className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-2xl"
+            className="flex h-dvh max-h-dvh w-full max-w-3xl flex-col overflow-hidden bg-white shadow-2xl dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-2xl"
           >
             <header className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <div>
@@ -280,9 +280,9 @@ export default function SellersPage() {
                         <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
                           <span className="material-symbols-outlined text-xl">add_photo_alternate</span>
                           {existingImage || selectedImage ? "جایگزینی تصویر" : "انتخاب تصویر"}
-                          <input type="file" accept=".webp,image/webp" onChange={selectImage} className="sr-only" />
+                          <input type="file" accept=".webp,.jpg,.jpeg,.png,image/webp,image/jpeg,image/png" onChange={selectImage} className="sr-only" />
                         </label>
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">فقط یک تصویر WebP (.webp). انتخاب تصویر جایگزین تصویر فعلی می‌شود.</p>
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">فقط یک تصویر WebP، JPG یا PNG. انتخاب تصویر جایگزین تصویر فعلی می‌شود.</p>
                         {selectedImage && <button type="button" onClick={() => setSelectedImage(null)} className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400">لغو انتخاب تصویر</button>}
                       </div>
                     </div>

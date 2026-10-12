@@ -663,9 +663,6 @@ public class ProductService(
             }
 
             var newKey = CreateCombinationKey(item.Values);
-            if (newKey != existing.CombinationKey &&
-                await productRepository.ProductVariantIsInUseAsync(existing.Id, cancellation))
-                return Result<ProductUpdateOutput>.Failure("مقادیر تنوع محصولی که در حال استفاده است قابل تغییر نیست");
 
             existing.Price = item.Price;
             existing.Stock = item.Stock;

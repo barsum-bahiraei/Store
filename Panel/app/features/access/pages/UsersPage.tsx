@@ -298,12 +298,12 @@ export default function UsersPage() {
             aria-modal="true"
             aria-labelledby="role-manager-title"
             onMouseDown={(event) => event.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:rounded-2xl"
+            className="h-dvh max-h-dvh w-full max-w-lg overflow-y-auto bg-white shadow-xl dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-2xl"
           >
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-5 dark:border-gray-800">
-              <div>
+              <div className="min-w-0">
                 <h2 id="role-manager-title" className="text-lg font-semibold text-gray-900 dark:text-white">مدیریت نقش‌ها</h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{selectedUser.firstName} {selectedUser.lastName} · {selectedUser.email}</p>
+                <p className="mt-1 break-all text-sm text-gray-500 dark:text-gray-400">{selectedUser.firstName} {selectedUser.lastName} · {selectedUser.email}</p>
               </div>
               <button onClick={closeRoleManager} disabled={saving} className="flex size-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="بستن مدیر نقش">
                 <span className="material-symbols-outlined">close</span>
