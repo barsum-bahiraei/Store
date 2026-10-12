@@ -2,6 +2,9 @@ export const AUTH_TOKEN_KEY = "store.auth.token";
 export const AUTH_TOKEN_EVENT = "store-auth-token-change";
 
 const FALLBACK_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+const SHARED_COOKIE_ATTRIBUTES = process.env.NODE_ENV === "production"
+  ? "; domain=zaryvan.com; secure"
+  : "";
 
 type JwtPayload = {
   exp?: unknown;
@@ -43,6 +46,7 @@ function writeTokenCookie(token: string | null) {
   if (typeof document === "undefined") return;
   if (!token) {
     document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
+    document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax${SHARED_COOKIE_ATTRIBUTES}`;
     return;
   }
 
@@ -51,7 +55,8 @@ function writeTokenCookie(token: string | null) {
     ? FALLBACK_COOKIE_MAX_AGE_SECONDS
     : Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
   const expires = expiresAt === null ? "" : `; expires=${new Date(expiresAt).toUTCString()}`;
-  document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${maxAge}${expires}; samesite=lax`;
+  document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${maxAge}${expires}; samesite=lax${SHARED_COOKIE_ATTRIBUTES}`;
 }
 
 export function getAuthToken() {
