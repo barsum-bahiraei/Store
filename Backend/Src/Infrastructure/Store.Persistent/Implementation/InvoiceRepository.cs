@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Store.Domain.Accounts;
 using Store.Domain.Invoices;
+using Store.Domain.Sellers.Models.Output;
 using Store.Persistent.Database.StoreDbContext;
 
 namespace Store.Persistent.Implementation;
@@ -192,6 +193,43 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
             .OrderBy(x => x.Id)
             .ToListAsync(cancellation);
         return result;
+    }
+
+    public async Task<List<SellerOrderAttentionListOutput>> SellerOrdersAttentionListAsync(int userId,
+        DateTime? from, DateTime? to, IReadOnlyCollection<PaymentStatusEnum> paymentStatuses,
+        CancellationToken cancellation)
+    {
+        var query = context.Invoices
+            .AsNoTracking()
+            .Where(invoice => paymentStatuses.Contains(invoice.PaymentStatus))
+            .Where(invoice => invoice.InvoiceItems.Any(item => item.Product.Seller.UserId == userId));
+
+        if (from.HasValue)
+            query = query.Where(invoice => invoice.CreatedAt >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(invoice => invoice.CreatedAt <= to.Value);
+
+        return await query
+            .OrderByDescending(invoice => invoice.CreatedAt)
+            .ThenByDescending(invoice => invoice.Id)
+            .Select(invoice => new SellerOrderAttentionListOutput
+            {
+                Id = invoice.Id,
+                TotalPrice = invoice.InvoiceItems
+                    .Where(item => item.Product.Seller.UserId == userId)
+                    .Sum(item => item.ProductPrice * item.ProductCount),
+                TotalCount = invoice.InvoiceItems
+                    .Where(item => item.Product.Seller.UserId == userId)
+                    .Sum(item => item.ProductCount),
+                CreatedAt = invoice.CreatedAt,
+                UpdatedAt = invoice.UpdatedAt,
+                PaymentStatus = invoice.PaymentStatus,
+                PaymentMethod = invoice.PaymentMethod,
+                DeliveryMethod = invoice.DeliveryMethod,
+                Address = invoice.User.Address ?? string.Empty
+            })
+            .ToListAsync(cancellation);
     }
 
     public async Task<InvoiceEntity?> SellerGetAsync(int id, int userId, CancellationToken cancellation)

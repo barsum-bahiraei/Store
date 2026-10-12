@@ -127,7 +127,7 @@ export default function AttributesPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400">{filteredAttributes.length} نمایش داده شده</p>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1fr)_10rem_10rem_6rem] border-b border-gray-200 bg-gray-50 px-5 py-2.5 gap-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:grid dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+        <div className="hidden grid-cols-[minmax(0,1fr)_10rem_10rem_6rem] border-b border-gray-200 bg-gray-50 px-5 py-2.5 gap-3 text-xs font-semibold uppercase tracking-wide text-gray-500 md:grid dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
           <span>نام</span><span>نوع مقدار</span><span>واحد</span><span className="text-center">عملیات</span>
         </div>
 
@@ -140,17 +140,17 @@ export default function AttributesPage() {
             {filteredAttributes.map((attribute) => (
               <li key={attribute.id}>
                 {editingId === attribute.id ? (
-                  <form onSubmit={(event) => { event.preventDefault(); void handleUpdate(attribute.id); }} className="grid gap-3 bg-primary-50/40 p-4 sm:grid-cols-[minmax(0,1fr)_10rem_10rem_auto] sm:items-center dark:bg-primary-950/10">
+                  <form onSubmit={(event) => { event.preventDefault(); void handleUpdate(attribute.id); }} className="grid gap-3 bg-primary-50/40 p-4 md:grid-cols-[minmax(0,1fr)_10rem_10rem_auto] md:items-center dark:bg-primary-950/10">
                     <input autoFocus value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className={inputClasses} />
                     <select value={editType} onChange={(event) => setEditType(Number(event.target.value))} className={inputClasses}>{ATTRIBUTE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                     <select value={editUnit} onChange={(event) => setEditUnit(Number(event.target.value))} className={inputClasses}>{ATTRIBUTE_UNIT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                     <div className="flex justify-end gap-1"><button disabled={loading || !editTitle.trim()} className="flex size-10 items-center justify-center rounded-lg bg-primary-600 text-white disabled:opacity-50" aria-label="ذخیره ویژگی"><span className="material-symbols-outlined text-xl">check</span></button><button type="button" onClick={() => setEditingId(null)} className="flex size-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="لغو ویرایش"><span className="material-symbols-outlined text-xl">close</span></button></div>
                   </form>
                 ) : (
-                  <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_10rem_10rem_6rem] sm:items-center sm:px-5">
-                     <div className="flex min-w-0 items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"><span className="material-symbols-outlined text-xl">label</span></span><div className="min-w-0"><p className="truncate text-sm font-medium text-gray-900 dark:text-white">{attribute.name}</p><p className="mt-0.5 text-xs text-gray-400 sm:hidden">{getAttributeTypeLabel(attribute.type)} · {getAttributeUnitLabel(attribute.unit)}</p></div></div>
-                    <span className="hidden text-sm text-gray-600 sm:block dark:text-gray-300">{getAttributeTypeLabel(attribute.type)}</span>
-                    <span className="hidden text-sm text-gray-600 sm:block dark:text-gray-300">{getAttributeUnitLabel(attribute.unit)}</span>
+                  <div className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_10rem_10rem_6rem] md:items-center md:px-5">
+                     <div className="flex min-w-0 items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"><span className="material-symbols-outlined text-xl">label</span></span><div className="min-w-0"><p className="truncate text-sm font-medium text-gray-900 dark:text-white">{attribute.name}</p><p className="mt-0.5 text-xs text-gray-400 md:hidden">{getAttributeTypeLabel(attribute.type)} · {getAttributeUnitLabel(attribute.unit)}</p></div></div>
+                    <span className="hidden text-sm text-gray-600 md:block dark:text-gray-300">{getAttributeTypeLabel(attribute.type)}</span>
+                    <span className="hidden text-sm text-gray-600 md:block dark:text-gray-300">{getAttributeUnitLabel(attribute.unit)}</span>
                      <div className="flex justify-center"><button onClick={() => startEditing(attribute)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label={`ویرایش ${attribute.name}`}><span className="material-symbols-outlined text-xl">edit</span></button><button onClick={() => void handleDelete(attribute)} disabled={loading} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف ${attribute.name}`}><span className="material-symbols-outlined text-xl">delete</span></button></div>
                   </div>
                 )}

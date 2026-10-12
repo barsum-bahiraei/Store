@@ -53,7 +53,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 right-0 z-40 flex w-64 flex-col border-l border-gray-200 bg-white transition-transform duration-300 dark:border-gray-800 dark:bg-gray-900 ${
+        className={`fixed inset-y-0 right-0 z-40 flex h-dvh w-64 flex-col border-l border-gray-200 bg-white transition-transform duration-300 dark:border-gray-800 dark:bg-gray-900 ${
           isMobileOpen ? "translate-x-0" : "translate-x-full"
         } lg:static lg:z-auto lg:translate-x-0 lg:transition-none`}
       >

@@ -654,7 +654,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const discountNumber = discount.trim() === "" ? 0 : Number(discount);
 
   const renderCategoryTree = (items: CategoryListOutput[], depth = 0) => (
-    <ul className={depth > 0 ? "mr-5 border-r border-gray-200 pr-2 dark:border-gray-700" : "space-y-1"}>
+    <ul className={depth > 0 ? "mr-3 border-r border-gray-200 pr-1.5 sm:mr-5 sm:pr-2 dark:border-gray-700" : "space-y-1"}>
       {items.map((category) => {
         const children = category.children ?? [];
         const hasChildren = children.length > 0;
@@ -681,7 +681,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
-      <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-3xl">
+      <div className="flex h-dvh max-h-dvh w-full max-w-4xl flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-3xl">
         <header className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7 sm:py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{isEditing ? "ویرایش محصول" : "محصول جدید"}</p>
@@ -706,7 +706,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           </ol>
         </div>
 
-        <div className="overflow-y-auto px-5 py-6 sm:px-7 sm:py-7">
+        <div className="min-w-0 overflow-y-auto px-4 py-5 sm:px-7 sm:py-7">
           {error && (
             <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300" role="alert">
               <span className="material-symbols-outlined text-[20px]">error</span><span>{error}</span>
@@ -722,7 +722,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               ) : categories.length === 0 ? (
                 <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-10 text-center dark:border-gray-700"><span className="material-symbols-outlined text-4xl text-gray-400">category</span><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">قبل از افزودن محصول، یک دسته‌بندی ایجاد کنید.</p></div>
               ) : (
-                <div className="mt-6 max-h-[50vh] overflow-y-auto rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <div className="mt-6 max-h-[50dvh] overflow-auto rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                   {renderCategoryTree(categories)}
                 </div>
               )}
@@ -784,19 +784,19 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                         </div>
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت همه تنوع‌ها یکسان می‌شود؛ موجودی همه به همان مقدار کم یا زیاد می‌شود و کمتر از صفر نمی‌شود.</p>
                         <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                          <div className="flex items-end gap-2">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                             <label className="min-w-0 flex-1">
                               <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">قیمت همه (تومان)</span>
                               <input type="number" inputMode="decimal" min="0" step="0.01" value={bulkPrice} onChange={(event) => setBulkPrice(event.target.value)} placeholder="مثلاً 200000" aria-label="قیمت گروهی تنوع‌ها" className={`${inputClasses} min-h-10 py-2`} disabled={submitting} />
                             </label>
-                            <button type="button" onClick={requestBulkPrice} disabled={submitting || bulkPriceValue === null} className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال قیمت</button>
+                            <button type="button" onClick={requestBulkPrice} disabled={submitting || bulkPriceValue === null} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال قیمت</button>
                           </div>
-                          <div className="flex items-end gap-2">
+                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
                             <label className="min-w-0 flex-1">
                               <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">تغییر موجودی همه</span>
                               <input type="number" inputMode="decimal" min="0" step="1" value={bulkStockDelta} onChange={(event) => setBulkStockDelta(event.target.value)} placeholder="مثلاً 5" aria-label="مقدار تغییر موجودی تنوع‌ها" className={`${inputClasses} min-h-10 py-2`} disabled={submitting} />
                             </label>
-                            <div role="group" aria-label="جهت تغییر موجودی" className="flex min-h-10 shrink-0 items-center divide-x divide-gray-300 overflow-hidden rounded-xl border border-gray-300 dark:divide-gray-600 dark:border-gray-600">
+                            <div role="group" aria-label="جهت تغییر موجودی" className="grid min-h-10 shrink-0 grid-cols-2 items-center divide-x divide-gray-300 overflow-hidden rounded-xl border border-gray-300 dark:divide-gray-600 dark:border-gray-600 sm:flex">
                               <button type="button" onClick={() => setBulkStockIncrease(true)} aria-pressed={bulkStockIncrease} disabled={submitting} aria-label="افزایش موجودی" className={`flex min-h-10 items-center gap-1 px-3 text-xs font-semibold transition-colors disabled:opacity-50 ${bulkStockIncrease ? "bg-primary-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-800"}`}>
                                 <span className="material-symbols-outlined text-base">add</span>
                                 افزایش
@@ -806,7 +806,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                 کاهش
                               </button>
                             </div>
-                            <button type="button" onClick={requestBulkStock} disabled={submitting || !isBulkStockDeltaValid} className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال موجودی</button>
+                            <button type="button" onClick={requestBulkStock} disabled={submitting || !isBulkStockDeltaValid} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-primary-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال موجودی</button>
                           </div>
                         </div>
                       </div>
@@ -825,7 +825,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                        const variantErrors = showErrors ? validation.variantErrors[variant.key] : undefined;
                        const priceNumber = parseNonNegative(variant.price);
                        return (
-                         <div key={variant.key} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
+                          <div key={variant.key} className="rounded-xl border border-gray-200 bg-gray-50/50 p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-800/30">
                            <div className="flex items-center justify-between gap-3">
                              <h5 className="text-sm font-semibold text-gray-900 dark:text-white">تنوع {variantIndex + 1}</h5>
                              <button type="button" onClick={() => requestRemoveVariant(variantIndex)} disabled={submitting} className="flex size-9 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف تنوع ${variantIndex + 1}`}>
@@ -876,7 +876,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                           {valueErrors?.colorName && <span role="alert" className={errorTextClasses}>{valueErrors.colorName}</span>}
                                         </div>
                                         <div>
-                                          <div className="flex items-center gap-2">
+                                           <div className="flex min-w-0 items-center gap-2">
                                             <input
                                               type="color"
                                               value={isValidColorCode(value.colorCode) ? value.colorCode.trim() : "#000000"}
@@ -968,9 +968,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           )}
         </div>
 
-        <footer className="mt-auto flex items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-900 sm:px-7">
-          <button type="button" onClick={step === 0 || step === 2 ? onClose : () => setStep(0)} className="min-h-11 rounded-xl px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800">{step === 0 || step === 2 ? "لغو" : "بازگشت"}</button>
-          <div className="flex items-center gap-2">
+        <footer className="mt-auto flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-4">
+          <button type="button" onClick={step === 0 || step === 2 ? onClose : () => setStep(0)} className="min-h-11 w-full rounded-xl px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800 sm:w-auto">{step === 0 || step === 2 ? "لغو" : "بازگشت"}</button>
+          <div className="flex w-full items-center gap-2 sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
             {step === 0 && <button type="button" onClick={() => void loadAttributes()} disabled={categoryId === null || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">ادامه<span className="material-symbols-outlined text-[19px]">arrow_back</span></button>}
             {step === 1 && <button type="submit" form="product-details-form" disabled={!canSubmitDetails || submitting || loading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{(submitting || loading) && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{submitting ? "در حال ذخیره..." : loading ? "در حال بارگذاری..." : isEditing ? "ذخیره و مدیریت تصاویر" : "ایجاد محصول"}</button>}
             {step === 2 && <button type="button" onClick={() => void finish()} disabled={!canSaveImages || uploading} className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900">{uploading && <span className="material-symbols-outlined animate-spin text-[19px]">progress_activity</span>}{uploading ? "در حال ذخیره تصاویر..." : isEditing ? "ذخیره تغییرات تصویر" : "بارگذاری و اتمام"}</button>}

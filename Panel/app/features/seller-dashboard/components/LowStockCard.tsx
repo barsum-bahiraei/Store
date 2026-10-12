@@ -114,13 +114,16 @@ export function LowStockCard({ refreshToken }: LowStockCardProps) {
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
                   {item.productName}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatVariantValues(item.values)}
+                <p className="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400 sm:block">
+                  <span className="text-gray-400 sm:hidden">تنوع</span>
+                  <span>{formatVariantValues(item.values)}</span>
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 sm:text-center">
-                  {formatNumber(item.price)}
+                <p className="flex items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-300 sm:block sm:text-center">
+                  <span className="text-xs text-gray-400 sm:hidden">قیمت</span>
+                  <span>{formatNumber(item.price)} تومان</span>
                 </p>
-                <p className="sm:text-center">
+                <p className="flex items-center justify-between gap-3 sm:block sm:text-center">
+                  <span className="text-xs text-gray-400 sm:hidden">موجودی</span>
                   <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
                     {formatNumber(item.stock)}
                   </span>

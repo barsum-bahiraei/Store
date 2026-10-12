@@ -73,11 +73,13 @@ export function TopProductsCard({ range, refreshToken }: TopProductsCardProps) {
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
                   {item.productName}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 sm:text-center">
-                  {formatNumber(item.unitsSold)}
+                <p className="flex items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-300 sm:block sm:text-center">
+                  <span className="text-xs text-gray-400 sm:hidden">تعداد فروش</span>
+                  <span>{formatNumber(item.unitsSold)}</span>
                 </p>
-                <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 sm:text-left">
-                  {formatNumber(item.salesAmount)} تومان
+                <p className="flex items-center justify-between gap-3 text-sm font-semibold text-primary-600 dark:text-primary-400 sm:block sm:text-left">
+                  <span className="text-xs font-normal text-gray-400 sm:hidden">مبلغ فروش</span>
+                  <span>{formatNumber(item.salesAmount)} تومان</span>
                 </p>
               </li>
             ))}

@@ -50,12 +50,12 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       <Sidebar
         isMobileOpen={sidebarOpen}
         onMobileClose={() => setSidebarOpen(false)}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 sm:px-6">
           <div className="flex items-center gap-3">
             <button
@@ -87,7 +87,7 @@ export default function DashboardLayout() {
             <span className="material-symbols-outlined hidden text-lg text-gray-400 sm:block">chevron_left</span>
           </Link>
         </header>
-        <main className="flex-1 overflow-auto bg-gray-50 p-4 sm:p-6 dark:bg-gray-950">
+        <main className="min-w-0 flex-1 overflow-auto bg-gray-50 p-4 sm:p-6 dark:bg-gray-950">
           <Outlet />
         </main>
       </div>

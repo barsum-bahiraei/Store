@@ -314,7 +314,7 @@ export default function DiscountCodesPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 sm:grid sm:grid-cols-[1fr_140px_100px_100px_120px_100px] sm:gap-4">
+          <div className="hidden border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400 lg:grid lg:grid-cols-[1fr_140px_100px_100px_120px_100px] lg:gap-4">
             <span>کد</span>
             <span className="text-center">مبلغ تخفیف</span>
             <span className="text-center">تعداد کاربران</span>
@@ -324,7 +324,7 @@ export default function DiscountCodesPage() {
           </div>
           <ul className="divide-y divide-gray-200 dark:divide-gray-800">
             {codes.map((item) => (
-              <li key={item.id} className="flex flex-col gap-3 p-4 sm:grid sm:grid-cols-[1fr_140px_100px_100px_120px_100px] sm:items-center sm:gap-4 sm:px-6">
+              <li key={item.id} className="flex flex-col gap-3 p-4 lg:grid lg:grid-cols-[1fr_140px_100px_100px_120px_100px] lg:items-center lg:gap-4 lg:px-6">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-gray-900 dark:text-white">{item.code}</p>
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
@@ -332,10 +332,11 @@ export default function DiscountCodesPage() {
                     {` · حداقل خرید ${item.minimumPurchaseAmount.toLocaleString("fa-IR")} تومان`}
                   </p>
                 </div>
-                <p className="text-center text-sm font-semibold text-primary-600 dark:text-primary-400">{item.maxDiscountAmount.toLocaleString("fa-IR")} تومان</p>
-                <p className="text-center text-sm text-gray-600 dark:text-gray-300">{item.assignedUserCount}</p>
-                <p className="text-center text-sm text-gray-600 dark:text-gray-300">{item.usedUserCount}</p>
-                <div className="flex justify-center">
+                <p className="flex justify-between text-sm font-semibold text-primary-600 dark:text-primary-400 lg:block lg:text-center"><span className="font-normal text-gray-400 lg:hidden">مبلغ تخفیف</span><span>{item.maxDiscountAmount.toLocaleString("fa-IR")} تومان</span></p>
+                <p className="flex justify-between text-sm text-gray-600 dark:text-gray-300 lg:block lg:text-center"><span className="text-gray-400 lg:hidden">تعداد کاربران</span><span>{item.assignedUserCount}</span></p>
+                <p className="flex justify-between text-sm text-gray-600 dark:text-gray-300 lg:block lg:text-center"><span className="text-gray-400 lg:hidden">تعداد استفاده</span><span>{item.usedUserCount}</span></p>
+                <div className="flex items-center justify-between lg:justify-center">
+                  <span className="text-sm text-gray-400 lg:hidden">وضعیت</span>
                   <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${item.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
                     <span className={`size-1.5 rounded-full ${item.isActive ? "bg-emerald-500" : "bg-gray-400"}`} />
                     {item.isActive ? "فعال" : "غیرفعال"}
@@ -357,7 +358,7 @@ export default function DiscountCodesPage() {
 
       {wizardOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" onMouseDown={closeWizard}>
-          <div onMouseDown={(e) => e.stopPropagation()} className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-3xl">
+          <div onMouseDown={(e) => e.stopPropagation()} className="flex h-dvh max-h-dvh w-full max-w-3xl flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-3xl">
             <header className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-7 sm:py-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">{editingId ? "ویرایش کد تخفیف" : "کد تخفیف جدید"}</p>

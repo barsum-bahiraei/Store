@@ -217,7 +217,7 @@ export default function SellersPage() {
           <form
             onSubmit={save}
             onMouseDown={(event) => event.stopPropagation()}
-            className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-2xl"
+            className="flex h-dvh max-h-dvh w-full max-w-3xl flex-col overflow-hidden bg-white shadow-2xl dark:bg-gray-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-2xl"
           >
             <header className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <div>

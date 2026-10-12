@@ -1,4 +1,5 @@
 using Store.Domain.Accounts;
+using Store.Domain.Sellers.Models.Output;
 
 namespace Store.Domain.Invoices;
 
@@ -23,6 +24,8 @@ public interface IInvoiceRepository
     Task<List<InvoiceEntity>> ListAsync(int userId, CancellationToken cancellation);
     Task<List<InvoiceEntity>> SellerListAsync(int userId, DateTime? from, DateTime? to,
         CancellationToken cancellation);
+    Task<List<SellerOrderAttentionListOutput>> SellerOrdersAttentionListAsync(int userId, DateTime? from,
+        DateTime? to, IReadOnlyCollection<PaymentStatusEnum> paymentStatuses, CancellationToken cancellation);
     Task<InvoiceEntity?> SellerGetAsync(int id, int userId, CancellationToken cancellation);
     Task<InvoiceEntity> UpdateAsync(InvoiceEntity input, CancellationToken cancellation);
 }

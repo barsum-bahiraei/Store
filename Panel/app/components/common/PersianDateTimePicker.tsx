@@ -133,7 +133,7 @@ export function PersianDateTimePicker({
   const dialog = open
     ? createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-gray-950/60 p-2 backdrop-blur-sm sm:p-4"
           onMouseDown={() => setOpen(false)}
           role="dialog"
           aria-modal="true"
@@ -143,9 +143,9 @@ export function PersianDateTimePicker({
             ref={dialogRef}
             tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl outline-none dark:border-gray-800 dark:bg-gray-900"
+            className="w-full max-w-sm overflow-x-auto rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl outline-none dark:border-gray-800 dark:bg-gray-900 sm:p-4"
           >
-            <div className="rmdp-container flex justify-center">
+            <div className="rmdp-container flex min-w-fit justify-center">
               <Calendar
                 className="rmdp-rtl"
                 calendar={persian}

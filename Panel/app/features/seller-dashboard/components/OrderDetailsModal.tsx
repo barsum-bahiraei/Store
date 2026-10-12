@@ -80,7 +80,7 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
       onMouseDown={onClose}
     >
       <div
-        className="order-print-sheet flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[85vh] sm:rounded-3xl"
+        className="order-print-sheet flex h-dvh max-h-dvh w-full max-w-4xl flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:h-auto sm:max-h-[85dvh] sm:rounded-3xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="order-print-hidden flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-6">
@@ -148,7 +148,34 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
                 </div>
               </section>
 
-              <section className="overflow-x-auto">
+              <section className="md:hidden">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {order.items.map((item, index) => (
+                    <article key={item.id} className="order-print-item p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-400">ردیف {formatNumber(index + 1)}</p>
+                          <h4 className="mt-1 break-words text-sm font-bold leading-6">{item.productName}</h4>
+                          <p className="mt-1 text-xs text-gray-500">کد تنوع: {formatNumber(item.productVariantId)}</p>
+                        </div>
+                        <span className="shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-sm font-black text-blue-800 dark:bg-blue-950/30 dark:text-blue-200">{formatNumber(item.productCount)} عدد</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.values.flatMap((value: VariantValueOutput) => [
+                          value.size ? <span key={`${value.id}-mobile-size`} className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs dark:border-gray-700">سایز: <strong>{value.size}</strong></span> : null,
+                          value.colorName ? <span key={`${value.id}-mobile-color`} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1 text-xs dark:border-gray-700">{value.colorCode && <span className="size-3 rounded-full border" style={{ backgroundColor: value.colorCode }} />}رنگ: <strong>{value.colorName}</strong></span> : null,
+                        ])}
+                      </div>
+                      <dl className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-gray-50 p-3 text-xs dark:bg-gray-800">
+                        <div><dt className="text-gray-400">قیمت واحد</dt><dd className="mt-1 font-bold">{formatNumber(item.productPrice)} تومان</dd></div>
+                        <div><dt className="text-gray-400">مبلغ کل</dt><dd className="mt-1 font-bold">{formatNumber(item.totalPrice)} تومان</dd></div>
+                      </dl>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[760px] border-collapse text-right text-sm">
                   <colgroup>
                     <col className="w-[5%]" />

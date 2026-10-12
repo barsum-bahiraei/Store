@@ -210,7 +210,7 @@ public class SellerService(
     public async Task<Result<List<SellerOrderAttentionListOutput>>> OrdersAttentionAsync(int userId,
         SellerOrdersAttentionInput input, CancellationToken cancellation)
     {
-        var (sellerIds, sellerError) = await GetSellerIdsAsync(userId, cancellation);
+        var (_, sellerError) = await GetSellerIdsAsync(userId, cancellation);
         if (sellerError != null)
             return Result<List<SellerOrderAttentionListOutput>>.Failure(sellerError);
 
@@ -221,31 +221,18 @@ public class SellerService(
         if (input.PaymentStatus.HasValue && !IsFulfillmentStatus(input.PaymentStatus.Value))
             return Result<List<SellerOrderAttentionListOutput>>.Failure("وضعیت سفارش برای فروشنده نامعتبر است");
 
-        var invoices = await invoiceRepository.SellerListAsync(userId, input.From, input.To, cancellation);
+        PaymentStatusEnum[] paymentStatuses = input.PaymentStatus.HasValue
+            ? [input.PaymentStatus.Value]
+            :
+            [
+                PaymentStatusEnum.PaymentCompleted,
+                PaymentStatusEnum.Preparing,
+                PaymentStatusEnum.ReadyForShipment,
+                PaymentStatusEnum.Shipping
+            ];
 
-        var result = invoices
-            .Where(x => input.PaymentStatus.HasValue
-                ? x.PaymentStatus == input.PaymentStatus.Value
-                : IsActiveFulfillmentStatus(x.PaymentStatus))
-            .OrderByDescending(x => x.CreatedAt)
-            .ThenByDescending(x => x.Id)
-            .Select(x =>
-            {
-                var items = GetSellerItems(x, sellerIds);
-                return new SellerOrderAttentionListOutput
-                {
-                    Id = x.Id,
-                    TotalPrice = GetItemsAmount(items),
-                    TotalCount = items.Sum(item => item.ProductCount),
-                    CreatedAt = x.CreatedAt,
-                    UpdatedAt = x.UpdatedAt,
-                    PaymentStatus = x.PaymentStatus,
-                    PaymentMethod = x.PaymentMethod,
-                    DeliveryMethod = x.DeliveryMethod,
-                    Address = x.User.Address!
-                };
-            })
-            .ToList();
+        var result = await invoiceRepository.SellerOrdersAttentionListAsync(userId, input.From, input.To,
+            paymentStatuses, cancellation);
 
         return Result<List<SellerOrderAttentionListOutput>>.Success(result);
     }
