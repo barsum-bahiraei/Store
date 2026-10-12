@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useCategories } from "@/features/categories/hooks/use-categories";
 import type { Category } from "@/features/categories/types/category";
 import { ProductCard } from "./product-card";
+import { PriceFilterInput } from "./price-filter-input";
 import { useInfiniteProductSearch, useProductBrands } from "../hooks/use-products";
 import type { ProductSearchFilters, ProductSearchItem, ProductSort } from "../types/product";
 
@@ -246,7 +247,10 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
             </select>
             {isBrandsError && <p id="brand-filter-error" role="alert" className="mt-2 text-xs text-error">بارگذاری فهرست برندها انجام نشد.</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3"><div><label htmlFor="min-price" className="text-sm font-bold">حداقل قیمت</label><input id="min-price" name="minPrice" type="number" inputMode="decimal" min="0" step="0.01" defaultValue={filters.minPrice} className="mt-2 h-11 w-full appearance-none rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" /></div><div><label htmlFor="max-price" className="text-sm font-bold">حداکثر قیمت</label><input id="max-price" name="maxPrice" type="number" inputMode="decimal" min="0" step="0.01" defaultValue={filters.maxPrice} className="mt-2 h-11 w-full appearance-none rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" /></div></div>
+          <div className="grid grid-cols-2 gap-3">
+            <PriceFilterInput id="min-price" name="minPrice" label="حداقل قیمت" defaultValue={filters.minPrice} />
+            <PriceFilterInput id="max-price" name="maxPrice" label="حداکثر قیمت" defaultValue={filters.maxPrice} />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex min-h-11 items-center gap-1.5 whitespace-nowrap text-xs font-bold"><input name="available" value="true" type="checkbox" defaultChecked={filters.isAvailable === true} className="size-5 shrink-0 accent-primary" />محصولات موجود</label>
             <label className="flex min-h-11 items-center gap-1.5 whitespace-nowrap text-xs font-bold"><input name="discount" value="true" type="checkbox" defaultChecked={filters.hasDiscount} className="size-5 shrink-0 accent-primary" />محصولات تخفیف‌دار</label>

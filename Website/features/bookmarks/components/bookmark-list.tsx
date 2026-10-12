@@ -109,7 +109,10 @@ function BookmarkListItem({ bookmark }: { bookmark: BookmarkItem }) {
           <div className="min-w-0">
             <p className="truncate font-black">{product.name}</p>
             <p className="mt-1.5 truncate text-xs font-bold text-muted-foreground">{product.categoryTitle}</p>
-            <p className="mt-3 font-black text-primary">{formatToman(salePrice)}</p>
+            <div className="mt-3 flex flex-col items-start gap-1">
+              {product.discount > 0 && <del className="text-xs text-muted-foreground"><span className="sr-only">قیمت اصلی: </span>{formatToman(product.price)}</del>}
+              <p className="font-black text-primary"><span className="sr-only">قیمت نهایی: </span>{formatToman(salePrice)}</p>
+            </div>
           </div>
           <span className="material-symbols-rounded shrink-0 text-2xl text-primary transition-transform group-hover:-translate-x-1" aria-hidden="true">arrow_back</span>
         </div>

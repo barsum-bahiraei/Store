@@ -249,13 +249,15 @@ export function ProductDetailContent({ productId }: { productId: number }) {
               {needsSelection && product.isAvailable && <p role="status" className="text-sm text-warning">لطفاً {nextSelectionLabel} محصول را انتخاب کنید</p>}
             </div>
           )}
-          <div className="mt-7 flex flex-wrap items-baseline gap-3" aria-live="polite">
+          <div className="mt-7 flex flex-wrap items-end gap-3" aria-live="polite">
             {availableSelection ? (
               <>
-                <span className="text-3xl font-black text-primary">{formatToman(salePrice)}</span>
+                <div className="flex flex-col items-start gap-1">
+                  {product.discount > 0 && <del className="text-lg text-muted-foreground"><span className="sr-only">قیمت اصلی: </span>{formatToman(basePrice)}</del>}
+                  <span className="text-3xl font-black text-primary"><span className="sr-only">قیمت نهایی: </span>{formatToman(salePrice)}</span>
+                </div>
                 {product.discount > 0 && (
                   <>
-                    <span className="text-lg text-muted-foreground line-through">{formatToman(basePrice)}</span>
                     <span className="rounded-lg bg-accent px-2 py-1 text-xs font-black text-accent-foreground">تخفیف {formatToman(product.discount)}</span>
                   </>
                 )}

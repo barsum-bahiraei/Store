@@ -3,13 +3,12 @@ import Link from "next/link";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 import { StoreHeader } from "@/features/categories/components/store-header";
 import { StoreLocationMap } from "@/features/layout/components/store-location-map";
+import { NeshanLocationLink } from "@/features/layout/components/neshan-location-link";
 
 export const metadata: Metadata = {
   title: "تماس با ما",
   description: "راه‌های ارتباطی با لوازم کمپ و کوه‌نوردی زریوان.",
 };
-
-const neshanMapUrl = "https://neshan.org/maps/share/37.250805015534795,55.1845741520782";
 
 const socialLinks = [
   { label: "تلگرام", icon: "send", href: "https://t.me/mohsengolchin" },
@@ -72,10 +71,7 @@ export default function ContactPage() {
                   <StoreLocationMap />
                 </div>
 
-                <a href={neshanMapUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground shadow-lg shadow-primary-shadow transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  <span className="material-symbols-rounded" aria-hidden="true">map</span>
-                  باز کردن در نشان
-                </a>
+                <NeshanLocationLink />
               </div>
             </section>
           </div>

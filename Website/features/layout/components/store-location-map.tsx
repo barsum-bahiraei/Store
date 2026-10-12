@@ -2,9 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { Map as LeafletMap } from "leaflet";
-
-const latitude = 37.250805015534795;
-const longitude = 55.1845741520782;
+import { storeLatitude as latitude, storeLongitude as longitude } from "../utils/store-location";
 
 export function StoreLocationMap() {
   const mapElementRef = useRef<HTMLDivElement>(null);

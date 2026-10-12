@@ -59,8 +59,10 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
           {!imageLoaded && <span className="absolute inset-0 z-10 grid place-items-center bg-muted/85 text-primary" role="status"><span className="material-symbols-rounded animate-spin text-4xl motion-reduce:animate-none" aria-hidden="true">progress_activity</span><span className="sr-only">در حال بارگذاری تصویر محصول</span></span>}
           <Image src={imageUrl} alt={product.image?.name || product.name} fill unoptimized sizes="(max-width: 639px) 80vw, (max-width: 1023px) 40vw, 22vw" onLoad={() => setImageLoaded(true)} onError={() => setImageLoaded(true)} className={`object-cover transition-[transform,opacity] duration-300 group-hover:scale-[1.03] ${imageLoaded ? "opacity-100" : "opacity-0"}`} />
         </> : <span className="grid h-full place-items-center text-muted-foreground"><span className="material-symbols-rounded text-5xl" aria-hidden="true">image_not_supported</span><span className="sr-only">تصویری موجود نیست</span></span>}
-        {product.discount > 0 && <span className={`absolute rounded-lg bg-accent font-black text-accent-foreground ${compactOnMobile ? "right-2 top-2 px-1.5 py-1 text-[10px] sm:right-3 sm:top-3 sm:px-2 sm:text-xs" : "right-3 top-3 px-2 py-1 text-xs"}`}>تخفیف {formatToman(product.discount)}</span>}
-        {!product.isAvailable && <span className={`absolute rounded-lg bg-error/10 font-black text-error ${compactOnMobile ? "left-2 top-2 px-1.5 py-1 text-[10px] sm:left-3 sm:top-3 sm:px-2 sm:text-xs" : "left-3 top-3 px-2 py-1 text-xs"}`}>ناموجود</span>}
+        {(product.discount > 0 || !product.isAvailable) && <div className={`absolute flex flex-col items-start gap-2 ${compactOnMobile ? "right-2 top-2 sm:right-3 sm:top-3" : "right-3 top-3"}`}>
+          {product.discount > 0 && <span className={`rounded-lg bg-accent font-black text-accent-foreground ${compactOnMobile ? "px-1.5 py-1 text-[10px] sm:px-2 sm:text-xs" : "px-2 py-1 text-xs"}`}>تخفیف {formatToman(product.discount)}</span>}
+          {!product.isAvailable && <span className={`rounded-lg bg-error/10 font-black text-error ${compactOnMobile ? "px-1.5 py-1 text-[10px] sm:px-2 sm:text-xs" : "px-2 py-1 text-xs"}`}>ناموجود</span>}
+        </div>}
         <BookmarkButton productId={product.id} productName={product.name} />
       </Link>
       <div className={`flex flex-1 flex-col ${compactOnMobile ? "p-3 sm:p-4" : "p-4"}`}>
@@ -69,7 +71,10 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
         <p className={`product-card-description mt-2 min-h-[3.75rem] text-sm leading-5 text-muted-foreground ${compactOnMobile ? "hidden sm:block" : ""}`}>{product.shortDescription ?? ""}</p>
         <div className={`mt-auto ${compactOnMobile ? "pt-3 sm:pt-4" : "pt-4"}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-             <div><span className={`font-black text-primary ${compactOnMobile ? "text-xs sm:text-base" : ""}`}>{formatToman(salePrice)}</span>{product.discount > 0 && <span className={`ml-2 text-xs text-muted-foreground line-through ${compactOnMobile ? "hidden sm:inline" : ""}`}>{formatToman(product.price)}</span>}</div>
+             <div className="flex flex-col items-start gap-1">
+               {product.discount > 0 && <del className="text-xs text-muted-foreground"><span className="sr-only">قیمت اصلی: </span>{formatToman(product.price)}</del>}
+               <span className={`font-black text-primary ${compactOnMobile ? "text-xs sm:text-base" : ""}`}><span className="sr-only">قیمت نهایی: </span>{formatToman(salePrice)}</span>
+             </div>
              <span className={`items-center gap-1 text-xs font-bold text-muted-foreground ${compactOnMobile ? "hidden sm:inline-flex" : "inline-flex"}`}><span className="material-symbols-rounded text-base text-warning" aria-hidden="true">star</span>{product.averageRating.toFixed(1)}</span>
            </div>
           <button type="button" onClick={handleQuickBuy} disabled={!product.isAvailable || isPending} className={`mt-3 inline-flex w-full items-center justify-center rounded-xl border border-primary bg-surface font-black text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-60 ${compactOnMobile ? "min-h-9 gap-1 px-1 text-[11px] sm:min-h-11 sm:gap-2 sm:px-2 sm:text-sm" : "min-h-11 gap-2 text-sm"}`}><span className={`material-symbols-rounded ${compactOnMobile ? "text-lg sm:text-xl" : "text-xl"} ${isPending ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isPending ? "progress_activity" : "shopping_cart"}</span>{isPending ? "در حال افزودن…" : "افزودن به سبد خرید"}</button>
