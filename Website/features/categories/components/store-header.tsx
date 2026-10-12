@@ -172,7 +172,7 @@ export function StoreHeader() {
           <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="absolute right-0 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 md:hidden">
             <span className="material-symbols-rounded text-2xl" aria-hidden="true">{isMenuOpen ? "close" : "menu"}</span>
           </button>
-          <Link href="/" aria-label="خانه فروشگاه" className="absolute left-1/2 flex min-h-11 min-w-0 -translate-x-1/2 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl] md:static md:translate-x-0">
+          <Link href="/" aria-label="خانه فروشگاه" className="hidden min-h-11 min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring [direction:rtl] md:flex">
             <Image src="/images/zaryvan-logo.png" alt="" width={64} height={64} className="size-14 rounded-full object-contain shadow-lg shadow-black/25 ring-2 ring-white/25 sm:size-16" />
           </Link>
           <Link href="/" aria-label="رفتن به صفحه اصلی" className="absolute right-12 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 md:static">
@@ -182,8 +182,8 @@ export function StoreHeader() {
 
         <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">
           <label htmlFor="store-search" className="sr-only">جست‌وجوی محصولات</label>
-          <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
           <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-xl border border-white/45 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-md shadow-black/10 outline-none backdrop-blur-md transition-[background-color,border-color,box-shadow] placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
+          <button type="submit" aria-label="جست‌وجوی محصول" className="absolute right-0 top-0 z-10 grid size-11 place-items-center rounded-xl text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-xl" aria-hidden="true">search</span></button>
         </form>
 
         <nav aria-label="عملیات حساب کاربری" className="absolute left-0 flex shrink-0 items-center gap-0 [direction:rtl] md:static md:gap-1">
@@ -202,8 +202,8 @@ export function StoreHeader() {
         <div className="mx-auto flex min-h-12 w-full items-center px-0 sm:px-5 lg:px-6 xl:px-8">
           <form action="/shop" role="search" className="relative w-full md:hidden">
             <label htmlFor="mobile-store-search" className="sr-only">جست‌وجوی محصولات</label>
-            <span className="material-symbols-rounded pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-muted-foreground" aria-hidden="true">search</span>
             <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-white/35 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-sm outline-none backdrop-blur-md placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
+            <button type="submit" aria-label="جست‌وجوی محصول" className="absolute right-0 top-0 z-10 grid size-11 place-items-center rounded-lg text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-xl" aria-hidden="true">search</span></button>
           </form>
           <div className="hidden items-center gap-1 md:flex">
           <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
@@ -233,6 +233,9 @@ export function StoreHeader() {
                   home
                 </span>
                 <span>خانه</span>
+              </Link>
+              <Link href="/" onClick={closeMenu} aria-label="خانه فروشگاه" className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Image src="/images/zaryvan-logo.png" alt="لوگوی زریوان" width={112} height={112} className="size-28 rounded-full object-contain" />
               </Link>
               <button type="button" onClick={closeMenu} aria-label="بستن منو" className="grid size-11 place-items-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
                 <span className="material-symbols-rounded text-2xl" aria-hidden="true">close</span>

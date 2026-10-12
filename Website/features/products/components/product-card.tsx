@@ -67,7 +67,7 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
       </Link>
       <div className={`flex flex-1 flex-col ${compactOnMobile ? "p-3 sm:p-4" : "p-4"}`}>
         <p className={`text-xs font-bold uppercase tracking-wider text-muted-foreground ${compactOnMobile ? "hidden sm:block" : ""}`}>{product.categoryTitle}</p>
-        <Link href={`/products/${product.id}`} className="mt-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"><h3 className={`line-clamp-2 font-black hover:text-primary ${compactOnMobile ? "text-sm leading-5 sm:text-base sm:leading-6" : "text-base leading-6"}`}>{product.name}</h3></Link>
+        <Link href={`/products/${product.id}`} className="mt-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"><h3 className={`line-clamp-2 font-black hover:text-primary ${compactOnMobile ? "h-10 text-sm leading-5 sm:h-12 sm:text-base sm:leading-6" : "h-12 text-base leading-6"}`}>{product.name}</h3></Link>
         <p className={`product-card-description mt-2 min-h-[3.75rem] text-sm leading-5 text-muted-foreground ${compactOnMobile ? "hidden sm:block" : ""}`}>{product.shortDescription ?? ""}</p>
         <div className={`mt-auto ${compactOnMobile ? "pt-3 sm:pt-4" : "pt-4"}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
