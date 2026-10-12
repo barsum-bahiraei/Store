@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { useCart } from "@/features/cart/hooks/use-cart";
+import { HeaderBrandsMenu } from "@/features/layout/components/header-brands-menu";
 import { useCategories } from "../hooks/use-categories";
 import type { Category } from "../types/category";
 
@@ -205,11 +206,12 @@ export function StoreHeader() {
             <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-white/35 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-sm outline-none backdrop-blur-md placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
             <button type="submit" aria-label="جست‌وجوی محصول" className="absolute right-0 top-0 z-10 grid size-11 place-items-center rounded-lg text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-xl" aria-hidden="true">search</span></button>
           </form>
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden flex-wrap items-center gap-1 md:flex">
           <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
             دسته‌بندی کالاها
             <span className={`material-symbols-rounded text-lg transition-transform ${isMenuOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
           </button>
+          <HeaderBrandsMenu />
           <Link href="/shop" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">همه محصولات</Link>
           <Link href="/shop?discount=true" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">شگفت‌انگیزها</Link>
           <Link href="/about" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">درباره ما</Link>
@@ -255,6 +257,7 @@ export function StoreHeader() {
                 <span className={`material-symbols-rounded text-lg text-muted-foreground transition-transform duration-300 ${isMobileCategoriesOpen ? "rotate-180" : ""}`} aria-hidden="true">expand_more</span>
               </button>
               {isMobileCategoriesOpen && categoryContent}
+              <HeaderBrandsMenu mobile onNavigate={closeMenu} />
               <div className="grid gap-2">
                 <Link href="/shop" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
                   <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">storefront</span>

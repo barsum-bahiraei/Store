@@ -9,16 +9,17 @@ import "swiper/css";
 import { ProductCard } from "@/features/products/components/product-card";
 import { useProductSearch } from "@/features/products/hooks/use-products";
 
-export function FeaturedProducts() {
+export function FeaturedProducts({ hasDiscount = false }: { hasDiscount?: boolean }) {
   const swiperRef = useRef<SwiperInstance | null>(null);
-  const { data, isPending, isError, isFetching, refetch } = useProductSearch({ page: 1, pageSize: 10, hasDiscount: false, isIdDec: true });
+  const { data, isPending, isError, isFetching, refetch } = useProductSearch({ page: 1, pageSize: 10, hasDiscount, isIdDec: true });
+  const titleId = hasDiscount ? "discounted-products-title" : "featured-products-title";
 
   return (
-    <section aria-labelledby="featured-products-title" className="bg-background px-4 py-8 text-foreground sm:px-8 sm:py-14 lg:px-12">
+    <section aria-labelledby={titleId} className="bg-background px-4 py-8 text-foreground sm:px-8 sm:py-14 lg:px-12">
       <div className="mx-auto w-full max-w-[1700px]">
         <div className="mb-6 flex items-end justify-between gap-2 sm:gap-5">
-          <div><h2 id="featured-products-title" className="text-xl font-black tracking-[-0.03em] sm:text-3xl">جدیدترین محصولات</h2></div>
-          <div className="flex shrink-0 items-center gap-2"><Link href="/shop?sort=newest" className="inline-flex min-h-9 items-center gap-0.5 rounded-lg px-1.5 text-xs font-black text-primary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:min-h-11 sm:gap-1 sm:px-3 sm:text-sm">مشاهده همه<span className="material-symbols-rounded text-base sm:text-xl" aria-hidden="true">arrow_back</span></Link></div>
+          <div><h2 id={titleId} className="text-xl font-black tracking-[-0.03em] sm:text-3xl">{hasDiscount ? "محصولات تخفیف‌دار" : "جدیدترین محصولات"}</h2></div>
+          <div className="flex shrink-0 items-center gap-2"><Link href={hasDiscount ? "/shop?discount=true&sort=newest" : "/shop?sort=newest"} className="inline-flex min-h-9 items-center gap-0.5 rounded-lg px-1.5 text-xs font-black text-primary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:min-h-11 sm:gap-1 sm:px-3 sm:text-sm">مشاهده همه<span className="material-symbols-rounded text-base sm:text-xl" aria-hidden="true">arrow_back</span></Link></div>
         </div>
         {isPending ? <div role="status" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6 min-[1280px]:grid-cols-7"><span className="sr-only">در حال بارگذاری محصولات</span>{Array.from({ length: 7 }, (_, index) => <span key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />)}</div>
           : isError ? <div role="alert" className="rounded-xl border border-border bg-surface p-6"><p className="text-error">بارگذاری محصولات انجام نشد.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-3 min-h-11 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-60">{isFetching ? "در حال بارگذاری…" : "تلاش دوباره"}</button></div>

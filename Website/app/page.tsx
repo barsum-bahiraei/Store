@@ -19,6 +19,7 @@ export default function Home() {
       <StoreHeader />
       <main className="flex-1">
         <HeroSlider />
+        <FeaturedProducts hasDiscount />
         <FeaturedProducts />
         <ClimbingToolsPromo />
         <BrandShowcase />

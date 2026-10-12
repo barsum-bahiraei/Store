@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { StoreFooter } from "@/features/layout/components/store-footer";
 import { StoreHeader } from "@/features/categories/components/store-header";
 import { StoreLocationMap } from "@/features/layout/components/store-location-map";
 import { NeshanLocationLink } from "@/features/layout/components/neshan-location-link";
+import { socialLinks } from "@/features/layout/utils/social-links";
 
 export const metadata: Metadata = {
   title: "تماس با ما",
   description: "راه‌های ارتباطی با لوازم کمپ و کوه‌نوردی زریوان.",
 };
-
-const socialLinks = [
-  { label: "تلگرام", icon: "send", href: "https://t.me/mohsengolchin" },
-  { label: "اینستاگرام", icon: "photo_camera", href: "https://instagram.com/zaryvan.shop" },
-  { label: "بله", icon: "forum", href: "https://ble.ir/09306815858" },
-] as const;
 
 export default function ContactPage() {
   return (
@@ -39,10 +35,11 @@ export default function ContactPage() {
                 <p className="text-sm font-bold text-accent">راه‌های ارتباطی</p>
                 <h2 className="mt-3 text-2xl font-black sm:text-3xl">ما را در شبکه‌های اجتماعی دنبال کنید</h2>
 
-                <div className="mt-7 grid grid-cols-3 gap-3">
+                <div className="mt-7 grid grid-cols-4 gap-2 sm:gap-3">
                   {socialLinks.map((social) => (
-                    <a key={social.label} href={social.href} target="_blank" rel="noreferrer" aria-label={social.label} title={social.label} className="group flex min-h-24 items-center justify-center rounded-2xl border border-accent/35 bg-background/10 px-2 text-center transition-[transform,background-color,border-color] hover:-translate-y-1 hover:border-accent hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-                      <span className="material-symbols-rounded text-3xl text-accent transition-transform group-hover:scale-110" aria-hidden="true">{social.icon}</span>
+                    <a key={social.label} href={social.href} target="_blank" rel="noreferrer" aria-label={social.label} title={social.label} className="group flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-accent/35 bg-background/10 px-1 py-3 text-center transition-[transform,background-color,border-color] hover:-translate-y-1 hover:border-accent hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                      <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-surface p-2 transition-transform group-hover:scale-110"><Image src={social.image} alt="" width={40} height={40} className="size-9 object-contain" /></span>
+                      <span className="text-xs font-bold">{social.label}</span>
                     </a>
                   ))}
                 </div>
