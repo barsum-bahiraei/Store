@@ -426,9 +426,19 @@ public class InvoiceService(
     private async Task<MellatCallbackOutput> CompletePaymentAsync(PaymentEntity payment,
         CancellationToken cancellation)
     {
+        if (payment.PaymentStatus == PaymentStatusEnum.PaymentCompleted)
+            return SuccessfulCallback(payment.InvoiceId);
+
         payment.PaidAmount ??= payment.Amount;
         payment.VerifiedAt ??= DateTime.UtcNow;
         payment.SettledAt = DateTime.UtcNow;
+        payment.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
+        if (!IsPaidInvoiceStatus(payment.Invoice.PaymentStatus))
+            payment.Invoice.PaymentStatus = PaymentStatusEnum.PaymentCompleted;
+
+        foreach (var item in payment.Invoice.InvoiceItems)
+            item.ProductVariant.Stock = Math.Max(0, item.ProductVariant.Stock - item.ProductCount);
+
         await invoiceRepository.CompletePaymentAsync(payment, cancellation);
         return SuccessfulCallback(payment.InvoiceId);
     }

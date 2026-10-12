@@ -6,10 +6,12 @@ RUN npm ci
 FROM node:24.21.0-alpine AS build
 WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_MINIO_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_MINIO_BASE_URL=$NEXT_PUBLIC_MINIO_BASE_URL
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
-RUN test -n "$NEXT_PUBLIC_API_BASE_URL" && npm run build
+RUN test -n "$NEXT_PUBLIC_API_BASE_URL" && test -n "$NEXT_PUBLIC_MINIO_BASE_URL" && npm run build
 
 FROM node:24.21.0-alpine AS runtime
 WORKDIR /app

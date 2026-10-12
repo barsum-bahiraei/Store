@@ -100,8 +100,8 @@ export function matchVariantBySelection(variants: ProductVariant[], color: strin
 export function getProductImageUrl(url?: string | null) {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://5.10.248.182:8080/api";
-  return `${apiBase.replace(/\/api\/?$/, "")}/${url.replace(/^\//, "")}`;
+  const baseUrl = process.env.NEXT_PUBLIC_MINIO_BASE_URL?.replace(/\/$/, "");
+  return baseUrl ? `${baseUrl}/${url.replace(/^\//, "")}` : null;
 }
 
 export function getProductAttributeUnitLabel(unit: ProductAttributeUnit) {
