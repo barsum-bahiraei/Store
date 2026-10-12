@@ -15,7 +15,9 @@
     "material-symbols": "^0.47.2",
     "next": "16.3.2",
     "react": "19.2.8",
+    "react-date-object": "^2.1.9",
     "react-dom": "19.2.8",
+    "react-multi-date-picker": "^4.5.2",
     "swiper": "^14.2.0",
     "zustand": "^5.0.15"
   },

@@ -10,6 +10,7 @@ import { BookmarkList } from "@/features/bookmarks/components/bookmark-list";
 import { useLogout, useUserProfile } from "../hooks/use-account";
 import { LocationPicker } from "./location-picker";
 import { ProfileEditForm } from "./profile-edit-form";
+import { formatPersianProfileDate } from "../utils/profile-date";
 
 const genderLabels = ["مرد", "زن", "مشخص نشده"];
 
@@ -109,7 +110,7 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
                     <ProfileField icon="mail" label="ایمیل" value={user.email} />
                     <ProfileField icon="phone" label="شماره تلفن" value={user.phoneNumber} />
                     <ProfileField icon="badge" label="کد ملی" value={user.nationalCode} />
-                    <ProfileField icon="cake" label="تاریخ تولد" value={user.birthDate} />
+                    <ProfileField icon="cake" label="تاریخ تولد" value={formatPersianProfileDate(user.birthDate)} />
                     <ProfileField icon="person" label="جنسیت" value={genderLabels[user.gender]} />
                     <ProfileField icon="location_on" label="نشانی" value={user.address} />
                     <ProfileField icon="markunread_mailbox" label="کد پستی" value={user.postalCode} />

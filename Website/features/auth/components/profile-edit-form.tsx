@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useUpdateUserProfile } from "../hooks/use-account";
 import type { AccountUser, Gender } from "../types/account";
 import { LocationPicker } from "./location-picker";
+import { PersianDatePicker } from "./persian-date-picker";
 
 type ProfileEditFormProps = {
   user: AccountUser;
@@ -131,7 +132,7 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
           </div>
           <div>
             <label htmlFor="profile-birth-date" className="text-sm font-bold">تاریخ تولد</label>
-            <input id="profile-birth-date" type="date" value={form.birthDate} onChange={(event) => setForm((current) => ({ ...current, birthDate: event.target.value }))} disabled={updateProfile.isPending} className={inputClassName} />
+            <PersianDatePicker id="profile-birth-date" value={form.birthDate} onChange={(birthDate) => setForm((current) => ({ ...current, birthDate }))} disabled={updateProfile.isPending} className={inputClassName} />
           </div>
           <div>
             <label htmlFor="profile-postal-code" className="inline-flex items-center gap-1 text-sm font-bold">کد پستی <span className="text-error" aria-hidden="true">*</span><span className="sr-only">(الزامی)</span></label>
