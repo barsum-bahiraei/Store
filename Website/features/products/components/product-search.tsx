@@ -204,7 +204,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
         </div>
         <form key={JSON.stringify(filters)} action="/shop" method="get" onPointerDownCapture={(event) => { if (!categoryDropdownRef.current?.contains(event.target as Node)) { setIsCategoryDropdownOpen(false); setOpenCategoryId(null); } }} className="space-y-5">
           {sort !== "priceAsc" && <input type="hidden" name="sort" value={sort} />}
-          <div><label htmlFor="filter-name" className="text-sm font-bold">نام محصول</label><input id="filter-name" name="q" type="search" defaultValue={filters.name} className="mt-2 h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" /></div>
+          {filters.name && <input type="hidden" name="q" value={filters.name} />}
           <fieldset>
             <legend className="text-sm font-bold">دسته‌بندی</legend>
             <input type="hidden" name="category" value={selectedCategoryId} readOnly />
@@ -282,7 +282,7 @@ export function ProductSearch({ filters, sort, showFilters = true }: { filters: 
           : isError && !data ? <div role="alert" className="rounded-xl border border-border bg-surface p-6"><p className="text-error">بارگذاری نتایج جست‌وجو انجام نشد.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-3 min-h-11 rounded-lg bg-primary px-4 font-bold text-primary-foreground disabled:opacity-60">{isFetching ? "در حال بارگذاری…" : "تلاش دوباره"}</button></div>
             : products.length === 0 ? <div className="rounded-2xl border border-accent/65 bg-accent/20 p-8 text-center shadow-lg shadow-primary-shadow backdrop-blur-xl"><span className="material-symbols-rounded text-5xl text-muted-foreground" aria-hidden="true">search_off</span><h3 className="mt-3 text-lg font-black">محصولی پیدا نشد</h3><p className="mt-1 text-sm text-muted-foreground">فیلترها را حذف کنید یا نام دیگری جست‌وجو کنید.</p></div>
               : <>
-                  <div className="grid grid-cols-2 gap-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4 min-[1700px]:grid-cols-5">{products.map((product) => <ProductCard key={product.id} product={product} compactOnMobile />)}</div>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4 min-[1700px]:grid-cols-5">{products.map((product) => <ProductCard key={product.id} product={product} compactOnMobile showAddToCart={false} />)}</div>
                   {isFetchingNextPage && <div role="status" className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground"><span className="material-symbols-rounded animate-spin motion-reduce:animate-none" aria-hidden="true">progress_activity</span>در حال بارگذاری محصولات بیشتر…</div>}
                   {isError && data && <div role="alert" className="mt-6 rounded-xl border border-border bg-surface p-4 text-center"><p className="text-error">بارگذاری محصولات بعدی انجام نشد.</p><button type="button" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} className="mt-3 min-h-11 rounded-lg bg-primary px-4 font-bold text-primary-foreground disabled:opacity-60">تلاش دوباره</button></div>}
                   {hasNextPage && !isError && <div ref={loadMoreRef} className="h-1" aria-hidden="true" />}

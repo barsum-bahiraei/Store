@@ -12,7 +12,7 @@ import {useAuthToken, useUserProfile} from "@/features/auth/hooks/use-account";
 import {isUserRole} from "@/features/auth/types/account";
 import {useCartItemActions} from "@/features/cart/hooks/use-cart";
 
-export function ProductCard({ product, originalAppearance = false, compactOnMobile = false }: { product: ProductSearchItem; originalAppearance?: boolean; compactOnMobile?: boolean }) {
+export function ProductCard({ product, originalAppearance = false, compactOnMobile = false, showAddToCart = true }: { product: ProductSearchItem; originalAppearance?: boolean; compactOnMobile?: boolean; showAddToCart?: boolean }) {
   const router = useRouter();
   const token = useAuthToken();
   const { data: userProfile } = useUserProfile();
@@ -77,8 +77,8 @@ export function ProductCard({ product, originalAppearance = false, compactOnMobi
              </div>
              <span className={`items-center gap-1 text-xs font-bold text-muted-foreground ${compactOnMobile ? "hidden sm:inline-flex" : "inline-flex"}`}><span className="material-symbols-rounded text-base text-warning" aria-hidden="true">star</span>{product.averageRating.toFixed(1)}</span>
            </div>
-          <button type="button" onClick={handleQuickBuy} disabled={!product.isAvailable || isPending} className={`mt-3 inline-flex w-full items-center justify-center rounded-xl border border-primary bg-surface font-black text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-60 ${compactOnMobile ? "min-h-9 gap-1 px-1 text-[11px] sm:min-h-11 sm:gap-2 sm:px-2 sm:text-sm" : "min-h-11 gap-2 text-sm"}`}><span className={`material-symbols-rounded ${compactOnMobile ? "text-lg sm:text-xl" : "text-xl"} ${isPending ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isPending ? "progress_activity" : "shopping_cart"}</span>{isPending ? "در حال افزودن…" : "افزودن به سبد خرید"}</button>
-          {error && <p role="alert" className="mt-2 text-xs text-error">{error.message}</p>}
+          {showAddToCart && <button type="button" onClick={handleQuickBuy} disabled={!product.isAvailable || isPending} className={`mt-3 inline-flex w-full items-center justify-center rounded-xl border border-primary bg-surface font-black text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-60 ${compactOnMobile ? "min-h-9 gap-1 px-1 text-[11px] sm:min-h-11 sm:gap-2 sm:px-2 sm:text-sm" : "min-h-11 gap-2 text-sm"}`}><span className={`material-symbols-rounded ${compactOnMobile ? "text-lg sm:text-xl" : "text-xl"} ${isPending ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true">{isPending ? "progress_activity" : "shopping_cart"}</span>{isPending ? "در حال افزودن…" : "افزودن به سبد خرید"}</button>}
+          {showAddToCart && error && <p role="alert" className="mt-2 text-xs text-error">{error.message}</p>}
         </div>
       </div>
     </article>
