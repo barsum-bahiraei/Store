@@ -58,7 +58,7 @@ function GuestBookmarks() {
 }
 
 function AuthBookmarks() {
-  const { data: bookmarks = [], isLoading, isError, error, refetch, isFetching } = useBookmarks();
+  const { data: bookmarks = [], guestItems, isLoading, isError, error, refetch, isFetching } = useBookmarks();
 
   if (isLoading) return <BookmarkSkeleton />;
 
@@ -68,6 +68,7 @@ function AuthBookmarks() {
         <span className="material-symbols-rounded text-4xl text-error" aria-hidden="true">favorite</span>
         <p className="mt-3 font-black">علاقه‌مندی‌ها بارگذاری نشد</p>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        {guestItems.length > 0 && <p className="mt-2 text-sm text-muted-foreground">علاقه‌مندی‌های منتقل‌نشده در این مرورگر ذخیره هستند. برای انتقال آن‌ها دوباره تلاش کنید.</p>}
         <button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-5 min-h-11 rounded-xl bg-primary px-5 text-sm font-black text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
           {isFetching ? "در حال تلاش…" : "تلاش دوباره"}
         </button>

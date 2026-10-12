@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { CartSession } from "@/features/cart/components/cart-session";
+import { BookmarkSession } from "@/features/bookmarks/components/bookmark-session";
 
 export function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
   const [queryClient] = useState(
@@ -18,5 +19,5 @@ export function Providers({ children }: Readonly<{ children: React.ReactNode }>)
       }),
   );
 
-  return <QueryClientProvider client={queryClient}><CartSession />{children}</QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><CartSession /><BookmarkSession />{children}</QueryClientProvider>;
 }

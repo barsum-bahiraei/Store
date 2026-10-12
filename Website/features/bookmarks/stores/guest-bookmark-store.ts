@@ -13,6 +13,7 @@ type GuestBookmarkState = {
   items: GuestBookmarkItem[];
   isBookmarked: (productId: number) => boolean;
   toggle: (productId: number, name?: string) => void;
+  completeTransfer: (productId: number, addedAt: string) => void;
 };
 
 function validItems(value: unknown): GuestBookmarkItem[] {
@@ -35,6 +36,9 @@ export const useGuestBookmarkStore = create<GuestBookmarkState>()(persist((set, 
     }
     return { items: [...state.items, { productId, name, addedAt: new Date().toISOString() }] };
   }),
+  completeTransfer: (productId, addedAt) => set((state) => ({
+    items: state.items.filter((item) => item.productId !== productId || item.addedAt !== addedAt),
+  })),
 }), {
   name: "store-guest-bookmarks",
   storage: createJSONStorage(() => ({
