@@ -40,7 +40,7 @@ internal class SellerReportingService(
         var output = new SellerDashboardOutput
         {
             TotalSales = totalSales,
-            OrderCount = invoices.Count,
+            OrderCount = successfulInvoices.Count,
             ItemsSoldCount = itemsSoldCount,
             AverageOrderValue = successfulInvoices.Count == 0
                 ? 0

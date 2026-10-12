@@ -31,7 +31,7 @@ export function SalesChartCard({ range, refreshToken }: SalesChartCardProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [mounted, setMounted] = useState(false);
-  const [groupBy, setGroupBy] = useState<SalesChartGroupBy>("Day");
+  const [groupBy, setGroupBy] = useState<SalesChartGroupBy>("Week");
   const [points, setPoints] = useState<SalesChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -168,6 +168,8 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
         CancellationToken cancellation)
     {
         var query = context.Invoices
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(x => x.User)
             .Include(x => x.InvoiceItems)
             .ThenInclude(x => x.Product)

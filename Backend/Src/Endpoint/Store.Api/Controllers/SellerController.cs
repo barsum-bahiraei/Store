@@ -156,6 +156,15 @@ public class SellerController(SellerService sellerService) : ControllerBase
     }
 
     [HasAccess]
+    [HttpGet("Order/{id}")]
+    public async Task<IActionResult> OrderGet(int id, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await sellerService.OrderGetAsync(id, userId, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
     [HttpPut("Order/{id}/Status")]
     public async Task<IActionResult> OrderStatusPut(int id, SellerOrderStatusUpdateInput input,
         CancellationToken cancellation = default)

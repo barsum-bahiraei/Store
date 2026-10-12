@@ -5,7 +5,7 @@ import { useTheme } from "~/contexts/theme-context";
 import {
   canAccessPanel,
 } from "~/features/auth/utils/authorization";
-import loginImage from "~/assets/images/login.png";
+import loginImage from "~/assets/images/login.jpg";
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -57,7 +57,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen lg:h-screen lg:overflow-hidden">
       <button
         onClick={toggleTheme}
         className="fixed left-4 top-4 z-10 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -67,7 +67,7 @@ export default function LoginPage() {
           {theme === "dark" ? "light_mode" : "dark_mode"}
         </span>
       </button>
-      <div className="hidden lg:block lg:w-1/2">
+      <div className="hidden overflow-hidden lg:block lg:w-1/2">
         <div className="relative h-full w-full">
           <img
             src={loginImage}
@@ -78,7 +78,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2">
+      <div className="flex w-full flex-col justify-center overflow-y-auto px-8 py-12 lg:w-1/2">
         <div className="mx-auto w-full max-w-sm">
           <div className="mb-8">
             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">

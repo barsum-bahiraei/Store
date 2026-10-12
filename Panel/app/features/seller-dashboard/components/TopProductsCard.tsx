@@ -13,7 +13,7 @@ interface TopProductsCardProps {
   refreshToken: number;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 export function TopProductsCard({ range, refreshToken }: TopProductsCardProps) {
   const [result, setResult] = useState<PagedResult<TopProductItem> | null>(null);

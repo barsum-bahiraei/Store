@@ -14,9 +14,28 @@ function readTokenCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+function isTokenExpired(token: string): boolean {
+  const payloadPart = token.split(".")[1];
+  if (!payloadPart) return false;
+
+  try {
+    const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const payload = JSON.parse(window.atob(padded)) as { exp?: unknown };
+    return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
-  return readTokenCookie();
+  const token = readTokenCookie();
+  if (token && isTokenExpired(token)) {
+    clearAuthToken();
+    return null;
+  }
+  return token;
 }
 
 export function setAuthToken(token: string): void {

@@ -4,6 +4,7 @@ export interface SellerLocationMapProps {
   latitude: number | null;
   longitude: number | null;
   onChange: (latitude: number, longitude: number) => void;
+  readOnly?: boolean;
 }
 
 export function SellerLocationMap(props: SellerLocationMapProps) {
