@@ -10,7 +10,7 @@ import type {
   ProductUpdateInput,
 } from "../models/product";
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 50;
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : "An unexpected error occurred.";

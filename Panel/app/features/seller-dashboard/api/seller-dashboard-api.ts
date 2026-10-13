@@ -37,7 +37,7 @@ function rangeQuery(range?: SellerDateRange): Record<string, string> {
 function pageQuery(page?: number, pageSize?: number): Record<string, string> {
   return {
     Page: String(page ?? 1),
-    PageSize: String(pageSize ?? 10),
+    PageSize: String(pageSize ?? 50),
   };
 }
 

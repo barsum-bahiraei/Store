@@ -161,53 +161,31 @@ public class ProductService(
         CancellationToken cancellation)
     {
         var entities = await productRepository.ListAsync(userId, input, cancellation);
-        var result = new List<ProductListOutput>();
+        var images = await fileService.MainListAsync(
+            TableNameEnum.Products,
+            TargetNameEnum.ProductId,
+            entities.Items.Select(x => x.Id).ToList(),
+            cancellation);
 
-        foreach (var entity in entities.Items)
+        foreach (var item in entities.Items)
         {
-            var imageResult = await fileService.GetAsync(
-                TableNameEnum.Products,
-                TargetNameEnum.ProductId,
-                entity.Id,
-                cancellation);
-
-            ProductImageListOutput? image = null;
-
-            if (imageResult.Data != null)
+            if (images.TryGetValue(item.Id, out var image))
             {
-                image = new ProductImageListOutput
+                item.Image = new ProductImageListOutput
                 {
-                    Id = imageResult.Data.Id,
-                    Url = imageResult.Data.Url,
-                    IsMain = imageResult.Data.IsMain,
-                    Name = imageResult.Data.Name,
-                    FileType = imageResult.Data.FileType
+                    Id = image.Id,
+                    Url = image.Url,
+                    IsMain = image.IsMain,
+                    Name = image.Name,
+                    FileType = image.FileType
                 };
             }
-
-            result.Add(new ProductListOutput
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                ShortDescription = entity.ShortDescription,
-                Price = GetDisplayPrice(entity),
-                Discount = entity.Discount,
-                CategoryId = entity.CategoryId,
-                CategoryTitle = entity.Category.Name,
-                IsAvailable = IsAvailable(entity),
-                Image = image,
-                Seller = new ProductSellerListOutput
-                {
-                    Id = entity.Seller.Id,
-                    Name = entity.Seller.Name
-                }
-            });
         }
 
         var pageResult = new ProductListPageOutput
         {
             TotalCount = entities.TotalCount,
-            Items = result
+            Items = entities.Items
         };
         return Result<ProductListPageOutput>.Success(pageResult);
     }

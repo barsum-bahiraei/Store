@@ -110,6 +110,39 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         });
     }
 
+    public async Task<Dictionary<int, FileGetOutput>> MainListAsync(
+        TableNameEnum tableName,
+        TargetNameEnum targetName,
+        IReadOnlyCollection<int> targetIds,
+        CancellationToken cancellation)
+    {
+        if (targetIds.Count == 0)
+            return [];
+
+        var entities = await fileRepository.MainListAsync(tableName, targetName, targetIds, cancellation);
+        var result = new Dictionary<int, FileGetOutput>();
+
+        foreach (var entity in entities)
+        {
+            if (result.ContainsKey(entity.TargetId))
+                continue;
+
+            result[entity.TargetId] = new FileGetOutput
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Url = await minioStorage.GetUrlAsync(entity.Url, cancellation),
+                FileType = entity.FileType,
+                TableName = entity.TableName,
+                TargetId = entity.TargetId,
+                TargetName = entity.TargetName,
+                IsMain = entity.IsMain
+            };
+        }
+
+        return result;
+    }
+
     public async Task<Result<List<FileListOutput>>> ListAsync(
         TableNameEnum tableName,
         TargetNameEnum targetName,
