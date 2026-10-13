@@ -8,6 +8,7 @@ import { useCart } from "@/features/cart/hooks/use-cart";
 import { OrdersList } from "@/features/orders/components/completed-purchases";
 import { BookmarkList } from "@/features/bookmarks/components/bookmark-list";
 import { useLogout, useUserProfile } from "../hooks/use-account";
+import { canAccessDashboard } from "../types/account";
 import { LocationPicker } from "./location-picker";
 import { ProfileEditForm } from "./profile-edit-form";
 import { formatPersianProfileDate } from "../utils/profile-date";
@@ -67,6 +68,7 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
                 <span className="material-symbols-rounded" aria-hidden="true">{item.icon}</span>{item.label}
               </Link>
             ))}
+            {cart.isAuthenticated && canAccessDashboard(user) && <a href="https://panel.zaryvan.com" target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-bold text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded" aria-hidden="true">dashboard</span>داشبورد</a>}
             <button type="button" onClick={handleLogout} className="flex min-h-12 items-center gap-3 rounded-lg border-t border-border px-3 text-right text-sm font-bold text-error outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded" aria-hidden="true">logout</span>خروج</button>
           </nav>
           <div className="min-w-0">

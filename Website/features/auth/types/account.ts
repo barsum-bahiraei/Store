@@ -45,6 +45,10 @@ export function isUserRole(user?: AccountUser): boolean {
   return Boolean(user?.roles?.includes(Role.User));
 }
 
+export function canAccessDashboard(user?: AccountUser): boolean {
+  return Boolean(user?.roles?.some((role) => role === Role.Owner || role === Role.Seller));
+}
+
 export type OtpSendInput = {
   phoneNumber: string;
 };

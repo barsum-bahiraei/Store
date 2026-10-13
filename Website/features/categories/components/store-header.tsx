@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
+import { canAccessDashboard } from "@/features/auth/types/account";
 import { useCart } from "@/features/cart/hooks/use-cart";
 import { HeaderBrandsMenu } from "@/features/layout/components/header-brands-menu";
 import { useCategories } from "../hooks/use-categories";
@@ -101,6 +102,7 @@ export function StoreHeader() {
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const { data: user } = useUserProfile();
   const { totalCount: cartCount, isAuthenticated, isError: isCartError } = useCart();
+  const showDashboard = isAuthenticated && canAccessDashboard(user);
   const { data: categories = [], isError, isLoading, refetch } = useCategories();
 
   const closeMenu = useCallback(() => {
@@ -218,6 +220,7 @@ export function StoreHeader() {
           <Link href="/contact" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">تماس با ما</Link>
           <Link href="/cooperation" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">همکاری با ما</Link>
           <Link href="/blog-1/" className="flex min-h-10 items-center rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">مجله زریوان</Link>
+          {showDashboard && <a href="https://panel.zaryvan.com" target="_blank" rel="noopener noreferrer" className="flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80"><span className="material-symbols-rounded text-xl" aria-hidden="true">dashboard</span>داشبورد</a>}
           </div>
         </div>
       </nav>
@@ -259,6 +262,7 @@ export function StoreHeader() {
               {isMobileCategoriesOpen && categoryContent}
               <HeaderBrandsMenu mobile onNavigate={closeMenu} />
               <div className="grid gap-2">
+                {showDashboard && <a href="https://panel.zaryvan.com" target="_blank" rel="noopener noreferrer" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold outline-none transition-colors hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">dashboard</span><span className="flex-1">داشبورد</span></a>}
                 <Link href="/shop" onClick={closeMenu} className="flex min-h-12 items-center gap-2 rounded-lg border border-border px-3 font-bold transition-colors hover:bg-muted hover:text-primary">
                   <span className="material-symbols-rounded shrink-0 text-xl text-primary" aria-hidden="true">storefront</span>
                   <span className="flex-1">همه محصولات</span>
