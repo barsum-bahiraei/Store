@@ -191,7 +191,7 @@ public class AccountService(
         if (created == null)
             return Result<UserOtpSendOutput>.Failure("لطفاً پیش از درخواست مجدد کد تأیید کمی صبر کنید");
 
-        //await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
+        await smsService.SendVerificationCodeAsync(phoneNumber, code, cancellation);
 
         return Result<UserOtpSendOutput>.Success(new UserOtpSendOutput
         {
