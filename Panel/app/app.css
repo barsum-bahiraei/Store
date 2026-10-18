@@ -157,6 +157,18 @@ body {
 }
 
 /* PersianDateTimePicker (react-multi-date-picker) */
+.persian-date-picker-dialog .rmdp-container,
+.persian-date-picker-dialog .rmdp-wrapper,
+.persian-date-picker-dialog .rmdp-calendar,
+.persian-date-picker-dialog .rmdp-day-picker > div {
+  width: 100%;
+}
+
+.persian-date-picker-dialog .rmdp-wrapper {
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .rmdp-container .rmdp-week-day {
   color: #2563eb;
 }

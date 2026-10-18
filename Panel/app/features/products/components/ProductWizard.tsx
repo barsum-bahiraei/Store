@@ -38,6 +38,7 @@ interface VariantValueDraft {
   key: string;
   id?: number;
   size: string;
+  model: string;
   colorName: string;
   colorCode: string;
 }
@@ -52,6 +53,7 @@ interface VariantDraft {
 
 interface VariantValueErrors {
   size?: string;
+  model?: string;
   colorName?: string;
   colorCode?: string;
 }
@@ -86,7 +88,7 @@ function formatPrice(value: number): string {
 }
 
 function createEmptyValue(): VariantValueDraft {
-  return { key: createClientId(), size: "", colorName: "", colorCode: "" };
+  return { key: createClientId(), size: "", model: "", colorName: "", colorCode: "" };
 }
 
 function createEmptyVariant(): VariantDraft {
@@ -110,11 +112,18 @@ function isValidColorCode(value: string): boolean {
 
 function variantComboKey(values: VariantValueDraft[]): string {
   return values
-    .map((value) =>
-      [value.size.trim().toLowerCase(), value.colorName.trim().toLowerCase(), value.colorCode.trim().toLowerCase()].join("|"),
-    )
+    .map((value) => {
+      const parts = [
+        value.size.trim().toLowerCase(),
+        value.colorName.trim().toLowerCase(),
+        value.colorCode.trim().toLowerCase(),
+      ];
+      const model = value.model.trim().toLowerCase();
+      if (model) parts.push(model);
+      return parts.join("\u001f");
+    })
     .sort()
-    .join(";;");
+    .join("\u001e");
 }
 
 interface AttributeValueFieldProps {
@@ -260,7 +269,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
               values: variant.values.map((value) => ({
                 key: createClientId(),
                 id: value.id,
-                size: value.size,
+                size: value.size ?? "",
+                model: value.model ?? "",
                 colorName: value.colorName,
                 colorCode: value.colorCode,
               })),
@@ -340,31 +350,28 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         variantErrors.values = "حداقل یک مقدار برای این تنوع لازم است.";
       }
 
-      const seenSizes = new Set<string>();
+      const seenValues = new Set<string>();
       variant.values.forEach((value) => {
         const valueErrors: VariantValueErrors = {};
         const size = value.size.trim();
+        const model = value.model.trim();
         const colorName = value.colorName.trim();
         const colorCode = value.colorCode.trim();
 
-        if (!size) {
-          valueErrors.size = "سایز را وارد کنید.";
-        } else if (size.length > 50) {
+        if (size.length > 50) {
           valueErrors.size = "سایز نمی‌تواند بیشتر از ۵۰ کاراکتر باشد.";
-        } else {
-          const normalizedSize = size.toLowerCase();
-          if (seenSizes.has(normalizedSize)) {
-            valueErrors.size = "سایز تکراری است.";
-          } else {
-            seenSizes.add(normalizedSize);
-          }
         }
+        if (model.length > 100) valueErrors.model = "مدل نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.";
         if (!colorName) valueErrors.colorName = "نام رنگ را وارد کنید.";
         else if (colorName.length > 100) valueErrors.colorName = "نام رنگ نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.";
         if (!colorCode) valueErrors.colorCode = "کد رنگ را وارد کنید.";
         else if (!isValidColorCode(colorCode)) valueErrors.colorCode = "کد رنگ باید مانند #e11d48 باشد.";
 
-        if (valueErrors.size || valueErrors.colorName || valueErrors.colorCode) {
+        const valueKey = variantComboKey([value]);
+        if (seenValues.has(valueKey)) valueErrors.colorName = "این مقدار تکراری است.";
+        else seenValues.add(valueKey);
+
+        if (valueErrors.size || valueErrors.model || valueErrors.colorName || valueErrors.colorCode) {
           variantErrors.valueErrors[value.key] = valueErrors;
         }
       });
@@ -418,7 +425,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         price: parseNonNegative(variant.price) ?? 0,
         stock: parseNonNegative(variant.stock) ?? 0,
         values: variant.values.map((value) => ({
-          size: value.size.trim(),
+          size: value.size.trim() || null,
+          model: value.model.trim() || null,
           colorName: value.colorName.trim(),
           colorCode: value.colorCode.trim(),
         })),
@@ -534,7 +542,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const updateVariantValue = (
     variantIndex: number,
     valueKey: string,
-    field: "size" | "colorName" | "colorCode",
+    field: "size" | "model" | "colorName" | "colorCode",
     value: string
   ) => {
     setProductVariants((current) =>
@@ -806,7 +814,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                        افزودن تنوع
                      </button>
                    </div>
-                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و مقادیر (سایز، نام رنگ، کد رنگ) هر تنوع را وارد کنید. حداقل یک تنوع با حداقل یک مقدار لازم است. کد رنگ باید مانند #e11d48 باشد.</p>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">قیمت، موجودی و رنگ هر تنوع را وارد کنید. سایز و مدل اختیاری هستند. کد رنگ باید مانند #e11d48 باشد.</p>
 
                     {productVariants.length > 0 && (
                       <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/40">
@@ -892,7 +900,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                  {variant.values.map((value, valueIndex) => {
                                    const valueErrors = variantErrors?.valueErrors[value.key];
                                    return (
-                                      <div key={value.key} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-950 sm:grid-cols-[1fr_1.25fr_1fr_auto] sm:items-start">
+                                       <div key={value.key} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-950 sm:grid-cols-2 sm:items-start xl:grid-cols-[1fr_1.25fr_0.9fr_1fr_auto]">
                                         <div>
                                           <input value={value.colorName} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorName", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="نام رنگ (مثلاً قرمز)" aria-label={`نام رنگ مقدار ${valueIndex + 1}`} disabled={submitting} />
                                           {valueErrors?.colorName && <span role="alert" className={errorTextClasses}>{valueErrors.colorName}</span>}
@@ -911,11 +919,15 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                           </div>
                                           {valueErrors?.colorCode && <span role="alert" className={errorTextClasses}>{valueErrors.colorCode}</span>}
                                         </div>
-                                        <div>
-                                          <input value={value.size} onChange={(event) => updateVariantValue(variantIndex, value.key, "size", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="سایز (مثلاً Size)" aria-label={`سایز مقدار ${valueIndex + 1}`} disabled={submitting} />
-                                          {valueErrors?.size && <span role="alert" className={errorTextClasses}>{valueErrors.size}</span>}
-                                        </div>
-                                       <button type="button" onClick={() => removeVariantValue(variantIndex, value.key)} disabled={submitting} className="flex size-10 shrink-0 items-center justify-center justify-self-end rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30" aria-label={`حذف مقدار ${valueIndex + 1}`}>
+                                         <div>
+                                           <input value={value.size} onChange={(event) => updateVariantValue(variantIndex, value.key, "size", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="سایز (اختیاری)" aria-label={`سایز مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                           {valueErrors?.size && <span role="alert" className={errorTextClasses}>{valueErrors.size}</span>}
+                                         </div>
+                                         <div>
+                                           <input value={value.model} onChange={(event) => updateVariantValue(variantIndex, value.key, "model", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="مدل (اختیاری)" aria-label={`مدل مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                           {valueErrors?.model && <span role="alert" className={errorTextClasses}>{valueErrors.model}</span>}
+                                         </div>
+                                        <button type="button" onClick={() => removeVariantValue(variantIndex, value.key)} disabled={submitting} className="flex size-10 shrink-0 items-center justify-center justify-self-end rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30 sm:col-span-2 xl:col-span-1" aria-label={`حذف مقدار ${valueIndex + 1}`}>
                                          <span className="material-symbols-outlined text-xl">close</span>
                                        </button>
                                      </div>

@@ -227,12 +227,15 @@ public class AccountService(
         // if (isNewUser)
         //     await CreateWelcomeDiscountAsync(user, cancellation);
 
+        var (token, expiresAt) = GenerateToken(user.Id);
+
         return Result<UserOtpVerifyOutput>.Success(new UserOtpVerifyOutput
         {
             Id = user.Id,
             PhoneNumber = user.PhoneNumber,
             IsNewUser = isNewUser,
-            Token = GenerateToken(user.Id)
+            Token = token,
+            ExpiresAt = expiresAt
         });
     }
 
@@ -445,7 +448,7 @@ public class AccountService(
         }
     }
 
-    private string GenerateToken(int id)
+    private (string Token, DateTime ExpiresAt) GenerateToken(int id)
     {
         var claims = new[]
         {
@@ -463,17 +466,19 @@ public class AccountService(
             SecurityAlgorithms.HmacSha256
         );
 
+        var expiresAt = DateTime.UtcNow.AddMinutes(
+            int.Parse(jwt["ExpireMinutes"]!)
+        );
+
         var token = new JwtSecurityToken(
             issuer: jwt["Issuer"],
             audience: jwt["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                int.Parse(jwt["ExpireMinutes"]!)
-            ),
+            expires: expiresAt,
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
 
     private async Task<(List<UserEntity> Users, string? Error)> GetDiscountCodeUsersAsync(

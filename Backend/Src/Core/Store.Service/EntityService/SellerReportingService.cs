@@ -130,8 +130,8 @@ internal class SellerReportingService(
                 UnitsSold = group.Sum(x => x.ProductCount),
                 SalesAmount = group.Sum(x => x.Sales)
             })
-            .OrderByDescending(x => x.SalesAmount)
-            .ThenByDescending(x => x.UnitsSold)
+            .OrderByDescending(x => x.UnitsSold)
+            .ThenByDescending(x => x.SalesAmount)
             .ThenBy(x => x.ProductId)
             .ToList();
 
@@ -195,6 +195,7 @@ internal class SellerReportingService(
                         {
                             Id = x.Id,
                             Size = x.Size,
+                            Model = x.Model,
                             ColorName = x.ColorName,
                             ColorCode = x.ColorCode
                         }).ToList(),
@@ -285,6 +286,7 @@ internal class SellerReportingService(
                         {
                             Id = value.Id,
                             Size = value.Size,
+                            Model = value.Model,
                             ColorName = value.ColorName,
                             ColorCode = value.ColorCode
                         }).ToList(),

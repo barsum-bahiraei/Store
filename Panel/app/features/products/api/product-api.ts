@@ -10,6 +10,8 @@ import type {
   ProductImageUploadInput,
   ProductListPage,
   ProductListParams,
+  ProductPricePercentageUpdateInput,
+  ProductPricePercentageUpdateOutput,
   ProductUpdateInput,
   ProductUpdateOutput,
 } from "../models/product";
@@ -25,6 +27,7 @@ export const productApi = {
     };
     if (params?.name) query.name = params.name;
     if (params?.categoryId) query.categoryId = String(params.categoryId);
+    if (params?.productBrandId) query.productBrandId = String(params.productBrandId);
     if (params?.sellerId) query.sellerId = String(params.sellerId);
     if (params?.minPrice != null) query.minPrice = String(params.minPrice);
     if (params?.maxPrice != null) query.maxPrice = String(params.maxPrice);
@@ -34,6 +37,16 @@ export const productApi = {
       const { data } = await httpClient.get<ApiResult<ProductListPage>>("/api/Product", { params: query });
       return resolveResult(data, "Failed to load products");
     });
+  },
+
+  async updatePricesByPercentage(
+    input: ProductPricePercentageUpdateInput
+  ): Promise<ProductPricePercentageUpdateOutput> {
+    const { data } = await httpClient.put<ApiResult<ProductPricePercentageUpdateOutput>>(
+      "/api/Product/Prices/Percentage",
+      input
+    );
+    return resolveResult(data, "Failed to update product prices");
   },
 
   async create(input: ProductCreateInput): Promise<ProductCreateOutput> {

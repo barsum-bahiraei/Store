@@ -191,6 +191,7 @@ internal class CartService(
             {
                 Id = x.Id,
                 Size = x.Size,
+                Model = x.Model,
                 ColorName = x.ColorName,
                 ColorCode = x.ColorCode
             }).ToList()

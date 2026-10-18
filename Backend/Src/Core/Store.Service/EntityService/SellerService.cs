@@ -273,6 +273,7 @@ public class SellerService(
                     {
                         Id = value.Id,
                         Size = value.Size,
+                        Model = value.Model,
                         ColorName = value.ColorName,
                         ColorCode = value.ColorCode
                     }).ToList()

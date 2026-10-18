@@ -17,7 +17,14 @@ const DEFAULT_PAGE_SIZE = 50;
 
 export function formatVariantValues(values: VariantValueOutput[]): string {
   if (!values?.length) return "—";
-  return values.map((value) => `${value.size}: ${value.colorName || value.colorCode}`).join(" / ");
+  const labels = values.map((value) => {
+    const size = value.size?.trim();
+    const color = value.colorName?.trim() || value.colorCode?.trim();
+    const model = value.model?.trim();
+    const previousLabel = size && color ? `${size}: ${color}` : size || color;
+    return [previousLabel, model ? `مدل: ${model}` : null].filter(Boolean).join("، ");
+  }).filter(Boolean);
+  return labels.join(" / ") || "—";
 }
 
 export function TopVariantsCard({ range, refreshToken }: TopVariantsCardProps) {

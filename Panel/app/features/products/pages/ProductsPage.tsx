@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { Pagination } from "~/components/common/Pagination";
+import { brandApi } from "~/features/brands/api/brand-api";
+import type { Brand } from "~/features/brands/models/brand";
 import { categoryApi } from "~/features/categories/api/category-api";
 import type { CategoryListOutput } from "~/features/categories/models/output/category-list-output";
 import { sellerApi } from "~/features/sellers/api/seller-api";
@@ -18,27 +20,35 @@ function formatPrice(value: number): string {
 }
 
 export default function ProductsPage() {
-  const { products, totalCount, page, pageSize, loading, submitting, error, fetchProducts, deleteProduct } =
+  const { products, totalCount, page, pageSize, lastParams, loading, submitting, error, fetchProducts, deleteProduct, updatePricesByPercentage } =
     useProductStore();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductListOutput | null>(null);
-  const [confirmData, setConfirmData] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
+  const [confirmData, setConfirmData] = useState<{ title: string; message: string; confirmLabel?: string; danger?: boolean; onConfirm: () => void } | null>(null);
+  const [priceModalOpen, setPriceModalOpen] = useState(false);
+  const [pricePercentage, setPricePercentage] = useState("");
+  const [priceIsIncrease, setPriceIsIncrease] = useState(true);
+  const [priceValidationError, setPriceValidationError] = useState<string | null>(null);
+  const [priceUpdateMessage, setPriceUpdateMessage] = useState<string | null>(null);
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [filterCategoryId, setFilterCategoryId] = useState<number | "">("");
+  const [filterProductBrandId, setFilterProductBrandId] = useState<number | "">("");
   const [filterSellerId, setFilterSellerId] = useState<number | "">("");
   const [filterMinPrice, setFilterMinPrice] = useState("");
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
   const [filterIsAvailable, setFilterIsAvailable] = useState<string>("");
 
   const [categories, setCategories] = useState<CategoryListOutput[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [sellers, setSellers] = useState<SellerListOutput[]>([]);
 
   const buildParams = (): ProductListParams => {
     const params: ProductListParams = {};
     if (filterName.trim()) params.name = filterName.trim();
     if (filterCategoryId !== "") params.categoryId = filterCategoryId;
+    if (filterProductBrandId !== "") params.productBrandId = filterProductBrandId;
     if (filterSellerId !== "") params.sellerId = filterSellerId;
     if (filterMinPrice !== "") params.minPrice = Number(filterMinPrice);
     if (filterMaxPrice !== "") params.maxPrice = Number(filterMaxPrice);
@@ -53,11 +63,60 @@ export default function ProductsPage() {
   const clearFilters = () => {
     setFilterName("");
     setFilterCategoryId("");
+    setFilterProductBrandId("");
     setFilterSellerId("");
     setFilterMinPrice("");
     setFilterMaxPrice("");
     setFilterIsAvailable("");
     void fetchProducts({ page: 1, pageSize });
+  };
+
+  const openPriceModal = () => {
+    setPricePercentage("");
+    setPriceIsIncrease(true);
+    setPriceValidationError(null);
+    setPriceUpdateMessage(null);
+    setPriceModalOpen(true);
+  };
+
+  const runPriceUpdate = async (percentage: number, isIncrease: boolean) => {
+    const filters = { ...lastParams };
+    delete filters.page;
+    delete filters.pageSize;
+
+    try {
+      const result = await updatePricesByPercentage({ ...filters, percentage, isIncrease, expectedProductCount: totalCount });
+      setPriceUpdateMessage(
+        `قیمت ${new Intl.NumberFormat("fa-IR").format(result.variantCount)} تنوع از ${new Intl.NumberFormat("fa-IR").format(result.productCount)} محصول با موفقیت به‌روزرسانی شد.`
+      );
+    } catch {
+      // Store exposes the request error in the page error alert.
+    }
+  };
+
+  const requestPriceUpdateConfirmation = () => {
+    const percentage = Number(pricePercentage);
+    if (!Number.isFinite(percentage) || percentage < 1 || percentage > 100) {
+      setPriceValidationError("درصد باید عددی بین ۱ تا ۱۰۰ باشد.");
+      return;
+    }
+    if (totalCount === 0) {
+      setPriceValidationError("محصولی برای تغییر قیمت وجود ندارد.");
+      return;
+    }
+
+    const operation = priceIsIncrease ? "افزایش" : "کاهش";
+    setPriceModalOpen(false);
+    setConfirmData({
+      title: `${operation} گروهی قیمت‌ها`,
+      message: `قیمت تمام تنوع‌های ${new Intl.NumberFormat("fa-IR").format(totalCount)} محصولی که اکنون در نتیجه فیلترها قرار دارند، ${new Intl.NumberFormat("fa-IR").format(percentage)} درصد ${operation} پیدا می‌کند. آیا مطمئن هستید؟`,
+      confirmLabel: `بله، ${operation} بده`,
+      danger: !priceIsIncrease,
+      onConfirm: () => {
+        setConfirmData(null);
+        void runPriceUpdate(percentage, priceIsIncrease);
+      },
+    });
   };
 
   const changePage = (nextPage: number) => {
@@ -74,14 +133,22 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (filterOpen) {
-      Promise.all([categoryApi.list(), sellerApi.list()]).then(([cats, sells]) => {
+      Promise.all([categoryApi.list(), brandApi.list(), sellerApi.list()]).then(([cats, brandItems, sells]) => {
         setCategories(cats);
+        setBrands(brandItems);
         setSellers(sells);
       });
     }
   }, [filterOpen]);
 
-  const hasActiveFilters = filterName || filterCategoryId !== "" || filterSellerId !== "" || filterMinPrice || filterMaxPrice || filterIsAvailable !== "";
+  const hasActiveFilters = filterName || filterCategoryId !== "" || filterProductBrandId !== "" || filterSellerId !== "" || filterMinPrice || filterMaxPrice || filterIsAvailable !== "";
+
+  const pricePercentageValue = Number(pricePercentage);
+  const canApplyPrice =
+    pricePercentage.trim() !== "" &&
+    Number.isFinite(pricePercentageValue) &&
+    pricePercentageValue >= 1 &&
+    pricePercentageValue <= 100;
 
   const completeWizard = () => {
     setWizardOpen(false);
@@ -105,13 +172,22 @@ export default function ProductsPage() {
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <button
             onClick={() => setFilterOpen((prev) => !prev)}
-            className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors ${filterOpen || hasActiveFilters ? "border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"}`}
+            className={`order-3 col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors sm:order-1 sm:col-span-1 ${filterOpen || hasActiveFilters ? "border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"}`}
           >
             <span className="material-symbols-outlined text-xl">filter_list</span>
             فیلتر
             {hasActiveFilters && <span className="size-2 rounded-full bg-primary-500"></span>}
           </button>
-          <button onClick={() => setWizardOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
+          <button
+            type="button"
+            onClick={openPriceModal}
+            disabled={loading || submitting || totalCount === 0}
+            className="order-1 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-primary-300 bg-white px-4 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-700 dark:bg-gray-950 dark:text-primary-300 dark:hover:bg-primary-950/30 sm:order-2"
+          >
+            <span className="material-symbols-outlined text-xl">price_change</span>
+            تغییر گروهی قیمت
+          </button>
+          <button onClick={() => setWizardOpen(true)} className="order-2 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 sm:order-3">
             <span className="material-symbols-outlined text-[20px]">add</span>محصول جدید
           </button>
         </div>
@@ -130,6 +206,15 @@ export default function ProductsPage() {
                 <option value="">همه دسته‌بندی‌ها</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">برند</span>
+              <select value={filterProductBrandId} onChange={(e) => setFilterProductBrandId(e.target.value ? Number(e.target.value) : "")} className={inputClasses}>
+                <option value="">همه برندها</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>{brand.name}</option>
                 ))}
               </select>
             </label>
@@ -176,6 +261,13 @@ export default function ProductsPage() {
         <div className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300" role="alert">
           <span className="flex items-start gap-2"><span className="material-symbols-outlined text-[20px]">error</span>{error}</span>
           <button onClick={() => void fetchProducts({ ...buildParams(), page })} className="shrink-0 font-semibold hover:underline">تلاش مجدد</button>
+        </div>
+      )}
+
+      {priceUpdateMessage && (
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-300" role="status">
+          <span className="flex items-start gap-2"><span className="material-symbols-outlined text-[20px]">check_circle</span>{priceUpdateMessage}</span>
+          <button type="button" onClick={() => setPriceUpdateMessage(null)} className="shrink-0" aria-label="بستن پیام"><span className="material-symbols-outlined text-lg">close</span></button>
         </div>
       )}
 
@@ -283,12 +375,54 @@ export default function ProductsPage() {
         />
       </section>
 
+      {priceModalOpen && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="price-update-title" onMouseDown={() => setPriceModalOpen(false)}>
+          <form onSubmit={(event) => { event.preventDefault(); requestPriceUpdateConfirmation(); }} onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="border-b border-gray-200 px-6 py-5 dark:border-gray-800">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 id="price-update-title" className="text-lg font-semibold text-gray-900 dark:text-white">تغییر گروهی قیمت</h2>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">این عملیات روی تمام {new Intl.NumberFormat("fa-IR").format(totalCount)} محصول نتیجه فعلی انجام می‌شود.</p>
+                </div>
+                <button type="button" onClick={() => setPriceModalOpen(false)} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="بستن">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            </div>
+            <div className="space-y-5 px-6 py-5">
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">نوع تغییر</legend>
+                <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+                  <button type="button" onClick={() => setPriceIsIncrease(true)} className={`min-h-11 rounded-lg px-3 text-sm font-semibold transition-colors ${priceIsIncrease ? "bg-white text-green-700 shadow-sm dark:bg-gray-950 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>افزایش قیمت</button>
+                  <button type="button" onClick={() => setPriceIsIncrease(false)} className={`min-h-11 rounded-lg px-3 text-sm font-semibold transition-colors ${!priceIsIncrease ? "bg-white text-red-700 shadow-sm dark:bg-gray-950 dark:text-red-400" : "text-gray-500 dark:text-gray-400"}`}>کاهش قیمت</button>
+                </div>
+              </fieldset>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">درصد تغییر</span>
+                <div className="relative">
+                  <input autoFocus type="number" min="1" max="100" step="0.01" inputMode="decimal" value={pricePercentage} onChange={(event) => { const value = event.target.value; setPricePercentage(value !== "" && Number(value) > 100 ? "100" : value); setPriceValidationError(null); }} placeholder="مثلاً ۱۰" className={`${inputClasses} pl-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`} aria-describedby={priceValidationError ? "price-percentage-error" : undefined} />
+                  <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm font-semibold text-gray-400">٪</span>
+                </div>
+                {priceValidationError && <span id="price-percentage-error" role="alert" className="mt-1.5 block text-xs font-medium text-red-600 dark:text-red-400">{priceValidationError}</span>}
+              </label>
+              <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">قیمت تمام تنوع‌های محصولات منطبق تغییر می‌کند؛ نه فقط محصولات صفحه فعلی.</p>
+            </div>
+            <div className="flex gap-3 border-t border-gray-200 px-6 py-4 dark:border-gray-800">
+              <button type="submit" disabled={submitting || !canApplyPrice} className="min-h-11 flex-1 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">اعمال</button>
+              <button type="button" onClick={() => setPriceModalOpen(false)} className="min-h-11 flex-1 rounded-xl border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">لغو</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {wizardOpen && <ProductWizard product={editingProduct ?? undefined} onClose={closeWizard} onComplete={completeWizard} />}
 
       <ConfirmDialog
         open={confirmData !== null}
         title={confirmData?.title ?? ""}
         message={confirmData?.message ?? ""}
+        confirmLabel={confirmData?.confirmLabel}
+        danger={confirmData?.danger}
         onConfirm={() => confirmData?.onConfirm()}
         onCancel={() => setConfirmData(null)}
       />

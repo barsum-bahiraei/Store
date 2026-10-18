@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const verifyOtp = async (phoneNumber: string, code: string) => {
-    const { token } = await authApi.verifyOtp({ phoneNumber, code });
-    setAuthToken(token);
+    const { token, expiresAt } = await authApi.verifyOtp({ phoneNumber, code });
+    setAuthToken(token, expiresAt);
     try {
       const user = await authApi.profile();
       setCurrentUser(user);

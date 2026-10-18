@@ -14,34 +14,51 @@ function readTokenCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function isTokenExpired(token: string): boolean {
+export function getAuthTokenExpiresAt(token: string): number | null {
   const payloadPart = token.split(".")[1];
-  if (!payloadPart) return false;
+  if (!payloadPart) return null;
 
   try {
     const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
     const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
     const payload = JSON.parse(window.atob(padded)) as { exp?: unknown };
-    return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now();
+    return typeof payload.exp === "number" && Number.isFinite(payload.exp)
+      ? payload.exp * 1000
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
   const token = readTokenCookie();
-  if (token && isTokenExpired(token)) {
+  const expiresAt = token ? getAuthTokenExpiresAt(token) : null;
+  if (token && expiresAt !== null && expiresAt <= Date.now()) {
     clearAuthToken();
     return null;
   }
   return token;
 }
 
-export function setAuthToken(token: string): void {
+export function clearAuthTokenIfExpired(): void {
   if (typeof window === "undefined") return;
+  const token = readTokenCookie();
+  if (!token) return;
+  const expiresAt = getAuthTokenExpiresAt(token);
+  if (expiresAt !== null && expiresAt <= Date.now()) clearAuthToken();
+}
+
+export function setAuthToken(token: string, expiresAt?: string): void {
+  if (typeof window === "undefined") return;
+  const provided = expiresAt ? new Date(expiresAt).getTime() : Number.NaN;
+  const expiresAtMs = Number.isFinite(provided) ? provided : getAuthTokenExpiresAt(token);
+  const maxAge = expiresAtMs === null
+    ? COOKIE_MAX_AGE_SECONDS
+    : Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+  const expires = expiresAtMs === null ? "" : `; expires=${new Date(expiresAtMs).toUTCString()}`;
   document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
-  document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax${SHARED_COOKIE_ATTRIBUTES}`;
+  document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${maxAge}${expires}; samesite=lax${SHARED_COOKIE_ATTRIBUTES}`;
 }
 
 export function clearAuthToken(): void {

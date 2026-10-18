@@ -190,6 +190,28 @@ public class ProductService(
         return Result<ProductListPageOutput>.Success(pageResult);
     }
 
+    public async Task<Result<ProductPricePercentageUpdateOutput>> UpdatePricesByPercentageAsync(int userId,
+        ProductPricePercentageUpdateInput input, CancellationToken cancellation)
+    {
+        if (input.Percentage is < 1 or > 100)
+            return Result<ProductPricePercentageUpdateOutput>.Failure("درصد باید عددی بین ۱ تا ۱۰۰ باشد");
+        if (!input.IsIncrease.HasValue)
+            return Result<ProductPricePercentageUpdateOutput>.Failure("نوع تغییر قیمت باید مشخص شود");
+        if (input.ExpectedProductCount < 1)
+            return Result<ProductPricePercentageUpdateOutput>.Failure("تعداد محصولات انتخاب‌شده نامعتبر است");
+
+        var updated = await productRepository.UpdatePricesByPercentageAsync(userId, input, cancellation);
+        if (!updated.IsCountMatch)
+            return Result<ProductPricePercentageUpdateOutput>.Failure(
+                $"تعداد محصولات از {input.ExpectedProductCount} به {updated.ProductCount} تغییر کرده است؛ فهرست را به‌روزرسانی و دوباره تلاش کنید");
+
+        return Result<ProductPricePercentageUpdateOutput>.Success(new ProductPricePercentageUpdateOutput
+        {
+            ProductCount = updated.ProductCount,
+            VariantCount = updated.VariantCount
+        });
+    }
+
     public async Task<Result<ProductSearchOutput>> SearchAsync(ProductSearchInput input,
         CancellationToken cancellation)
     {
@@ -517,6 +539,7 @@ public class ProductService(
             x.Stock,
             x.Values?.Select(value => new ProductVariantAttributeValueData(
                 value.Size,
+                value.Model,
                 value.ColorName,
                 value.ColorCode)).ToList() ?? [])).ToList() ?? [];
         var validationError = ValidateCombinations(combinations);
@@ -547,7 +570,8 @@ public class ProductService(
                 CombinationKey = CreateCombinationKey(x.Values),
                 AttributeValues = x.Values.Select(value => new ProductVariantAttributeValueEntity
                 {
-                    Size = value.Size.Trim(),
+                    Size = NormalizeOptional(value.Size),
+                    Model = NormalizeOptional(value.Model),
                     ColorName = value.ColorName.Trim(),
                     ColorCode = value.ColorCode.Trim()
                 }).ToList()
@@ -598,6 +622,7 @@ public class ProductService(
             x.Stock,
             x.Values?.Select(value => new ProductVariantAttributeValueData(
                 value.Size,
+                value.Model,
                 value.ColorName,
                 value.ColorCode)).ToList() ?? [])).ToList() ?? [];
         var validationError = ValidateCombinations(combinations);
@@ -649,7 +674,8 @@ public class ProductService(
             foreach (var value in item.Values)
                 existing.AttributeValues.Add(new ProductVariantAttributeValueEntity
                 {
-                    Size = value.Size.Trim(),
+                    Size = NormalizeOptional(value.Size),
+                    Model = NormalizeOptional(value.Model),
                     ColorName = value.ColorName.Trim(),
                     ColorCode = value.ColorCode.Trim()
                 });
@@ -663,7 +689,8 @@ public class ProductService(
                 CombinationKey = CreateCombinationKey(item.Values),
                 AttributeValues = item.Values.Select(value => new ProductVariantAttributeValueEntity
                 {
-                    Size = value.Size.Trim(),
+                    Size = NormalizeOptional(value.Size),
+                    Model = NormalizeOptional(value.Model),
                     ColorName = value.ColorName.Trim(),
                     ColorCode = value.ColorCode.Trim()
                 }).ToList()
@@ -744,17 +771,18 @@ public class ProductService(
             return "موجودی تنوع محصول نمی‌تواند منفی باشد";
 
         if (combinations.Any(x => x.Values.Count == 0 || x.Values.Any(value =>
-                string.IsNullOrWhiteSpace(value.Size) || value.Size.Trim().Length > 50 ||
+                NormalizeOptional(value.Size)?.Length > 50 ||
+                NormalizeOptional(value.Model)?.Length > 100 ||
                 string.IsNullOrWhiteSpace(value.ColorName) || value.ColorName.Trim().Length > 100 ||
                 string.IsNullOrWhiteSpace(value.ColorCode) || value.ColorCode.Trim().Length > 32 ||
                 !Regex.IsMatch(value.ColorCode.Trim(), "^#[0-9a-fA-F]{6}$"))))
             return "مقادیر تنوع محصول نامعتبر هستند";
 
         if (combinations.Any(combination => combination.Values
-                .Select(value => value.Size.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(CreateCombinationValueKey)
+                .Distinct(StringComparer.Ordinal)
                 .Count() != combination.Values.Count))
-            return "یک تنوع محصول نمی‌تواند چند مقدار از یک نوع یکسان داشته باشد";
+            return "یک تنوع محصول نمی‌تواند مقدار تکراری داشته باشد";
 
         var keys = combinations.Select(x => CreateCombinationKey(x.Values)).ToList();
         if (keys.Any(x => x.Length > 500))
@@ -768,11 +796,25 @@ public class ProductService(
 
     private static string CreateCombinationKey(IEnumerable<ProductVariantAttributeValueData> values) =>
         string.Join("\u001e", values
-            .Select(value => string.Join("\u001f",
-                value.Size.Trim().ToLowerInvariant(),
-                value.ColorName.Trim().ToLowerInvariant(),
-                value.ColorCode.Trim().ToLowerInvariant()))
+            .Select(CreateCombinationValueKey)
             .OrderBy(value => value, StringComparer.Ordinal));
+
+    private static string CreateCombinationValueKey(ProductVariantAttributeValueData value)
+    {
+        var parts = new List<string>
+        {
+            NormalizeOptional(value.Size)?.ToLowerInvariant() ?? string.Empty,
+            value.ColorName.Trim().ToLowerInvariant(),
+            value.ColorCode.Trim().ToLowerInvariant()
+        };
+        var model = NormalizeOptional(value.Model);
+        if (model != null)
+            parts.Add(model.ToLowerInvariant());
+        return string.Join("\u001f", parts);
+    }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static decimal GetDisplayPrice(ProductEntity product)
     {
@@ -798,6 +840,7 @@ public class ProductService(
             {
                 Id = x.Id,
                 Size = x.Size,
+                Model = x.Model,
                 ColorName = x.ColorName,
                 ColorCode = x.ColorCode
             }).ToList()
@@ -809,5 +852,9 @@ public class ProductService(
         int Stock,
         List<ProductVariantAttributeValueData> Values);
 
-    private sealed record ProductVariantAttributeValueData(string Size, string ColorName, string ColorCode);
+    private sealed record ProductVariantAttributeValueData(
+        string? Size,
+        string? Model,
+        string ColorName,
+        string ColorCode);
 }

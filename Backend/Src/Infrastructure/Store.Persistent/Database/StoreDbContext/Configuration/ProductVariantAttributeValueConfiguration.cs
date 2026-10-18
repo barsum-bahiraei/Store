@@ -9,7 +9,8 @@ public class ProductVariantAttributeValueConfiguration : IEntityTypeConfiguratio
     public void Configure(EntityTypeBuilder<ProductVariantAttributeValueEntity> builder)
     {
         builder.ToTable("ProductVariantAttributeValues");
-        builder.Property(x => x.Size).IsRequired().HasMaxLength(50);
+        builder.Property(x => x.Size).HasMaxLength(50);
+        builder.Property(x => x.Model).HasMaxLength(100);
         builder.Property(x => x.ColorName).IsRequired().HasMaxLength(100);
         builder.Property(x => x.ColorCode).IsRequired().HasMaxLength(32);
 
@@ -18,6 +19,8 @@ public class ProductVariantAttributeValueConfiguration : IEntityTypeConfiguratio
             .HasForeignKey(x => x.ProductVariantId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => new { x.ProductVariantId, x.Size }).IsUnique();
+        builder.HasIndex(x => new { x.ProductVariantId, x.Size, x.Model, x.ColorName, x.ColorCode })
+            .IsUnique()
+            .AreNullsDistinct(false);
     }
 }

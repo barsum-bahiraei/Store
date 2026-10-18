@@ -82,6 +82,16 @@ public class ProductController(ProductService productService) : ControllerBase
     }
 
     [HasAccess]
+    [HttpPut("Prices/Percentage")]
+    public async Task<IActionResult> Put(ProductPricePercentageUpdateInput input,
+        CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await productService.UpdatePricesByPercentageAsync(userId, input, cancellation);
+        return Ok(result);
+    }
+
+    [HasAccess]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellation = default)
     {
