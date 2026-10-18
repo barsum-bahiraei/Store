@@ -4,6 +4,8 @@ public interface IFileRepository
 {
     Task<List<FileEntity>> ListAsync(TableNameEnum tableName, TargetNameEnum targetName, int targetId, CancellationToken cancellationToken);
     Task<FileEntity?> GetAsync(TableNameEnum tableName, TargetNameEnum targetName, int targetId, CancellationToken cancellationToken);
+    Task<List<FileEntity>> MainListAsync(TableNameEnum tableName, TargetNameEnum targetName,
+        IReadOnlyCollection<int> targetIds, CancellationToken cancellationToken);
     Task<FileEntity?> GetAsync(int id, CancellationToken cancellationToken);
     Task<FileEntity> CreateAsync(FileEntity input, CancellationToken cancellationToken);
     Task<FileEntity> UpdateAsync(FileEntity input, CancellationToken cancellationToken);

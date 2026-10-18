@@ -1,10 +1,11 @@
 using Store.Domain.Products.Models.Input;
+using Store.Domain.Products.Models.Output;
 
 namespace Store.Domain.Products;
 
 public interface IProductRepository
 {
-    Task<(List<ProductEntity> Items, int TotalCount)> ListAsync(int userId, ProductListInput input,
+    Task<(List<ProductListOutput> Items, int TotalCount)> ListAsync(int userId, ProductListInput input,
         CancellationToken cancellation);
     Task<List<ProductEntity>> SellerProductListAsync(int userId, CancellationToken cancellation);
     Task<(List<ProductEntity> Items, int TotalCount)> SearchAsync(ProductSearchInput input,

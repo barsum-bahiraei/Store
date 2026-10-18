@@ -47,7 +47,7 @@ export default function ProductsPage() {
   };
 
   const applyFilters = () => {
-    void fetchProducts({ ...buildParams(), page: 1 });
+    void fetchProducts({ ...buildParams(), page: 1, pageSize });
   };
 
   const clearFilters = () => {
@@ -57,11 +57,15 @@ export default function ProductsPage() {
     setFilterMinPrice("");
     setFilterMaxPrice("");
     setFilterIsAvailable("");
-    void fetchProducts({ page: 1 });
+    void fetchProducts({ page: 1, pageSize });
   };
 
   const changePage = (nextPage: number) => {
-    void fetchProducts({ ...buildParams(), page: nextPage });
+    void fetchProducts({ ...buildParams(), page: nextPage, pageSize });
+  };
+
+  const changePageSize = (nextPageSize: number) => {
+    void fetchProducts({ ...buildParams(), page: 1, pageSize: nextPageSize });
   };
 
   useEffect(() => {
@@ -82,7 +86,7 @@ export default function ProductsPage() {
   const completeWizard = () => {
     setWizardOpen(false);
     setEditingProduct(null);
-    void fetchProducts({ ...buildParams(), page });
+    void fetchProducts({ ...buildParams(), page, pageSize });
   };
 
   const closeWizard = () => {
@@ -275,6 +279,7 @@ export default function ProductsPage() {
           totalCount={totalCount}
           loading={loading}
           onPageChange={changePage}
+          onPageSizeChange={changePageSize}
         />
       </section>
 

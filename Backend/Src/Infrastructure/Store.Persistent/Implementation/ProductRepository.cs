@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Store.Domain.Products;
 using Store.Domain.Products.Models.Input;
+using Store.Domain.Products.Models.Output;
 using Store.Persistent.Database.StoreDbContext;
 
 namespace Store.Persistent.Implementation;
 
 public class ProductRepository(StoreDbContext context) : IProductRepository
 {
-    public async Task<(List<ProductEntity> Items, int TotalCount)> ListAsync(int userId, ProductListInput input,
+    public async Task<(List<ProductListOutput> Items, int TotalCount)> ListAsync(int userId, ProductListInput input,
         CancellationToken cancellation)
     {
         var query = context.Products
@@ -39,12 +40,28 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
         var pageSize = Math.Clamp(input.PageSize, 1, 100);
 
         var result = await query
-            .Include(x => x.Category)
-            .Include(x => x.Seller)
-            .Include(x => x.ProductVariants)
             .OrderByDescending(x => x.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(x => new ProductListOutput
+            {
+                Id = x.Id,
+                Name = x.Name,
+                ShortDescription = x.ShortDescription,
+                Price = x.ProductVariants
+                            .Where(v => v.Stock > 0)
+                            .Min(v => (decimal?)v.Price) ??
+                        x.ProductVariants.Min(v => (decimal?)v.Price) ?? 0,
+                Discount = x.Discount,
+                CategoryId = x.CategoryId,
+                CategoryTitle = x.Category.Name,
+                IsAvailable = x.ProductVariants.Any(v => v.Stock > 0),
+                Seller = new ProductSellerListOutput
+                {
+                    Id = x.Seller.Id,
+                    Name = x.Seller.Name
+                }
+            })
             .ToListAsync(cancellation);
         return (result, totalCount);
     }

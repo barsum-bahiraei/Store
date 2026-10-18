@@ -13,11 +13,12 @@ interface TopProductsCardProps {
   refreshToken: number;
 }
 
-const PAGE_SIZE = 5;
+const DEFAULT_PAGE_SIZE = 50;
 
 export function TopProductsCard({ range, refreshToken }: TopProductsCardProps) {
   const [result, setResult] = useState<PagedResult<TopProductItem> | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +26,7 @@ export function TopProductsCard({ range, refreshToken }: TopProductsCardProps) {
     setLoading(true);
     setError(null);
     try {
-      setResult(await sellerDashboardApi.getTopProducts(range, targetPage, PAGE_SIZE));
+      setResult(await sellerDashboardApi.getTopProducts(range, targetPage, pageSize));
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     } finally {
@@ -36,7 +37,7 @@ export function TopProductsCard({ range, refreshToken }: TopProductsCardProps) {
   useEffect(() => {
     setPage(1);
     void load(1);
-  }, [range.from, range.to, refreshToken]);
+  }, [range.from, range.to, refreshToken, pageSize]);
 
   const handlePageChange = (nextPage: number) => {
     setPage(nextPage);
@@ -86,10 +87,11 @@ export function TopProductsCard({ range, refreshToken }: TopProductsCardProps) {
           </ul>
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             totalCount={result?.totalCount ?? 0}
             loading={loading}
             onPageChange={handlePageChange}
+            onPageSizeChange={setPageSize}
           />
         </>
       )}

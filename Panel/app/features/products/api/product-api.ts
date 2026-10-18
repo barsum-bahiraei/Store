@@ -21,7 +21,7 @@ export const productApi = {
   async list(params?: ProductListParams): Promise<ProductListPage> {
     const query: Record<string, string> = {
       page: String(params?.page ?? 1),
-      pageSize: String(params?.pageSize ?? 10),
+      pageSize: String(params?.pageSize ?? 50),
     };
     if (params?.name) query.name = params.name;
     if (params?.categoryId) query.categoryId = String(params.categoryId);

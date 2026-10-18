@@ -23,6 +23,19 @@ public class FileRepository(StoreDbContext context) : IFileRepository
                 x.IsMain, cancellationToken);
     }
 
+    public async Task<List<FileEntity>> MainListAsync(TableNameEnum tableName, TargetNameEnum targetName,
+        IReadOnlyCollection<int> targetIds, CancellationToken cancellationToken)
+    {
+        return await context.Files
+            .AsNoTracking()
+            .Where(x => x.TableName == tableName &&
+                        x.TargetName == targetName &&
+                        targetIds.Contains(x.TargetId) &&
+                        x.IsMain)
+            .OrderByDescending(x => x.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<FileEntity?> GetAsync(int id, CancellationToken cancellationToken)
     {
         return await context.Files

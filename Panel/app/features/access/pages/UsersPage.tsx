@@ -7,7 +7,7 @@ import type { Role, UserDetails, UserListParams, UserSummary } from "../models/a
 
 const inputClasses =
   "min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder-gray-500";
-const PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 50;
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "خطای غیرمنتظره‌ای رخ داد.";
@@ -17,6 +17,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState<number | "">("");
@@ -50,10 +51,12 @@ export default function UsersPage() {
     setError(null);
     try {
       const requestedPage = params?.page ?? 1;
-      const result = await accessApi.listUsers({ ...params, page: requestedPage, pageSize: PAGE_SIZE });
+      const requestedPageSize = params?.pageSize ?? pageSize;
+      const result = await accessApi.listUsers({ ...params, page: requestedPage, pageSize: requestedPageSize });
       setUsers(result.items);
       setTotalCount(result.totalCount);
       setPage(requestedPage);
+      setPageSize(requestedPageSize);
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     } finally {
@@ -81,6 +84,10 @@ export default function UsersPage() {
 
   const changePage = (nextPage: number) => {
     void load({ ...buildParams(), page: nextPage });
+  };
+
+  const changePageSize = (nextPageSize: number) => {
+    void load({ ...buildParams(), page: 1, pageSize: nextPageSize });
   };
 
   const hasActiveFilters = filterFirstName || filterLastName || filterEmail || filterPhoneNumber || filterBirthDate || filterGender !== "";
@@ -274,10 +281,11 @@ export default function UsersPage() {
           </ul>
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             totalCount={totalCount}
             loading={loading}
             onPageChange={changePage}
+            onPageSizeChange={changePageSize}
           />
         </div>
       )}

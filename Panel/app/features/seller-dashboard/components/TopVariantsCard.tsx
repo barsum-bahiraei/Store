@@ -13,7 +13,7 @@ interface TopVariantsCardProps {
   refreshToken: number;
 }
 
-const PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 50;
 
 export function formatVariantValues(values: VariantValueOutput[]): string {
   if (!values?.length) return "—";
@@ -23,6 +23,7 @@ export function formatVariantValues(values: VariantValueOutput[]): string {
 export function TopVariantsCard({ range, refreshToken }: TopVariantsCardProps) {
   const [result, setResult] = useState<PagedResult<TopVariantItem> | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +31,7 @@ export function TopVariantsCard({ range, refreshToken }: TopVariantsCardProps) {
     setLoading(true);
     setError(null);
     try {
-      setResult(await sellerDashboardApi.getTopVariants(range, targetPage, PAGE_SIZE));
+      setResult(await sellerDashboardApi.getTopVariants(range, targetPage, pageSize));
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     } finally {
@@ -41,7 +42,7 @@ export function TopVariantsCard({ range, refreshToken }: TopVariantsCardProps) {
   useEffect(() => {
     setPage(1);
     void load(1);
-  }, [range.from, range.to, refreshToken]);
+  }, [range.from, range.to, refreshToken, pageSize]);
 
   const handlePageChange = (nextPage: number) => {
     setPage(nextPage);
@@ -97,10 +98,11 @@ export function TopVariantsCard({ range, refreshToken }: TopVariantsCardProps) {
           </ul>
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             totalCount={result?.totalCount ?? 0}
             loading={loading}
             onPageChange={handlePageChange}
+            onPageSizeChange={setPageSize}
           />
         </>
       )}
