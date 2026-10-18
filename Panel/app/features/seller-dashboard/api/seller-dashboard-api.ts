@@ -170,9 +170,11 @@ export const sellerDashboardApi = {
   async getOrdersAttention(
     range?: SellerDateRange,
     paymentStatus?: PaymentStatus,
+    invoiceId?: number,
   ): Promise<OrderAttentionItem[]> {
     const query = rangeQuery(range);
     if (paymentStatus !== undefined) query.PaymentStatus = String(paymentStatus);
+    if (invoiceId !== undefined) query.InvoiceId = String(invoiceId);
     return dedupe(listKey("OrdersAttention", query), async () => {
       const { data } = await httpClient.get<ApiResult<OrderAttentionItem[]>>(
         "/api/Seller/Orders/Attention",

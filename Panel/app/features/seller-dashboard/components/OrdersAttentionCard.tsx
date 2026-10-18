@@ -13,6 +13,7 @@ import { SectionCard } from "./SectionCard";
 interface OrdersAttentionCardProps {
   range: SellerDateRange;
   status?: PaymentStatus;
+  invoiceId?: number;
 }
 
 const statusColors: Record<number, string> = {
@@ -30,7 +31,7 @@ const statusColors: Record<number, string> = {
 const inputClasses =
   "min-h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-900 outline-none transition-colors focus:border-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white";
 
-export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps) {
+export function OrdersAttentionCard({ range, status, invoiceId }: OrdersAttentionCardProps) {
   const [items, setItems] = useState<OrderAttentionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps)
     setLoading(true);
     setError(null);
     try {
-      setItems(await sellerDashboardApi.getOrdersAttention(range, status));
+      setItems(await sellerDashboardApi.getOrdersAttention(range, status, invoiceId));
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     } finally {
@@ -57,7 +58,7 @@ export function OrdersAttentionCard({ range, status }: OrdersAttentionCardProps)
 
   useEffect(() => {
     void load();
-  }, [range.from, range.to, status]);
+  }, [range.from, range.to, status, invoiceId]);
 
   const changeStatus = async (order: OrderAttentionItem, next: PaymentStatus) => {
     setUpdatingId(order.id);

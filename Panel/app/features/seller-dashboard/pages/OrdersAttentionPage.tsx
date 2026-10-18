@@ -20,11 +20,19 @@ export default function OrdersAttentionPage() {
   const [fromDraft, setFromDraft] = useState("");
   const [toDraft, setToDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState("");
+  const [invoiceIdDraft, setInvoiceIdDraft] = useState("");
   const [range, setRange] = useState<SellerDateRange>({});
   const [status, setStatus] = useState<PaymentStatus | undefined>();
+  const [invoiceId, setInvoiceId] = useState<number | undefined>();
   const [filterError, setFilterError] = useState<string | null>(null);
 
   const applyFilters = () => {
+    const parsedInvoiceId = invoiceIdDraft === "" ? undefined : Number(invoiceIdDraft);
+    if (parsedInvoiceId !== undefined && (!Number.isInteger(parsedInvoiceId) || parsedInvoiceId <= 0)) {
+      setFilterError("شماره سفارش باید یک عدد صحیح بزرگ‌تر از صفر باشد.");
+      return;
+    }
+
     const nextRange = toDateRange(fromDraft, toDraft);
     if (!nextRange) {
       setFilterError("بازه زمانی معتبر نیست. تاریخ شروع باید قبل از تاریخ پایان باشد.");
@@ -33,6 +41,7 @@ export default function OrdersAttentionPage() {
     setFilterError(null);
     setRange(nextRange);
     setStatus(statusDraft === "" ? undefined : Number(statusDraft) as PaymentStatus);
+    setInvoiceId(parsedInvoiceId);
   };
 
   return (
@@ -52,7 +61,24 @@ export default function OrdersAttentionPage() {
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[0.8fr_1fr_1fr_1fr_auto] xl:items-end">
+          <label>
+            <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">شماره سفارش</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min="1"
+              step="1"
+              value={invoiceIdDraft}
+              onChange={(event) => setInvoiceIdDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (["-", "+", "e", "E", "."].includes(event.key)) event.preventDefault();
+                if (event.key === "Enter") applyFilters();
+              }}
+              placeholder="مثلاً ۱۲۳۴"
+              className={inputClasses}
+            />
+          </label>
           <label>
             <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">از تاریخ</span>
             <PersianDateTimePicker mode="date" value={fromDraft} onChange={setFromDraft} className={inputClasses} ariaLabel="از تاریخ" />
@@ -77,7 +103,7 @@ export default function OrdersAttentionPage() {
         {filterError && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{filterError}</p>}
       </div>
 
-      <OrdersAttentionCard range={range} status={status} />
+      <OrdersAttentionCard range={range} status={status} invoiceId={invoiceId} />
     </div>
   );
 }

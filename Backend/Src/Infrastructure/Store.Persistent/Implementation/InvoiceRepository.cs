@@ -196,13 +196,16 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     }
 
     public async Task<List<SellerOrderAttentionListOutput>> SellerOrdersAttentionListAsync(int userId,
-        DateTime? from, DateTime? to, IReadOnlyCollection<PaymentStatusEnum> paymentStatuses,
+        int? invoiceId, DateTime? from, DateTime? to, IReadOnlyCollection<PaymentStatusEnum> paymentStatuses,
         CancellationToken cancellation)
     {
         var query = context.Invoices
             .AsNoTracking()
             .Where(invoice => paymentStatuses.Contains(invoice.PaymentStatus))
             .Where(invoice => invoice.InvoiceItems.Any(item => item.Product.Seller.UserId == userId));
+
+        if (invoiceId.HasValue)
+            query = query.Where(invoice => invoice.Id == invoiceId.Value);
 
         if (from.HasValue)
             query = query.Where(invoice => invoice.CreatedAt >= from.Value);
