@@ -3,7 +3,7 @@ import Image from "next/image";
 import { socialLinks, whatsappSupportNumber, whatsappSupportUrl } from "../utils/social-links";
 
 const trustSealImage = "/images/enamad.png";
-const trustSealLink = "https://trustseal.enamad.ir/?id=261898&Code=fAmxCvuhBi7lav0BUQhk";
+const trustSealLink = "https://trustseal.enamad.ir/?id=261898&code=fAmxCvuhBi7lav0BUQhk";
 
 export function StoreFooter() {
   return (
