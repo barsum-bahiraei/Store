@@ -8,6 +8,7 @@ import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { canAccessDashboard } from "@/features/auth/types/account";
 import { useCart } from "@/features/cart/hooks/use-cart";
 import { HeaderBrandsMenu } from "@/features/layout/components/header-brands-menu";
+import { HeaderProductSearch } from "@/features/layout/components/header-product-search";
 import { useCategories } from "../hooks/use-categories";
 import type { Category } from "../types/category";
 
@@ -170,7 +171,7 @@ export function StoreHeader() {
   return (
     <header data-store-header onMouseLeave={closeDesktopMenu} className="store-header-landscape sticky top-0 z-[1100] border-b border-white/15 text-white shadow-lg shadow-emerald-950/20">
       <Image src="/images/header-forest-mountains.png" alt="" fill priority sizes="100vw" className="pointer-events-none object-cover object-[center_62%]" />
-      <div className="relative z-[2] mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 md:gap-4 md:px-5 lg:px-6 xl:px-8">
+      <div className="relative z-[3] mx-auto flex h-20 w-full items-center gap-0 px-0 sm:h-24 md:gap-4 md:px-5 lg:px-6 xl:px-8">
         <div className="contents md:flex md:min-w-0 md:shrink-0 md:items-center md:gap-2 md:[direction:rtl]">
           <button type="button" aria-label="باز و بسته کردن منوی دسته‌بندی‌ها" aria-expanded={isMenuOpen} aria-controls="store-navigation" onClick={toggleMenu} className="absolute right-0 grid size-11 shrink-0 place-items-center rounded-lg outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 md:hidden">
             <span className="material-symbols-rounded text-2xl" aria-hidden="true">{isMenuOpen ? "close" : "menu"}</span>
@@ -183,11 +184,7 @@ export function StoreHeader() {
           </Link>
         </div>
 
-        <form action="/shop" role="search" className="relative mx-auto hidden w-full max-w-2xl md:block">
-          <label htmlFor="store-search" className="sr-only">جست‌وجوی محصولات</label>
-          <input id="store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-xl border border-white/45 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-md shadow-black/10 outline-none backdrop-blur-md transition-[background-color,border-color,box-shadow] placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
-          <button type="submit" aria-label="جست‌وجوی محصول" className="absolute right-0 top-0 z-10 grid size-11 place-items-center rounded-xl text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-xl" aria-hidden="true">search</span></button>
-        </form>
+        <HeaderProductSearch />
 
         <nav aria-label="عملیات حساب کاربری" className="absolute left-0 flex shrink-0 items-center gap-0 [direction:rtl] md:static md:gap-1">
           <Link href={user ? "/account" : "/login"} aria-label={user ? (user.firstName ? `حساب ${user.firstName}` : "حساب من") : "ورود"} className="flex min-h-11 items-center gap-2 rounded-lg px-2.5 outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
@@ -203,11 +200,7 @@ export function StoreHeader() {
 
       <nav aria-label="منوی اصلی" className="relative z-[2] border-t border-white/15 bg-[#092f2a]/60 text-white backdrop-blur-md">
         <div className="mx-auto flex min-h-12 w-full items-center px-0 sm:px-5 lg:px-6 xl:px-8">
-          <form action="/shop" role="search" className="relative w-full md:hidden">
-            <label htmlFor="mobile-store-search" className="sr-only">جست‌وجوی محصولات</label>
-            <input id="mobile-store-search" name="q" type="search" placeholder="جست‌وجوی محصول" className="h-11 w-full rounded-lg border border-white/35 bg-white/90 py-2.5 pl-4 pr-11 text-sm text-foreground shadow-sm outline-none backdrop-blur-md placeholder:text-muted-foreground focus:border-white focus:bg-white focus:ring-2 focus:ring-white/35" />
-            <button type="submit" aria-label="جست‌وجوی محصول" className="absolute right-0 top-0 z-10 grid size-11 place-items-center rounded-lg text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><span className="material-symbols-rounded text-xl" aria-hidden="true">search</span></button>
-          </form>
+          <HeaderProductSearch mobile />
           <div className="hidden flex-wrap items-center gap-1 md:flex">
           <button type="button" onClick={toggleMenu} onMouseEnter={openDesktopMenu} onFocus={openDesktopMenu} aria-expanded={isMenuOpen} aria-controls="store-navigation" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80">
             دسته‌بندی کالاها

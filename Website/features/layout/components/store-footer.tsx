@@ -39,7 +39,7 @@ export function StoreFooter() {
         <a
           referrerPolicy="origin"
           target="_blank"
-          rel="noreferrer"
+          rel="noopener"
           href={trustSealLink}
           aria-label="مشاهده نماد اعتماد الکترونیکی زریوان"
           className="mx-auto inline-flex min-h-32 min-w-32 items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring md:col-span-2 lg:col-span-1"
