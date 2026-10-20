@@ -2,8 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { socialLinks, whatsappSupportNumber, whatsappSupportUrl } from "../utils/social-links";
 
-const trustSealImage = "/images/enamad.png";
-const trustSealLink = "https://trustseal.enamad.ir/?id=261898&code=fAmxCvuhBi7lav0BUQhk";
+const trustSealCode = "fAmxCvuhBi7lav0BUQhk";
+const trustSealImage = `https://trustseal.enamad.ir/logo.aspx?id=261898&Code=${trustSealCode}`;
+const trustSealLink = `https://trustseal.enamad.ir/?id=261898&Code=${trustSealCode}`;
 
 export function StoreFooter() {
   return (
@@ -51,7 +52,7 @@ export function StoreFooter() {
             alt="نماد اعتماد الکترونیکی زریوان"
             width={120}
             height={120}
-            id="fAmxCvuhBi7lav0BUQhk"
+            {...{ code: trustSealCode }}
             className="max-h-32 w-auto cursor-pointer object-contain"
           />
         </a>

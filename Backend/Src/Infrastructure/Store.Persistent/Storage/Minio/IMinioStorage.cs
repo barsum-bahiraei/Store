@@ -6,5 +6,7 @@ public interface IMinioStorage
     Task UpdateAsync(Stream stream, long size, string contentType, string objectName, CancellationToken cancellation);
     Task DeleteAsync(string objectName, CancellationToken cancellation);
     Task<string> GetUrlAsync(string objectName, CancellationToken cancellation);
+    Task ReadAsync(string objectName, Func<Stream, string, long, CancellationToken, Task> read,
+        CancellationToken cancellation);
     Task<List<string>> GetListAsync(string prefix, CancellationToken cancellation);
 }

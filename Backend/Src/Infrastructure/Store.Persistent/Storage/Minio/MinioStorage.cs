@@ -45,6 +45,19 @@ public class MinioStorage(IMinioClient minioClient, IConfiguration configuration
                 .WithExpiry(60 * 60));
     }
 
+    public async Task ReadAsync(string objectName, Func<Stream, string, long, CancellationToken, Task> read,
+        CancellationToken cancellation)
+    {
+        var stat = await minioClient.StatObjectAsync(
+            new StatObjectArgs().WithBucket(_bucketName).WithObject(objectName), cancellation);
+        await minioClient.GetObjectAsync(
+            new GetObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(objectName)
+                .WithCallbackStream((stream, token) => read(stream, stat.ContentType, stat.Size, token)),
+            cancellation);
+    }
+
     public async Task<List<string>> GetListAsync(string prefix, CancellationToken cancellation)
     {
         var result = new List<string>();

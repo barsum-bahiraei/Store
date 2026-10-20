@@ -39,11 +39,9 @@ public class ProductService(
                 "برای صفحه‌بندی دقیقاً یکی از page_urls، page_uniques، page یا cursor را ارسال کنید");
 
         var websiteUrl = configuration["Torob:WebsiteUrl"]?.TrimEnd('/');
-        var imageUrl = configuration["Torob:ImageUrl"]?.TrimEnd('/');
-        var imageBucket = configuration["Minio:Bucket"]?.Trim('/');
-        if (string.IsNullOrWhiteSpace(websiteUrl) || string.IsNullOrWhiteSpace(imageUrl))
+        var apiUrl = configuration["Torob:ApiUrl"]?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(websiteUrl) || string.IsNullOrWhiteSpace(apiUrl))
             return Result<ProductTorobOutput>.Failure("نشانی وب‌سایت یا تصویر ترب پیکربندی نشده است");
-        imageBucket = string.IsNullOrWhiteSpace(imageBucket) ? "store" : imageBucket;
 
         string ProductUrl(int id) => $"{websiteUrl}/products/{id}";
 
@@ -106,9 +104,10 @@ public class ProductService(
                 entity.Id,
                 cancellation);
             var imageLinks = imageEntities
+                .Where(x => x.FileType == FileTypeEnum.Image)
                 .OrderByDescending(x => x.IsMain)
                 .ThenBy(x => x.Id)
-                .Select(x => $"{imageUrl}/{imageBucket}/{x.Url.TrimStart('/')}")
+                .Select(x => $"{apiUrl}/torob_api/v3/images/{x.Id}")
                 .ToList();
 
             products.Add(new ProductTorobItemOutput
