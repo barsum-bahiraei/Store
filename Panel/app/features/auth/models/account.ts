@@ -69,4 +69,5 @@ export interface OtpVerifyOutput {
   phoneNumber: string;
   isNewUser: boolean;
   token: string;
+  expiresAt: string;
 }

@@ -23,7 +23,8 @@ export interface ProductAttributeGetOutput
     ProductAttributeDefinition {}
 
 export interface ProductVariantValueInput {
-  size: string;
+  size: string | null;
+  model: string | null;
   colorName: string;
   colorCode: string;
 }
@@ -119,10 +120,22 @@ export interface ProductListParams {
   pageSize?: number;
   name?: string;
   categoryId?: number;
+  productBrandId?: number;
   sellerId?: number;
   minPrice?: number;
   maxPrice?: number;
   isAvailable?: boolean;
+}
+
+export type ProductPricePercentageUpdateInput = Omit<ProductListParams, "page" | "pageSize"> & {
+  percentage: number;
+  isIncrease: boolean;
+  expectedProductCount: number;
+};
+
+export interface ProductPricePercentageUpdateOutput {
+  productCount: number;
+  variantCount: number;
 }
 
 export interface ProductImageUploadInput {

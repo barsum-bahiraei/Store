@@ -14,7 +14,7 @@ import { BookmarkButton } from "@/features/bookmarks/components/bookmark-button"
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { isUserRole } from "@/features/auth/types/account";
 import { useProductDetail } from "../hooks/use-products";
-import { formatProductAttributeValue, formatToman, formatVariantLabel, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice, getVariantColors, getVariantSizes, isVariantOptionOutOfStock, matchVariantBySelection } from "../utils/product";
+import { formatProductAttributeValue, formatToman, formatVariantLabel, getProductAttributeUnitLabel, getProductImageUrl, getSalePrice, getVariantColors, getVariantModels, getVariantSizes, isVariantOptionOutOfStock, matchVariantBySelection } from "../utils/product";
 import { ProductCard } from "./product-card";
 import { ProductComments } from "./product-comments";
 
@@ -26,6 +26,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const blockedByRole = isAuthenticated && !canPurchase;
   const [userColor, setUserColor] = useState<string | null>(null);
   const [userSize, setUserSize] = useState<string | null>(null);
+  const [userModel, setUserModel] = useState<string | null>(null);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const colors = useMemo(() => (product ? getVariantColors(product.variants) : []), [product]);
   const selectedColor = colors.length === 1 ? colors[0].colorName ?? null : colors.some((color) => color.colorName === userColor) ? userColor : null;
@@ -34,13 +35,23 @@ export function ProductDetailContent({ productId }: { productId: number }) {
     [product, colors.length, selectedColor],
   );
   const selectedSize = sizes.length === 1 ? sizes[0] : sizes.includes(userSize ?? "") ? userSize : null;
+  const models = useMemo(
+    () => product &&
+      (colors.length === 0 || selectedColor) &&
+      (sizes.length === 0 || selectedSize)
+      ? getVariantModels(product.variants, selectedColor, selectedSize)
+      : [],
+    [product, colors.length, sizes.length, selectedColor, selectedSize],
+  );
+  const selectedModel = models.length === 1 ? models[0] : models.includes(userModel ?? "") ? userModel : null;
 
   const selectedVariant = useMemo(() => {
     if (!product) return undefined;
     if (colors.length > 0 && !selectedColor) return undefined;
     if (sizes.length > 0 && !selectedSize) return undefined;
-    return matchVariantBySelection(product.variants, selectedColor, selectedSize);
-  }, [product, colors.length, sizes.length, selectedColor, selectedSize]);
+    if (models.length > 0 && !selectedModel) return undefined;
+    return matchVariantBySelection(product.variants, selectedColor, selectedSize, selectedModel);
+  }, [product, colors.length, sizes.length, models.length, selectedColor, selectedSize, selectedModel]);
 
   const effectiveVariantId = selectedVariant?.id ?? null;
   const serverItem = isAuthenticated && effectiveVariantId != null
@@ -74,8 +85,12 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   const salePrice = getSalePrice(basePrice, product.discount);
   const stock = selectedVariant?.stock ?? 0;
   const addToCartDisabled = isAdding || selectedVariant == null || stock <= 0 || quantity >= stock;
-  const needsSelection = (colors.length > 0 || sizes.length > 0) && selectedVariant == null;
-  const nextSelectionLabel = colors.length > 0 && !selectedColor ? "رنگ" : "سایز";
+  const needsSelection = (colors.length > 0 || sizes.length > 0 || models.length > 0) && selectedVariant == null;
+  const nextSelectionLabel = colors.length > 0 && !selectedColor
+    ? "رنگ"
+    : sizes.length > 0 && !selectedSize
+      ? "سایز"
+      : "مدل";
   const availableSelection = product.isAvailable && selectedVariant != null && stock > 0;
   const averageRating = product.comments.reduce((total, comment) => total + (comment.rating ?? 0), 0) / (product.comments.filter((comment) => comment.rating).length || 1);
 
@@ -189,7 +204,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             </div>
           )}
           {product.shortDescription && <p className="mt-6 whitespace-pre-wrap text-base leading-7 text-muted-foreground">{product.shortDescription}</p>}
-          {(colors.length > 0 || sizes.length > 0) && (
+          {(colors.length > 0 || sizes.length > 0 || models.length > 0) && (
             <div className="mt-6 space-y-5">
               {colors.length > 0 && (
                 <div aria-labelledby="product-color-label">
@@ -197,7 +212,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                   <div role="radiogroup" aria-labelledby="product-color-label" className="mt-3 flex flex-wrap gap-3">
                     {colors.map((color) => {
                       const colorName = color.colorName ?? color.colorCode ?? "";
-                      const outOfStock = isVariantOptionOutOfStock(product.variants, colorName, null);
+                      const outOfStock = isVariantOptionOutOfStock(product.variants, colorName, null, null);
                       const isSelected = selectedColor === colorName;
                       const swatchColor = color.colorCode && /^#[\da-f]{3}(?:[\da-f]{3})?$/i.test(color.colorCode) ? color.colorCode : null;
                       return (
@@ -207,7 +222,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                           role="radio"
                           aria-checked={isSelected}
                           disabled={outOfStock}
-                          onClick={() => { setUserColor(colorName); setUserSize(null); }}
+                          onClick={() => { setUserColor(colorName); setUserSize(null); setUserModel(null); }}
                           className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary bg-primary/10 text-primary" : outOfStock ? "border-border bg-muted text-muted-foreground" : "border-border bg-surface hover:bg-muted"}`}
                         >
                           {swatchColor && <span className="size-4 shrink-0 rounded-full border border-border" style={{ backgroundColor: swatchColor }} aria-hidden="true" />}
@@ -225,7 +240,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                   <h2 id="product-size-label" className="text-sm font-black">انتخاب سایز</h2>
                   <div role="radiogroup" aria-labelledby="product-size-label" className="mt-3 flex flex-wrap gap-3">
                     {sizes.map((size) => {
-                      const outOfStock = isVariantOptionOutOfStock(product.variants, selectedColor, size);
+                      const outOfStock = isVariantOptionOutOfStock(product.variants, selectedColor, size, null);
                       const isSelected = selectedSize === size;
                       return (
                         <button
@@ -234,10 +249,36 @@ export function ProductDetailContent({ productId }: { productId: number }) {
                           role="radio"
                           aria-checked={isSelected}
                           disabled={outOfStock}
-                          onClick={() => setUserSize(size)}
+                          onClick={() => { setUserSize(size); setUserModel(null); }}
                           className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary bg-primary/10 text-primary" : outOfStock ? "border-border bg-muted text-muted-foreground" : "border-border bg-surface hover:bg-muted"}`}
                         >
                           <span>{size}</span>
+                          {outOfStock && <span className="text-xs font-black text-error">ناموجود</span>}
+                          {isSelected && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {models.length > 0 && (
+                <div aria-labelledby="product-model-label">
+                  <h2 id="product-model-label" className="text-sm font-black">انتخاب مدل</h2>
+                  <div role="radiogroup" aria-labelledby="product-model-label" className="mt-3 flex flex-wrap gap-3">
+                    {models.map((model) => {
+                      const outOfStock = isVariantOptionOutOfStock(product.variants, selectedColor, selectedSize, model);
+                      const isSelected = selectedModel === model;
+                      return (
+                        <button
+                          key={model}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          disabled={outOfStock}
+                          onClick={() => setUserModel(model)}
+                          className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary bg-primary/10 text-primary" : outOfStock ? "border-border bg-muted text-muted-foreground" : "border-border bg-surface hover:bg-muted"}`}
+                        >
+                          <span>{model}</span>
                           {outOfStock && <span className="text-xs font-black text-error">ناموجود</span>}
                           {isSelected && <span className="material-symbols-rounded text-lg" aria-hidden="true">check</span>}
                         </button>

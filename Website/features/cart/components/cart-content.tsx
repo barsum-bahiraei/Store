@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUserProfile } from "@/features/auth/hooks/use-account";
 import { isUserRole } from "@/features/auth/types/account";
-import { formatToman, getProductImageUrl, getSalePrice } from "@/features/products/utils/product";
+import { formatToman, formatVariantLabel, getProductImageUrl, getSalePrice } from "@/features/products/utils/product";
 import { useCart } from "../hooks/use-cart";
 import { CartItemControls } from "./cart-item-controls";
 
@@ -13,6 +13,7 @@ type GuestCartRow = {
   productCount: number;
   productVariantId: number;
   imageUrl?: string;
+  variantName?: string;
   product: { id: number; name: string };
 };
 
@@ -27,6 +28,7 @@ export function CartContent() {
       productCount: item.count,
       productVariantId: item.productVariantId,
       imageUrl: item.imageUrl,
+      variantName: item.variantName,
       product: { id: item.productId, name: item.name ?? `محصول شماره ${item.productId}` },
     }));
   const linkClass = "inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground outline-none hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -53,6 +55,7 @@ export function CartContent() {
           const discount = "price" in item.product ? item.product.discount : 0;
           const rawPrice = variant?.price ?? ("price" in item.product ? item.product.price : undefined);
           const unitPrice = rawPrice != null ? getSalePrice(rawPrice, discount) : undefined;
+          const variantLabel = variant ? formatVariantLabel(variant.values) : "variantName" in item ? item.variantName : undefined;
           const imageUrl = "imageUrl" in item
             ? item.imageUrl
             : "image" in item.product
@@ -70,6 +73,7 @@ export function CartContent() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="break-words text-lg font-bold">{item.product.name}</h2>
+                  {variantLabel && <p className="mt-1 text-sm text-muted-foreground">{variantLabel}</p>}
                   {unitPrice != null && (
                     <p className="mt-3 text-sm font-bold text-muted-foreground">مجموع: <span className="text-base font-black text-primary">{formatToman(unitPrice * item.productCount)}</span></p>
                   )}

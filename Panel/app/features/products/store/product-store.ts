@@ -7,6 +7,8 @@ import type {
   ProductImageUploadInput,
   ProductListOutput,
   ProductListParams,
+  ProductPricePercentageUpdateInput,
+  ProductPricePercentageUpdateOutput,
   ProductUpdateInput,
 } from "../models/product";
 
@@ -30,6 +32,7 @@ interface ProductStore {
   getProduct: (id: number) => Promise<ProductGetOutput>;
   updateProduct: (id: number, input: ProductUpdateInput) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
+  updatePricesByPercentage: (input: ProductPricePercentageUpdateInput) => Promise<ProductPricePercentageUpdateOutput>;
   uploadImage: (input: ProductImageUploadInput) => Promise<void>;
   deleteImage: (id: number) => Promise<void>;
   setMainImage: (id: number) => Promise<void>;
@@ -103,6 +106,21 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       await get().fetchProducts({ ...state.lastParams, page });
     } catch (error) {
       set({ error: getErrorMessage(error), submitting: false });
+    }
+  },
+
+  updatePricesByPercentage: async (input) => {
+    set({ submitting: true, error: null });
+    try {
+      const result = await productApi.updatePricesByPercentage(input);
+      const lastParams = get().lastParams;
+      set({ submitting: false });
+      await get().fetchProducts(lastParams);
+      return result;
+    } catch (error) {
+      const message = getErrorMessage(error);
+      set({ error: message, submitting: false });
+      throw new Error(message);
     }
   },
 

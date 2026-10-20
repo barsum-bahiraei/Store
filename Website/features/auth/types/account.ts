@@ -39,6 +39,7 @@ export type UpdatedUserProfile = UpdateUserProfileInput;
 
 export type AuthenticatedUser = AccountUser & {
   token: string;
+  expiresAt: string;
 };
 
 export function isUserRole(user?: AccountUser): boolean {

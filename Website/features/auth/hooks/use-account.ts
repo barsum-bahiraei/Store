@@ -97,8 +97,8 @@ function useAuthenticationMutation<TInput>(mutationFn: (input: TInput) => Promis
 
   return useMutation({
     mutationFn,
-    onSuccess: async ({ token, ...user }) => {
-      setAuthToken(token);
+    onSuccess: async ({ token, expiresAt, ...user }) => {
+      setAuthToken(token, expiresAt);
       queryClient.setQueryData<AccountUser>(accountKeys.profile, user);
       const profile = await getUserProfile();
       queryClient.setQueryData<AccountUser>(accountKeys.profile, profile);

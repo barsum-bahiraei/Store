@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Store.Domain.Products;
 using Store.Domain.Products.Models.Input;
@@ -11,29 +12,9 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
     public async Task<(List<ProductListOutput> Items, int TotalCount)> ListAsync(int userId, ProductListInput input,
         CancellationToken cancellation)
     {
-        var query = context.Products
-            .Where(x => x.Seller.UserId == userId)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(input.Name))
-            query = query.Where(x => x.Name.Contains(input.Name.Trim()));
-
-        if (input.CategoryId.HasValue)
-            query = query.Where(x => x.CategoryId == input.CategoryId.Value);
-
-        if (input.SellerId.HasValue)
-            query = query.Where(x => x.SellerId == input.SellerId.Value);
-
-        if (input.MinPrice.HasValue || input.MaxPrice.HasValue)
-            query = query.Where(x => x.ProductVariants.Any(v =>
-                (x.ProductVariants.Any(available => available.Stock > 0) ? v.Stock > 0 : true) &&
-                (!input.MinPrice.HasValue || v.Price >= input.MinPrice.Value) &&
-                (!input.MaxPrice.HasValue || v.Price <= input.MaxPrice.Value)));
-
-        if (input.IsAvailable.HasValue)
-            query = input.IsAvailable.Value
-                ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
-                : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
+        var query = ApplyListFilters(
+            context.Products.Where(x => x.Seller.UserId == userId),
+            input);
 
         var totalCount = await query.CountAsync(cancellation);
         var page = input.Page < 1 ? 1 : input.Page;
@@ -64,6 +45,64 @@ public class ProductRepository(StoreDbContext context) : IProductRepository
             })
             .ToListAsync(cancellation);
         return (result, totalCount);
+    }
+
+    public async Task<(int ProductCount, int VariantCount, bool IsCountMatch)> UpdatePricesByPercentageAsync(int userId,
+        ProductPricePercentageUpdateInput input, CancellationToken cancellation)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.RepeatableRead,
+            cancellation);
+        var products = ApplyListFilters(
+            context.Products.Where(x => x.Seller.UserId == userId),
+            input);
+        var productCount = await products.CountAsync(cancellation);
+        if (productCount != input.ExpectedProductCount)
+            return (productCount, 0, false);
+
+        var productIds = products.Select(x => x.Id);
+        var factor = input.IsIncrease == true
+            ? 1 + input.Percentage / 100
+            : 1 - input.Percentage / 100;
+
+        var variantCount = await context.ProductVariants
+            .Where(variant => productIds.Contains(variant.ProductId))
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(variant => variant.Price, variant => variant.Price * factor),
+                cancellation);
+
+        await transaction.CommitAsync(cancellation);
+        return (productCount, variantCount, true);
+    }
+
+    private static IQueryable<ProductEntity> ApplyListFilters(IQueryable<ProductEntity> query,
+        ProductListFilterInput input)
+    {
+
+        if (!string.IsNullOrWhiteSpace(input.Name))
+            query = query.Where(x => x.Name.Contains(input.Name.Trim()));
+
+        if (input.CategoryId.HasValue)
+            query = query.Where(x => x.CategoryId == input.CategoryId.Value);
+
+        if (input.ProductBrandId.HasValue)
+            query = query.Where(x => x.ProductBrandId == input.ProductBrandId.Value);
+
+        if (input.SellerId.HasValue)
+            query = query.Where(x => x.SellerId == input.SellerId.Value);
+
+        if (input.MinPrice.HasValue || input.MaxPrice.HasValue)
+            query = query.Where(x => x.ProductVariants.Any(v =>
+                (x.ProductVariants.Any(available => available.Stock > 0) ? v.Stock > 0 : true) &&
+                (!input.MinPrice.HasValue || v.Price >= input.MinPrice.Value) &&
+                (!input.MaxPrice.HasValue || v.Price <= input.MaxPrice.Value)));
+
+        if (input.IsAvailable.HasValue)
+            query = input.IsAvailable.Value
+                ? query.Where(x => x.ProductVariants.Any(v => v.Stock > 0))
+                : query.Where(x => !x.ProductVariants.Any(v => v.Stock > 0));
+
+        return query;
     }
 
     public async Task<List<ProductEntity>> SellerProductListAsync(int userId, CancellationToken cancellation)

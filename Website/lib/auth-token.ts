@@ -42,7 +42,7 @@ function readTokenCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function writeTokenCookie(token: string | null) {
+function writeTokenCookie(token: string | null, expiresAtMs?: number | null) {
   if (typeof document === "undefined") return;
   if (!token) {
     document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
@@ -50,7 +50,7 @@ function writeTokenCookie(token: string | null) {
     return;
   }
 
-  const expiresAt = getAuthTokenExpiresAt(token);
+  const expiresAt = expiresAtMs !== undefined ? expiresAtMs : getAuthTokenExpiresAt(token);
   const maxAge = expiresAt === null
     ? FALLBACK_COOKIE_MAX_AGE_SECONDS
     : Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
@@ -67,16 +67,26 @@ export function getAuthToken() {
 
   const expiresAt = getAuthTokenExpiresAt(token);
   if (expiresAt !== null && expiresAt <= Date.now()) {
-    writeTokenCookie(null);
+    clearAuthToken();
     return null;
   }
 
   return token;
 }
 
-export function setAuthToken(token: string) {
+export function clearAuthTokenIfExpired() {
+  if (typeof window === "undefined") return;
+  const token = readTokenCookie();
+  if (!token) return;
+
+  const expiresAt = getAuthTokenExpiresAt(token);
+  if (expiresAt !== null && expiresAt <= Date.now()) clearAuthToken();
+}
+
+export function setAuthToken(token: string, expiresAt?: string) {
   removeLegacyStoredToken();
-  writeTokenCookie(token);
+  const provided = expiresAt ? new Date(expiresAt).getTime() : Number.NaN;
+  writeTokenCookie(token, Number.isFinite(provided) ? provided : undefined);
   window.dispatchEvent(new Event(AUTH_TOKEN_EVENT));
 }
 

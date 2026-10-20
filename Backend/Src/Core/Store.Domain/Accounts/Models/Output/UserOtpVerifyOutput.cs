@@ -6,4 +6,5 @@ public class UserOtpVerifyOutput
     public string PhoneNumber { get; set; }
     public bool IsNewUser { get; set; }
     public string Token { get; set; }
+    public DateTime ExpiresAt { get; set; }
 }

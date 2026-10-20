@@ -42,9 +42,17 @@ export function getSalePrice(price: number, discount: number) {
 export function formatVariantLabel(values: ProductVariantAttributeValue[]) {
   if (values.length === 0) return undefined;
   const labels = values
-    .map((value) => [getVariantColor(value)?.colorName, value.size?.trim()].filter(Boolean).join("، "))
+    .map((value) => [getVariantColor(value)?.colorName, getVariantSize(value), getVariantModel(value)].filter(Boolean).join("، "))
     .filter(Boolean);
   return labels.join("، ") || undefined;
+}
+
+function getVariantSize(value: ProductVariantAttributeValue) {
+  return value.size?.trim() || null;
+}
+
+function getVariantModel(value: ProductVariantAttributeValue) {
+  return value.model?.trim() || null;
 }
 
 function getVariantColor(value: ProductVariantAttributeValue): VariantColor | null {
@@ -69,7 +77,11 @@ function variantHasColor(variant: ProductVariant, color: string) {
 }
 
 function variantHasSize(variant: ProductVariant, size: string) {
-  return variant.values.some((value) => value.size?.trim() === size);
+  return variant.values.some((value) => getVariantSize(value) === size);
+}
+
+function variantHasModel(variant: ProductVariant, model: string) {
+  return variant.values.some((value) => getVariantModel(value) === model);
 }
 
 export function getVariantSizes(variants: ProductVariant[], color: string | null): string[] {
@@ -77,22 +89,50 @@ export function getVariantSizes(variants: ProductVariant[], color: string | null
   for (const variant of variants) {
     if (color && !variantHasColor(variant, color)) continue;
     for (const value of variant.values) {
-      const size = value.size?.trim();
+      const size = getVariantSize(value);
       if (size) sizes.add(size);
     }
   }
   return [...sizes];
 }
 
-export function isVariantOptionOutOfStock(variants: ProductVariant[], color: string | null, size: string | null) {
+export function getVariantModels(variants: ProductVariant[], color: string | null, size: string | null): string[] {
+  const models = new Set<string>();
+  for (const variant of variants) {
+    if (color && !variantHasColor(variant, color)) continue;
+    if (size && !variantHasSize(variant, size)) continue;
+    for (const value of variant.values) {
+      const model = getVariantModel(value);
+      if (model) models.add(model);
+    }
+  }
+  return [...models];
+}
+
+export function isVariantOptionOutOfStock(
+  variants: ProductVariant[],
+  color: string | null,
+  size: string | null,
+  model: string | null,
+) {
   return !variants.some((variant) =>
-    (!color || variantHasColor(variant, color)) && (!size || variantHasSize(variant, size)) && variant.stock > 0,
+    (!color || variantHasColor(variant, color)) &&
+    (!size || variantHasSize(variant, size)) &&
+    (!model || variantHasModel(variant, model)) &&
+    variant.stock > 0,
   );
 }
 
-export function matchVariantBySelection(variants: ProductVariant[], color: string | null, size: string | null) {
+export function matchVariantBySelection(
+  variants: ProductVariant[],
+  color: string | null,
+  size: string | null,
+  model: string | null,
+) {
   const matching = variants.filter((variant) =>
-    (!color || variantHasColor(variant, color)) && (!size || variantHasSize(variant, size)),
+    (!color || variantHasColor(variant, color)) &&
+    (!size || variantHasSize(variant, size)) &&
+    (!model || variantHasModel(variant, model)),
   );
   return matching.find((variant) => variant.stock > 0) ?? matching[0];
 }

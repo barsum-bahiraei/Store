@@ -85,11 +85,11 @@ export default function SellerDashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <div className="overflow-hidden rounded-2xl bg-gray-950 px-5 py-6 text-white shadow-lg shadow-gray-950/10 dark:bg-black sm:px-7">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 py-6 text-gray-950 shadow-sm dark:border-gray-800 dark:bg-black dark:text-white sm:px-7">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-gray-200">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs text-primary-700 dark:bg-white/10 dark:text-gray-200">
                 <span className="material-symbols-outlined text-base">date_range</span>
                 عملکرد ۳۰ روز اخیر
               </span>
@@ -99,15 +99,15 @@ export default function SellerDashboardPage() {
               </Link>
             </div>
             <h1 className="text-2xl font-bold sm:text-3xl">مرکز عملکرد فروشگاه</h1>
-            <p className="mt-2 text-sm text-gray-400">فروش، محصولات پرفروش و موجودی‌های نیازمند اقدام در یک نگاه</p>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">فروش، محصولات پرفروش و موجودی‌های نیازمند اقدام در یک نگاه</p>
           </div>
-          <div className="grid gap-3 rounded-2xl bg-white/5 p-3 sm:grid-cols-[170px_170px_auto] sm:items-end">
+          <div className="grid gap-3 rounded-2xl bg-gray-50 p-3 dark:bg-white/5 sm:grid-cols-[170px_170px_auto] sm:items-end">
             <label>
-              <span className="mb-1.5 block text-xs font-medium text-gray-300">از تاریخ</span>
+              <span className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">از تاریخ</span>
               <PersianDateTimePicker mode="date" value={fromDraft} onChange={setFromDraft} clearable={false} className={inputClasses} ariaLabel="از تاریخ" />
             </label>
             <label>
-              <span className="mb-1.5 block text-xs font-medium text-gray-300">تا تاریخ</span>
+              <span className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">تا تاریخ</span>
               <PersianDateTimePicker mode="date" value={toDraft} onChange={setToDraft} clearable={false} className={inputClasses} ariaLabel="تا تاریخ" />
             </label>
             <button
@@ -119,7 +119,7 @@ export default function SellerDashboardPage() {
             </button>
           </div>
         </div>
-        {filterError && <p role="alert" className="mt-3 text-sm text-red-300">{filterError}</p>}
+        {filterError && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-300">{filterError}</p>}
       </div>
 
       {sellerMissing ? (

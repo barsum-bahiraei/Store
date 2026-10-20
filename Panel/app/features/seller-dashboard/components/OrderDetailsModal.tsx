@@ -167,6 +167,7 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {item.values.flatMap((value: VariantValueOutput) => [
+                          value.model ? <span key={`${value.id}-mobile-model`} className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs dark:border-gray-700">مدل: <strong>{value.model}</strong></span> : null,
                           value.size ? <span key={`${value.id}-mobile-size`} className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs dark:border-gray-700">سایز: <strong>{value.size}</strong></span> : null,
                           value.colorName ? <span key={`${value.id}-mobile-color`} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1 text-xs dark:border-gray-700">{value.colorCode && <span className="size-3 rounded-full border" style={{ backgroundColor: value.colorCode }} />}رنگ: <strong>{value.colorName}</strong></span> : null,
                         ])}
@@ -211,6 +212,7 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
                         <td className="break-words border-r border-gray-200 px-3 py-4 dark:border-gray-700">
                           <div className="space-y-1.5">
                             {item.values.flatMap((value: VariantValueOutput) => [
+                              value.model ? <p key={`${value.id}-model`}><span className="text-gray-500">مدل: </span><strong className="text-base">{value.model}</strong></p> : null,
                               value.size ? <p key={`${value.id}-size`}><span className="text-gray-500">سایز: </span><strong className="text-base">{value.size}</strong></p> : null,
                               value.colorName ? (
                                 <p key={`${value.id}-color`} className="flex items-center gap-2">
@@ -220,7 +222,7 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
                                 </p>
                               ) : null,
                             ])}
-                            {item.values.every((value) => !value.size && !value.colorName) && <span className="text-gray-500">بدون تنوع</span>}
+                            {item.values.every((value) => !value.model && !value.size && !value.colorName) && <span className="text-gray-500">بدون تنوع</span>}
                           </div>
                         </td>
                         <td className="bg-blue-50 px-2 py-4 text-center text-xl font-black dark:bg-blue-950/30">{formatNumber(item.productCount)}</td>

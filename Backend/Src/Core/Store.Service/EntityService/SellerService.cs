@@ -218,6 +218,9 @@ public class SellerService(
         if (dateError != null)
             return Result<List<SellerOrderAttentionListOutput>>.Failure(dateError);
 
+        if (input.InvoiceId is <= 0)
+            return Result<List<SellerOrderAttentionListOutput>>.Failure("شماره سفارش نامعتبر است");
+
         if (input.PaymentStatus.HasValue && !IsFulfillmentStatus(input.PaymentStatus.Value))
             return Result<List<SellerOrderAttentionListOutput>>.Failure("وضعیت سفارش برای فروشنده نامعتبر است");
 
@@ -231,7 +234,7 @@ public class SellerService(
                 PaymentStatusEnum.Shipping
             ];
 
-        var result = await invoiceRepository.SellerOrdersAttentionListAsync(userId, input.From, input.To,
+        var result = await invoiceRepository.SellerOrdersAttentionListAsync(userId, input.InvoiceId, input.From, input.To,
             paymentStatuses, cancellation);
 
         return Result<List<SellerOrderAttentionListOutput>>.Success(result);
@@ -270,6 +273,7 @@ public class SellerService(
                     {
                         Id = value.Id,
                         Size = value.Size,
+                        Model = value.Model,
                         ColorName = value.ColorName,
                         ColorCode = value.ColorCode
                     }).ToList()

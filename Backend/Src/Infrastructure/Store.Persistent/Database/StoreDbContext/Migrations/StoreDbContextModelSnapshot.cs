@@ -845,11 +845,14 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("ProductVariantId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Size")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -858,8 +861,10 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductVariantId", "Size")
+                    b.HasIndex("ProductVariantId", "Size", "Model", "ColorName", "ColorCode")
                         .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ProductVariantId", "Size", "Model", "ColorName", "ColorCode"), false);
 
                     b.ToTable("ProductVariantAttributeValues", (string)null);
                 });

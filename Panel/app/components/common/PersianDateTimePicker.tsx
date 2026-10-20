@@ -133,7 +133,7 @@ export function PersianDateTimePicker({
   const dialog = open
     ? createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-gray-950/60 p-2 backdrop-blur-sm sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-gray-950/60 py-2 backdrop-blur-sm sm:p-4"
           onMouseDown={() => setOpen(false)}
           role="dialog"
           aria-modal="true"
@@ -143,9 +143,21 @@ export function PersianDateTimePicker({
             ref={dialogRef}
             tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-sm overflow-x-auto rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl outline-none dark:border-gray-800 dark:bg-gray-900 sm:p-4"
+            className="persian-date-picker-dialog w-full max-w-none overflow-hidden rounded-none border-y border-gray-200 bg-white shadow-2xl outline-none dark:border-gray-800 dark:bg-gray-900 sm:max-w-sm sm:rounded-2xl sm:border"
           >
-            <div className="rmdp-container flex min-w-fit justify-center">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{placeholderText}</p>
+              <button
+                type="button"
+                onClick={handleToday}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-primary-600 transition-colors hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-primary-300 dark:hover:bg-primary-950/50"
+              >
+                <span className="material-symbols-outlined text-lg">today</span>
+                {mode === "time" ? "اکنون" : "امروز"}
+              </button>
+            </div>
+
+            <div className="rmdp-container flex w-full justify-center">
               <Calendar
                 className="rmdp-rtl"
                 calendar={persian}
@@ -158,25 +170,18 @@ export function PersianDateTimePicker({
               />
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="flex gap-2 border-t border-gray-200 p-3 dark:border-gray-800">
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="min-h-11 rounded-xl bg-primary-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="min-h-11 flex-1 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 تأیید
               </button>
               <button
                 type="button"
-                onClick={handleToday}
-                className="min-h-11 rounded-xl border border-primary-200 bg-primary-50 px-3 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 dark:hover:bg-primary-900"
-              >
-                امروز
-              </button>
-              <button
-                type="button"
                 onClick={() => setOpen(false)}
-                className="min-h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="min-h-11 flex-1 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 لغو
               </button>

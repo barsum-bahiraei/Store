@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import { ThemeProvider } from "~/contexts/theme-context";
 import { AuthProvider } from "~/contexts/auth-context";
+import { TruncateTooltipLayer } from "~/components/common/TruncateTooltip";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -37,6 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
+        <TruncateTooltipLayer />
         <ScrollRestoration />
         <Scripts />
       </body>
