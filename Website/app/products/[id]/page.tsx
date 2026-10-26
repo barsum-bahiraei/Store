@@ -5,7 +5,7 @@ import { ProductDetailContent } from "@/features/products/components/product-det
 
 export const metadata: Metadata = {
   title: "جزئیات محصول",
-  description: "مشاهده جزئیات محصول، مشخصات فنی، اطلاعات فروشنده و نظرات مشتریان.",
+  description: "مشاهده جزئیات محصول، مشخصات فنی و نظرات مشتریان.",
 };
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {

@@ -186,7 +186,6 @@ export function ProductDetailContent({ productId }: { productId: number }) {
             </span>
             <span className="inline-flex items-center gap-1 text-sm font-bold"><span className="material-symbols-rounded text-warning" aria-hidden="true">star</span>{averageRating.toFixed(1)}</span>
             <span className="text-sm text-muted-foreground">{product.comments.length} نظر</span>
-            <span className="text-sm text-muted-foreground">فروشنده: {product.seller.name}</span>
           </div>
           {product.brand && (
             <div className="mt-5 flex w-fit items-center gap-3 rounded-xl border border-border bg-surface p-3">
