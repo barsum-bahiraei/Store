@@ -3,6 +3,7 @@ export type ProductImage = {
   name: string;
   url: string;
   isMain: boolean;
+  displayOrder: number | null;
   fileType: number;
 };
 

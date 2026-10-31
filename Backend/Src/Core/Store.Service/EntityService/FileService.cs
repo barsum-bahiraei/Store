@@ -42,7 +42,8 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             TableName = input.TableName,
             TargetId = input.TargetId,
             TargetName = input.TargetName,
-            IsMain = input.IsMain
+            IsMain = input.IsMain,
+            DisplayOrder = null
         };
 
         var created = await fileRepository.CreateAsync(entity, cancellation);
@@ -56,7 +57,8 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             TableName = created.TableName,
             TargetId = created.TargetId,
             TargetName = created.TargetName,
-            IsMain = created.IsMain
+            IsMain = created.IsMain,
+            DisplayOrder = created.DisplayOrder
         });
     }
 
@@ -78,7 +80,8 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             TableName = entity.TableName,
             TargetId = entity.TargetId,
             TargetName = entity.TargetName,
-            IsMain = entity.IsMain
+            IsMain = entity.IsMain,
+            DisplayOrder = entity.DisplayOrder
         });
     }
 
@@ -106,7 +109,8 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             TableName = entity.TableName,
             TargetId = entity.TargetId,
             TargetName = entity.TargetName,
-            IsMain = entity.IsMain
+            IsMain = entity.IsMain,
+            DisplayOrder = entity.DisplayOrder
         });
     }
 
@@ -136,7 +140,8 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
                 TableName = entity.TableName,
                 TargetId = entity.TargetId,
                 TargetName = entity.TargetName,
-                IsMain = entity.IsMain
+                IsMain = entity.IsMain,
+                DisplayOrder = entity.DisplayOrder
             };
         }
 
@@ -168,7 +173,8 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
                 TableName = entity.TableName,
                 TargetId = entity.TargetId,
                 TargetName = entity.TargetName,
-                IsMain = entity.IsMain
+                IsMain = entity.IsMain,
+                DisplayOrder = entity.DisplayOrder
             });
         }
 
@@ -210,6 +216,21 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         if (entity.Url != objectName)
             await minioStorage.DeleteAsync(entity.Url, cancellation);
 
+        var targetChanged = entity.TableName != input.TableName ||
+                            entity.TargetName != input.TargetName ||
+                            entity.TargetId != input.TargetId;
+        var displayOrder = entity.DisplayOrder;
+        if (input.TableName != TableNameEnum.Products ||
+            input.TargetName != TargetNameEnum.ProductId ||
+            input.FileType is not (FileTypeEnum.Image or FileTypeEnum.Svg))
+        {
+            displayOrder = null;
+        }
+        else if (targetChanged || displayOrder == null)
+        {
+            displayOrder = int.MaxValue - entity.Id;
+        }
+
         entity.Name = input.Name;
         entity.Url = objectName;
         entity.FileType = input.FileType;
@@ -217,6 +238,7 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
         entity.TargetId = input.TargetId;
         entity.TargetName = input.TargetName;
         entity.IsMain = input.IsMain;
+        entity.DisplayOrder = displayOrder;
 
         var updated = await fileRepository.UpdateAsync(entity, cancellation);
 
@@ -229,8 +251,57 @@ public class FileService(IFileRepository fileRepository, IMinioStorage minioStor
             TableName = updated.TableName,
             TargetId = updated.TargetId,
             TargetName = updated.TargetName,
-            IsMain = updated.IsMain
+            IsMain = updated.IsMain,
+            DisplayOrder = updated.DisplayOrder
         });
+    }
+
+    public async Task<Result<bool>> UpdateOrderAsync(
+        int userId,
+        FileOrderUpdateInput input,
+        CancellationToken cancellation)
+    {
+        if (input.Ids == null || input.Ids.Count == 0 || input.Ids.Count != input.Ids.Distinct().Count())
+            return Result<bool>.Failure("فهرست فایل‌ها نامعتبر است");
+
+        var ids = input.Ids;
+
+        var entities = await fileRepository.ListByIdsAsync(ids, cancellation);
+        if (entities.Count != ids.Count)
+            return Result<bool>.Failure("برخی از فایل‌ها یافت نشد");
+
+        var first = entities[0];
+        if (first.TableName != TableNameEnum.Products ||
+            first.TargetName != TargetNameEnum.ProductId ||
+            entities.Any(x => x.FileType is not (FileTypeEnum.Image or FileTypeEnum.Svg)))
+            return Result<bool>.Failure("ترتیب نمایش فقط برای تصاویر محصول قابل تغییر است");
+
+        if (entities.Any(x =>
+                x.TableName != first.TableName ||
+                x.TargetName != first.TargetName ||
+                x.TargetId != first.TargetId))
+            return Result<bool>.Failure("همه فایل‌ها باید متعلق به یک مورد باشند");
+
+        if (!await IsOwnedByAsync(first.TableName, first.TargetId, userId, cancellation))
+            return Result<bool>.Failure("فایل یافت نشد");
+
+        var byId = entities.ToDictionary(x => x.Id);
+        var targetFiles = (await fileRepository.ListAsync(
+            first.TableName,
+            first.TargetName,
+            first.TargetId,
+            cancellation))
+            .Where(x => x.FileType is FileTypeEnum.Image or FileTypeEnum.Svg)
+            .ToList();
+        if (targetFiles.Count != ids.Count || targetFiles.Any(x => !byId.ContainsKey(x.Id)))
+            return Result<bool>.Failure("فهرست تصاویر محصول کامل نیست");
+
+        var displayOrders = ids
+            .Select((id, index) => new { Id = id, DisplayOrder = index + 1 })
+            .ToDictionary(x => x.Id, x => x.DisplayOrder);
+        await fileRepository.UpdateDisplayOrdersAsync(displayOrders, cancellation);
+
+        return Result<bool>.Success(true);
     }
 
     public async Task<Result<bool>> DeleteAsync(

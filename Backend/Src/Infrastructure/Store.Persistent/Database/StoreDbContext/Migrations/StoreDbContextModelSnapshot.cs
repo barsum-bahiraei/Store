@@ -411,6 +411,9 @@ namespace Store.Persistent.Database.StoreDbContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FileType")
                         .HasColumnType("integer");
 

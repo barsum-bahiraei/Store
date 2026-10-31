@@ -39,6 +39,16 @@ public class FileController(FileService fileService) : ControllerBase
     }
 
     [HasAccess]
+    [HttpPut("Order")]
+    public async Task<IActionResult> Order([FromBody] FileOrderUpdateInput input, CancellationToken cancellation = default)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var result = await fileService.UpdateOrderAsync(userId, input, cancellation);
+
+        return Ok(result);
+    }
+
+    [HasAccess]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, IFormFile file, [FromForm] FileUpdateInput input, CancellationToken cancellation = default)
     {

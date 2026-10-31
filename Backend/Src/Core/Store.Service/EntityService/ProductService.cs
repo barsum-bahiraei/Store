@@ -176,6 +176,7 @@ public class ProductService(
                     Url = image.Url,
                     IsMain = image.IsMain,
                     Name = image.Name,
+                    DisplayOrder = image.DisplayOrder,
                     FileType = image.FileType
                 };
             }
@@ -236,6 +237,7 @@ public class ProductService(
                     Url = imageResult.Data.Url,
                     IsMain = imageResult.Data.IsMain,
                     Name = imageResult.Data.Name,
+                    DisplayOrder = imageResult.Data.DisplayOrder,
                     FileType = imageResult.Data.FileType
                 };
             }
@@ -299,7 +301,8 @@ public class ProductService(
 
         if (imagesResult.Data != null)
         {
-            foreach (var image in imagesResult.Data)
+            foreach (var image in imagesResult.Data.Where(x =>
+                         x.FileType is FileTypeEnum.Image or FileTypeEnum.Svg))
             {
                 images.Add(new ProductImageDetailOutput
                 {
@@ -307,6 +310,7 @@ public class ProductService(
                     Url = image.Url,
                     IsMain = image.IsMain,
                     Name = image.Name,
+                    DisplayOrder = image.DisplayOrder,
                     FileType = image.FileType
                 });
             }
@@ -375,6 +379,7 @@ public class ProductService(
                         Name = imageResult.Data.Name,
                         Url = imageResult.Data.Url,
                         IsMain = imageResult.Data.IsMain,
+                        DisplayOrder = imageResult.Data.DisplayOrder,
                         FileType = imageResult.Data.FileType
                     }
             });
@@ -451,7 +456,8 @@ public class ProductService(
 
         if (imagesResult.Data != null)
         {
-            foreach (var image in imagesResult.Data)
+            foreach (var image in imagesResult.Data.Where(x =>
+                         x.FileType is FileTypeEnum.Image or FileTypeEnum.Svg))
             {
                 images.Add(new ProductImageGetOutput
                 {
@@ -459,6 +465,7 @@ public class ProductService(
                     Url = image.Url,
                     IsMain = image.IsMain,
                     Name = image.Name,
+                    DisplayOrder = image.DisplayOrder,
                     FileType = image.FileType
                 });
             }

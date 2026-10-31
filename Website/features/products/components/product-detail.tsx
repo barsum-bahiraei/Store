@@ -74,7 +74,7 @@ export function ProductDetailContent({ productId }: { productId: number }) {
   if (isPending) return <div role="status" className="grid gap-8 lg:grid-cols-2"><span className="sr-only">در حال بارگذاری محصول</span><span className="aspect-square animate-pulse rounded-xl bg-muted motion-reduce:animate-none" /><div className="space-y-4">{[32, 20, 20, 40].map((height, index) => <span key={index} style={{ height }} className="block animate-pulse rounded-lg bg-muted motion-reduce:animate-none" />)}</div></div>;
   if (isError || !product) return <div role="alert" className="rounded-xl border border-border bg-surface p-8 text-center"><span className="material-symbols-rounded text-5xl text-error" aria-hidden="true">error</span><h1 className="mt-3 text-2xl font-black">محصول در دسترس نیست</h1><p className="mt-2 text-muted-foreground">بارگذاری این محصول انجام نشد.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="mt-5 min-h-11 rounded-lg bg-primary px-5 font-bold text-primary-foreground disabled:opacity-60">{isFetching ? "در حال بارگذاری…" : "تلاش دوباره"}</button></div>;
 
-  const images = product.images.map((image) => ({ ...image, resolvedUrl: getProductImageUrl(image.url) })).filter((image) => image.resolvedUrl).sort((left, right) => Number(right.isMain) - Number(left.isMain));
+  const images = product.images.map((image) => ({ ...image, resolvedUrl: getProductImageUrl(image.url) })).filter((image) => image.resolvedUrl).sort((left, right) => (left.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.displayOrder ?? Number.MAX_SAFE_INTEGER));
   const brandImageUrl = getProductImageUrl(product.brand?.image?.url);
   const quantity = isAuthenticated
     ? serverQuantity

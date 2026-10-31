@@ -122,4 +122,10 @@ export const productApi = {
     resolveResult(data, "Failed to set main image");
     productCache.clear();
   },
+
+  async reorderImages(ids: number[]): Promise<void> {
+    const { data } = await httpClient.put<ApiResult<boolean>>("/api/File/Order", { ids });
+    resolveResult(data, "Failed to reorder images");
+    productCache.clear();
+  },
 };

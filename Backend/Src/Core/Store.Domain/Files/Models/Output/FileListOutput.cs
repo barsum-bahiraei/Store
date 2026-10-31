@@ -9,5 +9,6 @@ public class FileListOutput
     public int TargetId { get; set; }
     public TargetNameEnum TargetName { get; set; }
     public bool IsMain { get; set; }
+    public int? DisplayOrder { get; set; }
     public FileTypeEnum FileType { get; set; }
 }

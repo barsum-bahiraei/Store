@@ -4,6 +4,7 @@ import type {
   ProductCreateInput,
   ProductCreateOutput,
   ProductGetOutput,
+  ProductImageOutput,
   ProductImageUploadInput,
   ProductListOutput,
   ProductListParams,
@@ -33,9 +34,10 @@ interface ProductStore {
   updateProduct: (id: number, input: ProductUpdateInput) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
   updatePricesByPercentage: (input: ProductPricePercentageUpdateInput) => Promise<ProductPricePercentageUpdateOutput>;
-  uploadImage: (input: ProductImageUploadInput) => Promise<void>;
+  uploadImage: (input: ProductImageUploadInput) => Promise<ProductImageOutput>;
   deleteImage: (id: number) => Promise<void>;
   setMainImage: (id: number) => Promise<void>;
+  reorderImages: (ids: number[]) => Promise<void>;
 }
 
 export const useProductStore = create<ProductStore>((set, get) => ({
@@ -124,9 +126,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  uploadImage: async (input) => {
-    await productApi.uploadImage(input);
-  },
+  uploadImage: async (input) => productApi.uploadImage(input),
 
   deleteImage: async (id) => {
     await productApi.removeImage(id);
@@ -134,5 +134,9 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
   setMainImage: async (id) => {
     await productApi.setMainImage(id);
+  },
+
+  reorderImages: async (ids) => {
+    await productApi.reorderImages(ids);
   },
 }));

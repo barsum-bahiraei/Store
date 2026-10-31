@@ -104,6 +104,7 @@ export interface ProductImage {
   name: string;
   url: string;
   isMain: boolean;
+  displayOrder: number | null;
   fileType: number;
 }
 
@@ -154,5 +155,6 @@ export interface ProductImageOutput {
   targetId: number;
   targetName: 0;
   isMain: boolean;
+  displayOrder: number | null;
   fileType: 0 | 3;
 }

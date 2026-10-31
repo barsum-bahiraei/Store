@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { AttributeType } from "~/features/attributes/models/enums/attribute-type";
@@ -198,7 +198,7 @@ function AttributeValueField({ attribute, value, onChange }: AttributeValueField
 }
 
 export function ProductWizard({ product, onClose, onComplete }: ProductWizardProps) {
-  const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, setMainImage, submitting } =
+  const { createProduct, getProduct, updateProduct, uploadImage, deleteImage, setMainImage, reorderImages, submitting } =
     useProductStore();
   const editingProductId = product?.id;
   const isEditing = editingProductId !== undefined;
@@ -221,6 +221,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
+  const [imageOrder, setImageOrder] = useState<string[]>([]);
+  const [draggingImageKey, setDraggingImageKey] = useState<string | null>(null);
+  const [dragOverImageKey, setDragOverImageKey] = useState<string | null>(null);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const imagesRef = useRef<SelectedImage[]>([]);
   const [mainImageId, setMainImageId] = useState<string | null>(null);
@@ -277,6 +280,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
             }))
           );
           setExistingImages(details.images ?? []);
+          setImageOrder((details.images ?? []).map((image) => `existing:${image.id}`));
           setMainExistingId(details.images?.find((image) => image.isMain)?.id ?? null);
         })
       : Promise.all([categoryApi.list(), sellerApi.list(), brandApi.list()]).then(
@@ -582,6 +586,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       previewUrl: URL.createObjectURL(file),
     }));
     setImages((current) => [...current, ...next]);
+    setImageOrder((current) => [...current, ...next.map((image) => `new:${image.id}`)]);
     if (mainExistingId === null) {
       setMainImageId((current) => current ?? next[0]?.id ?? null);
     }
@@ -589,6 +594,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
   };
 
   const removeImage = (id: string) => {
+    setImageOrder((current) => current.filter((key) => key !== `new:${id}`));
     setImages((current) => {
       const image = current.find((item) => item.id === id);
       if (image) URL.revokeObjectURL(image.previewUrl);
@@ -612,18 +618,34 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     if (savedProductId === null) return;
     setUploading(true);
     setError(null);
+    const uploadedIds = new Map<string, number>();
+    let uploadsComplete = false;
     try {
-      await Promise.all(
-        images.map((image) =>
-          uploadImage({
-            file: image.file,
-            name: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
-            productId: savedProductId,
-            isMain: image.id === mainImageId,
-            fileType: 0,
-          })
-        )
-      );
+      const finalKeys = imageOrder.filter((key) => {
+        if (key.startsWith("existing:")) {
+          const id = Number(key.slice("existing:".length));
+          return !deletedImageIds.includes(id);
+        }
+        return images.some((image) => `new:${image.id}` === key);
+      });
+
+      for (let index = 0; index < finalKeys.length; index++) {
+        const key = finalKeys[index];
+        if (!key.startsWith("new:")) continue;
+        const clientId = key.slice("new:".length);
+        const image = images.find((item) => item.id === clientId);
+        if (!image) continue;
+        const uploaded = await uploadImage({
+          file: image.file,
+          name: `${savedProductId}-${image.id}-${image.file.name.replace(/\.[^/.]+$/, "")}`,
+          productId: savedProductId,
+          isMain: image.id === mainImageId,
+          fileType: 0,
+        });
+        uploadedIds.set(key, uploaded.id);
+      }
+      uploadsComplete = true;
+
       await Promise.all(deletedImageIds.map((id) => deleteImage(id)));
       if (
         mainExistingId !== null &&
@@ -632,8 +654,22 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
       ) {
         await setMainImage(mainExistingId);
       }
+
+      const finalIds = finalKeys
+        .map((key) =>
+          key.startsWith("existing:")
+            ? Number(key.slice("existing:".length))
+            : uploadedIds.get(key)
+        )
+        .filter((id): id is number => typeof id === "number");
+
+      if (finalIds.length > 0) await reorderImages(finalIds);
+
       onComplete();
     } catch (reason) {
+      if (!uploadsComplete && uploadedIds.size > 0) {
+        await Promise.allSettled([...uploadedIds.values()].map((id) => deleteImage(id)));
+      }
       setError(errorMessage(reason));
     } finally {
       setUploading(false);
@@ -677,7 +713,71 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
     (image) => image.isMain && !deletedImageIds.includes(image.id)
   )?.id ?? null;
   const mainChanged = mainExistingId !== currentMainExistingId;
-  const hasImageWork = images.length > 0 || deletedImageIds.length > 0 || mainChanged;
+
+  const originalExistingOrder = existingImages.map((image) => `existing:${image.id}`);
+  const currentExistingOrder = imageOrder.filter((key) => key.startsWith("existing:"));
+  const orderChanged = currentExistingOrder.join("|") !== originalExistingOrder.join("|");
+  const hasImageWork = images.length > 0 || deletedImageIds.length > 0 || mainChanged || orderChanged;
+
+  const orderedImages = useMemo(() => {
+    const existingByKey = new Map<string, ProductImage>(
+      existingImages.map((image) => [`existing:${image.id}`, image])
+    );
+    const newByKey = new Map<string, SelectedImage>(
+      images.map((image) => [`new:${image.id}`, image])
+    );
+    const items: Array<
+      | { kind: "existing"; key: string; image: ProductImage }
+      | { kind: "new"; key: string; image: SelectedImage }
+    > = [];
+
+    for (const key of imageOrder) {
+      const existing = existingByKey.get(key);
+      if (existing) {
+        items.push({ kind: "existing", key, image: existing });
+        continue;
+      }
+      const pending = newByKey.get(key);
+      if (pending) items.push({ kind: "new", key, image: pending });
+    }
+
+    return items;
+  }, [existingImages, images, imageOrder]);
+
+  const handleImageDragStart = (key: string) => (event: DragEvent<HTMLDivElement>) => {
+    setDraggingImageKey(key);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", key);
+  };
+
+  const handleImageDragOver = (key: string) => (event: DragEvent<HTMLDivElement>) => {
+    if (!draggingImageKey) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (key !== draggingImageKey) setDragOverImageKey(key);
+  };
+
+  const handleImageDrop = (key: string) => (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const source = draggingImageKey ?? event.dataTransfer.getData("text/plain");
+    setDraggingImageKey(null);
+    setDragOverImageKey(null);
+    if (!source || source === key) return;
+    setImageOrder((current) => {
+      const from = current.indexOf(source);
+      const to = current.indexOf(key);
+      if (from < 0 || to < 0) return current;
+      const next = [...current];
+      next.splice(from, 1);
+      next.splice(to, 0, source);
+      return next;
+    });
+  };
+
+  const handleImageDragEnd = () => {
+    setDraggingImageKey(null);
+    setDragOverImageKey(null);
+  };
 
   const selectNewMain = (id: string) => {
     setMainImageId(id);
@@ -966,37 +1066,55 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                 <span className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">انتخاب تصاویر محصول</span><span className="mt-1 text-xs text-gray-500 dark:text-gray-400">فقط WebP، JPG یا PNG — یک یا چند فایل انتخاب کنید</span>
                 <input type="file" accept=".webp,.jpg,.jpeg,.png,image/webp,image/jpeg,image/png" multiple onChange={selectImages} className="sr-only" />
               </label>
-              {existingImages.length > 0 && (
+              {orderedImages.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">تصاویر فعلی</h4>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">تصاویر محصول</h4>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">برای تغییر ترتیب، تصویر را بکشید و روی تصویر دیگر رها کنید.</span>
+                  </div>
                   <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                    {existingImages.map((image) => {
-                      const isDeleted = deletedImageIds.includes(image.id);
-                      const isSelectedMain = mainExistingId === image.id;
+                    {orderedImages.map((item, index) => {
+                      const isDeleted =
+                        item.kind === "existing" && deletedImageIds.includes(item.image.id);
+                      const isSelectedMain =
+                        item.kind === "existing"
+                          ? mainExistingId === item.image.id
+                          : mainImageId === item.image.id;
+                      const src =
+                        item.kind === "existing"
+                          ? resolveProductImageUrl(item.image) ?? undefined
+                          : item.image.previewUrl;
+                      const alt = item.kind === "existing" ? item.image.name : item.image.file.name;
+
                       return (
-                        <div key={image.id} className={`relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${!isDeleted && isSelectedMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""}`}>
-                           <img src={resolveProductImageUrl(image) ?? undefined} alt={image.name} className="aspect-square w-full object-cover" />
-                            <button type="button" onClick={() => toggleExistingImageDeletion(image)} className={`absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `نگه‌داشتن ${image.name}` : `حذف ${image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
+                        <div
+                          key={item.key}
+                          draggable
+                          onDragStart={handleImageDragStart(item.key)}
+                          onDragOver={handleImageDragOver(item.key)}
+                          onDrop={handleImageDrop(item.key)}
+                          onDragEnd={handleImageDragEnd}
+                          className={`group relative cursor-grab overflow-hidden rounded-2xl border-2 bg-gray-100 active:cursor-grabbing dark:bg-gray-800 ${!isDeleted && isSelectedMain ? "border-primary-500" : "border-transparent"} ${isDeleted ? "opacity-50" : ""} ${draggingImageKey === item.key ? "opacity-40" : ""} ${dragOverImageKey === item.key ? "ring-2 ring-primary-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900" : ""}`}
+                        >
+                          <img src={src} alt={alt} className="aspect-square w-full object-cover" draggable={false} />
+                          <span className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-lg bg-gray-950/70 text-xs font-semibold text-white backdrop-blur-sm">{index + 1}</span>
+                          {item.kind === "existing" ? (
+                            <button type="button" onClick={() => toggleExistingImageDeletion(item.image)} className={`absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg text-white backdrop-blur-sm ${isDeleted ? "bg-green-600 hover:bg-green-700" : "bg-gray-950/70 hover:bg-red-600"}`} aria-label={isDeleted ? `نگه‌داشتن ${item.image.name}` : `حذف ${item.image.name}`}><span className="material-symbols-outlined text-[19px]">{isDeleted ? "undo" : "delete"}</span></button>
+                          ) : (
+                            <button type="button" onClick={() => removeImage(item.image.id)} className="absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`حذف ${item.image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
+                          )}
                           {isDeleted ? (
                             <span className="absolute inset-x-2 bottom-2 flex min-h-10 items-center rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">حذف خواهد شد</span>
                           ) : (
-                            <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={isSelectedMain} onChange={() => selectExistingMain(image.id)} className="size-4 accent-primary-600" />{isSelectedMain ? "تصویر اصلی" : "اصلی شود"}</label>
+                            <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm">
+                              <input type="radio" name="main-image" checked={isSelectedMain} onChange={() => item.kind === "existing" ? selectExistingMain(item.image.id) : selectNewMain(item.image.id)} className="size-4 accent-primary-600" />
+                              {isSelectedMain ? "تصویر اصلی" : "اصلی شود"}
+                            </label>
                           )}
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              )}
-              {images.length > 0 && (
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {images.map((image) => (
-                    <div key={image.id} className={`group relative overflow-hidden rounded-2xl border-2 bg-gray-100 dark:bg-gray-800 ${mainImageId === image.id ? "border-primary-500" : "border-transparent"}`}>
-                      <img src={image.previewUrl} alt={image.file.name} className="aspect-square w-full object-cover" />
-                      <button type="button" onClick={() => removeImage(image.id)} className="absolute left-2 top-2 flex size-9 items-center justify-center rounded-lg bg-gray-950/70 text-white backdrop-blur-sm hover:bg-red-600" aria-label={`حذف ${image.file.name}`}><span className="material-symbols-outlined text-[19px]">delete</span></button>
-                      <label className="absolute inset-x-2 bottom-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-gray-950/75 px-3 text-xs font-medium text-white backdrop-blur-sm"><input type="radio" name="main-image" checked={mainImageId === image.id} onChange={() => selectNewMain(image.id)} className="size-4 accent-primary-600" />{mainImageId === image.id ? "تصویر اصلی" : "اصلی شود"}</label>
-                    </div>
-                  ))}
                 </div>
               )}
             </section>
