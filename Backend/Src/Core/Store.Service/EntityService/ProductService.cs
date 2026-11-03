@@ -578,8 +578,8 @@ public class ProductService(
                 {
                     Size = NormalizeOptional(value.Size),
                     Model = NormalizeOptional(value.Model),
-                    ColorName = value.ColorName.Trim(),
-                    ColorCode = value.ColorCode.Trim()
+                    ColorName = NormalizeOptional(value.ColorName),
+                    ColorCode = NormalizeOptional(value.ColorCode)
                 }).ToList()
             }).ToList()
         };
@@ -682,8 +682,8 @@ public class ProductService(
                 {
                     Size = NormalizeOptional(value.Size),
                     Model = NormalizeOptional(value.Model),
-                    ColorName = value.ColorName.Trim(),
-                    ColorCode = value.ColorCode.Trim()
+                    ColorName = NormalizeOptional(value.ColorName),
+                    ColorCode = NormalizeOptional(value.ColorCode)
                 });
         }
 
@@ -697,8 +697,8 @@ public class ProductService(
                 {
                     Size = NormalizeOptional(value.Size),
                     Model = NormalizeOptional(value.Model),
-                    ColorName = value.ColorName.Trim(),
-                    ColorCode = value.ColorCode.Trim()
+                    ColorName = NormalizeOptional(value.ColorName),
+                    ColorCode = NormalizeOptional(value.ColorCode)
                 }).ToList()
             });
 
@@ -776,12 +776,7 @@ public class ProductService(
         if (combinations.Any(x => x.Stock < 0))
             return "موجودی تنوع محصول نمی‌تواند منفی باشد";
 
-        if (combinations.Any(x => x.Values.Count == 0 || x.Values.Any(value =>
-                NormalizeOptional(value.Size)?.Length > 50 ||
-                NormalizeOptional(value.Model)?.Length > 100 ||
-                string.IsNullOrWhiteSpace(value.ColorName) || value.ColorName.Trim().Length > 100 ||
-                string.IsNullOrWhiteSpace(value.ColorCode) || value.ColorCode.Trim().Length > 32 ||
-                !Regex.IsMatch(value.ColorCode.Trim(), "^#[0-9a-fA-F]{6}$"))))
+        if (combinations.Any(x => x.Values.Count == 0 || x.Values.Any(IsInvalidCombinationValue)))
             return "مقادیر تنوع محصول نامعتبر هستند";
 
         if (combinations.Any(combination => combination.Values
@@ -800,6 +795,18 @@ public class ProductService(
         return null;
     }
 
+    private static bool IsInvalidCombinationValue(ProductVariantAttributeValueData value)
+    {
+        var size = NormalizeOptional(value.Size);
+        var model = NormalizeOptional(value.Model);
+        var colorName = NormalizeOptional(value.ColorName);
+        var colorCode = NormalizeOptional(value.ColorCode);
+
+        return size?.Length > 50 || model?.Length > 100 || colorName?.Length > 100 || colorCode?.Length > 32 ||
+               colorCode != null && !Regex.IsMatch(colorCode, "^#[0-9a-fA-F]{6}$") ||
+               size == null && model == null && colorName == null && colorCode == null;
+    }
+
     private static string CreateCombinationKey(IEnumerable<ProductVariantAttributeValueData> values) =>
         string.Join("\u001e", values
             .Select(CreateCombinationValueKey)
@@ -810,8 +817,8 @@ public class ProductService(
         var parts = new List<string>
         {
             NormalizeOptional(value.Size)?.ToLowerInvariant() ?? string.Empty,
-            value.ColorName.Trim().ToLowerInvariant(),
-            value.ColorCode.Trim().ToLowerInvariant()
+            NormalizeOptional(value.ColorName)?.ToLowerInvariant() ?? string.Empty,
+            NormalizeOptional(value.ColorCode)?.ToLowerInvariant() ?? string.Empty
         };
         var model = NormalizeOptional(value.Model);
         if (model != null)
@@ -861,6 +868,6 @@ public class ProductService(
     private sealed record ProductVariantAttributeValueData(
         string? Size,
         string? Model,
-        string ColorName,
-        string ColorCode);
+        string? ColorName,
+        string? ColorCode);
 }

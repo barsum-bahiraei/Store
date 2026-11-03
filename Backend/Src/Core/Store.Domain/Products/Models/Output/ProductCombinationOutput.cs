@@ -13,6 +13,6 @@ public class ProductVariantAttributeValueOutput
     public int Id { get; set; }
     public string? Size { get; set; }
     public string? Model { get; set; }
-    public string ColorName { get; set; }
-    public string ColorCode { get; set; }
+    public string? ColorName { get; set; }
+    public string? ColorCode { get; set; }
 }

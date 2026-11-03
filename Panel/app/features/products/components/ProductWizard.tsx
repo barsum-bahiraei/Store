@@ -274,8 +274,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                 id: value.id,
                 size: value.size ?? "",
                 model: value.model ?? "",
-                colorName: value.colorName,
-                colorCode: value.colorCode,
+                colorName: value.colorName ?? "",
+                colorCode: value.colorCode ?? "",
               })),
             }))
           );
@@ -366,10 +366,9 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
           valueErrors.size = "سایز نمی‌تواند بیشتر از ۵۰ کاراکتر باشد.";
         }
         if (model.length > 100) valueErrors.model = "مدل نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.";
-        if (!colorName) valueErrors.colorName = "نام رنگ را وارد کنید.";
-        else if (colorName.length > 100) valueErrors.colorName = "نام رنگ نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.";
-        if (!colorCode) valueErrors.colorCode = "کد رنگ را وارد کنید.";
-        else if (!isValidColorCode(colorCode)) valueErrors.colorCode = "کد رنگ باید مانند #e11d48 باشد.";
+        if (colorName.length > 100) valueErrors.colorName = "نام رنگ نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.";
+        if (colorCode && !isValidColorCode(colorCode)) valueErrors.colorCode = "کد رنگ باید مانند #e11d48 باشد.";
+        if (!size && !model && !colorName && !colorCode) valueErrors.size = "حداقل یکی از مشخصات تنوع را وارد کنید.";
 
         const valueKey = variantComboKey([value]);
         if (seenValues.has(valueKey)) valueErrors.colorName = "این مقدار تکراری است.";
@@ -431,8 +430,8 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
         values: variant.values.map((value) => ({
           size: value.size.trim() || null,
           model: value.model.trim() || null,
-          colorName: value.colorName.trim(),
-          colorCode: value.colorCode.trim(),
+          colorName: value.colorName.trim() || null,
+          colorCode: value.colorCode.trim() || null,
         })),
       };
       return isEditing ? { id: variant.id ?? null, ...base } : base;
@@ -1002,7 +1001,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                    return (
                                        <div key={value.key} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-950 sm:grid-cols-2 sm:items-start xl:grid-cols-[1fr_1.25fr_0.9fr_1fr_auto]">
                                         <div>
-                                          <input value={value.colorName} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorName", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="نام رنگ (مثلاً قرمز)" aria-label={`نام رنگ مقدار ${valueIndex + 1}`} disabled={submitting} />
+                                          <input value={value.colorName} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorName", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="نام رنگ (اختیاری)" aria-label={`نام رنگ مقدار ${valueIndex + 1}`} disabled={submitting} />
                                           {valueErrors?.colorName && <span role="alert" className={errorTextClasses}>{valueErrors.colorName}</span>}
                                         </div>
                                         <div>
@@ -1015,7 +1014,7 @@ export function ProductWizard({ product, onClose, onComplete }: ProductWizardPro
                                               aria-label={`انتخاب رنگ مقدار ${valueIndex + 1}`}
                                               disabled={submitting}
                                             />
-                                            <input value={value.colorCode} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorCode", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="#e11d48" aria-label={`کد رنگ مقدار ${valueIndex + 1}`} dir="ltr" disabled={submitting} />
+                                            <input value={value.colorCode} onChange={(event) => updateVariantValue(variantIndex, value.key, "colorCode", event.target.value)} className={`${inputClasses} min-h-10 py-2`} placeholder="کد رنگ (اختیاری)" aria-label={`کد رنگ مقدار ${valueIndex + 1}`} dir="ltr" disabled={submitting} />
                                           </div>
                                           {valueErrors?.colorCode && <span role="alert" className={errorTextClasses}>{valueErrors.colorCode}</span>}
                                         </div>

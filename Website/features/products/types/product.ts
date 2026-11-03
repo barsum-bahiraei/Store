@@ -11,8 +11,8 @@ export type ProductVariantAttributeValue = {
   id: number;
   size?: string | null;
   model?: string | null;
-  colorName?: string;
-  colorCode?: string;
+  colorName?: string | null;
+  colorCode?: string | null;
 };
 
 export type ProductVariant = {

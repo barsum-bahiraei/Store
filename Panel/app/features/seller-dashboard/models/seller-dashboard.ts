@@ -43,8 +43,8 @@ export interface VariantValueOutput {
   id: number;
   size: string | null;
   model: string | null;
-  colorName: string;
-  colorCode: string;
+  colorName: string | null;
+  colorCode: string | null;
 }
 
 export interface TopVariantItem {
