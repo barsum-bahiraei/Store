@@ -153,7 +153,6 @@ export const paymentMethodLabels: Record<number, string> = {
 
 export const deliveryMethodLabels: Record<number, string> = {
   0: "دریافت حضوری",
-  1: "چاپار",
   2: "تیپاکس",
   3: "پست",
 };

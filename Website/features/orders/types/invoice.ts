@@ -6,7 +6,6 @@ export enum PaymentMethod {
 
 export enum DeliveryMethod {
   Pickup = 0,
-  Chapar = 1,
   Tipax = 2,
   Post = 3,
 }

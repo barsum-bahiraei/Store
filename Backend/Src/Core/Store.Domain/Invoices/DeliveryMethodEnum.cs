@@ -5,20 +5,15 @@ public enum DeliveryMethodEnum
     /// <summary>
     /// دریافت حضوری
     /// </summary>
-    Pickup,
-
-    /// <summary>
-    /// ارسال با چاپار
-    /// </summary>
-    Chapar,
+    Pickup = 0,
 
     /// <summary>
     /// ارسال با تیپاکس
     /// </summary>
-    Tipax,
+    Tipax = 2,
 
     /// <summary>
     /// ارسال با پست
     /// </summary>
-    Post
+    Post = 3
 }

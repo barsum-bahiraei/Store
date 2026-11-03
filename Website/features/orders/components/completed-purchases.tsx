@@ -15,7 +15,6 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 };
 const deliveryMethodLabels: Record<DeliveryMethod, string> = {
   [DeliveryMethod.Pickup]: "تحویل حضوری",
-  [DeliveryMethod.Chapar]: "ارسال با چاپار",
   [DeliveryMethod.Tipax]: "ارسال با تیپاکس",
   [DeliveryMethod.Post]: "ارسال با پست",
 };

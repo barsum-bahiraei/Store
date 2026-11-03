@@ -48,7 +48,7 @@ export function CheckoutContent() {
   const cart = useCart();
   const checkout = useCheckout();
   const discountValidation = useDiscountValidation();
-  const [deliveryMethod, setDeliveryMethod] = useState(DeliveryMethod.Chapar);
+  const [deliveryMethod, setDeliveryMethod] = useState(DeliveryMethod.Tipax);
   const [discountCode, setDiscountCode] = useState("");
   const [itemsError, setItemsError] = useState<string | null>(null);
 
@@ -156,7 +156,6 @@ export function CheckoutContent() {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {([
               { value: DeliveryMethod.Pickup, label: "تحویل حضوری", hint: "دریافت مستقیم از فروشگاه" },
-              { value: DeliveryMethod.Chapar, label: "ارسال با چاپار", hint: "تحویل در نشانی پروفایل" },
               { value: DeliveryMethod.Tipax, label: "ارسال با تیپاکس", hint: "تحویل در نشانی پروفایل" },
               { value: DeliveryMethod.Post, label: "ارسال با پست", hint: "تحویل در نشانی پروفایل" },
             ] as const).map((method) => (
