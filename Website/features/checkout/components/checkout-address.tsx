@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LocationPicker } from "@/features/auth/components/location-picker";
 import type { AccountUser } from "@/features/auth/types/account";
 
-type UserWithAddress = AccountUser & { address: string; postalCode: string };
+type UserWithAddress = AccountUser & { address: string; postalCode: string; provinceId: number; cityId: number };
 
 export function CheckoutAddress({ user }: { user: UserWithAddress }) {
   const location = user.latitude != null && user.longitude != null
@@ -33,7 +33,8 @@ export function CheckoutAddress({ user }: { user: UserWithAddress }) {
             </div>
           </div>
           <dl className="mt-6 border-t border-border pt-5 text-xs">
-            <div><dt className="font-bold text-muted-foreground">کد پستی</dt><dd className="mt-1 font-black" dir="ltr">{user.postalCode}</dd></div>
+            <div><dt className="font-bold text-muted-foreground">استان و شهر</dt><dd className="mt-1 font-black">{[user.provinceName, user.cityName].filter(Boolean).join("، ") || "ثبت نشده"}</dd></div>
+            <div className="mt-4"><dt className="font-bold text-muted-foreground">کد پستی</dt><dd className="mt-1 font-black" dir="ltr">{user.postalCode}</dd></div>
           </dl>
         </div>
         {location ? <LocationPicker value={location} /> : null}

@@ -9,12 +9,14 @@ using Store.Domain.Accounts;
 using Store.Domain.Accounts.Models.Input;
 using Store.Domain.Accounts.Models.Output;
 using Store.Domain.Invoices;
+using Store.Domain.Locations;
 using Store.Service.ProviderService;
 
 namespace Store.Service.EntityService;
 
 public class AccountService(
     IAccountRepository accountRepository,
+    ILocationRepository locationRepository,
     IConfiguration configuration,
     KavenegarSmsService smsService,
     ILogger<AccountService> logger
@@ -110,6 +112,10 @@ public class AccountService(
             BirthDate = entity.BirthDate,
             Address = entity.Address,
             PostalCode = entity.PostalCode,
+            ProvinceId = entity.ProvinceId,
+            ProvinceName = entity.Province?.Name,
+            CityId = entity.CityId,
+            CityName = entity.City?.Name,
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,
             Gender = entity.Gender,
@@ -135,6 +141,13 @@ public class AccountService(
         if (string.IsNullOrWhiteSpace(input.LastName))
             return Result<UserProfileUpdateOutput>.Failure("وارد کردن نام خانوادگی الزامی است");
 
+        if (!input.ProvinceId.HasValue || !input.CityId.HasValue)
+            return Result<UserProfileUpdateOutput>.Failure("انتخاب استان و شهر الزامی است");
+
+        var city = await locationRepository.CityGetAsync(input.ProvinceId.Value, input.CityId.Value, cancellation);
+        if (city == null)
+            return Result<UserProfileUpdateOutput>.Failure("شهر انتخاب‌شده متعلق به استان انتخاب‌شده نیست");
+
         var email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim();
         if (email != null && !string.Equals(email, entity.Email, StringComparison.OrdinalIgnoreCase))
         {
@@ -149,6 +162,8 @@ public class AccountService(
         entity.Email = email;
         entity.Address = input.Address;
         entity.PostalCode = string.IsNullOrWhiteSpace(input.PostalCode) ? null : input.PostalCode.Trim();
+        entity.ProvinceId = input.ProvinceId.Value;
+        entity.CityId = input.CityId.Value;
         entity.Latitude = input.Latitude;
         entity.Longitude = input.Longitude;
         entity.Gender = input.Gender;
@@ -163,6 +178,10 @@ public class AccountService(
             Email = updated.Email,
             Address = updated.Address,
             PostalCode = updated.PostalCode,
+            ProvinceId = city.ProvinceId,
+            ProvinceName = city.Province.Name,
+            CityId = city.Id,
+            CityName = city.Name,
             Latitude = updated.Latitude,
             Longitude = updated.Longitude,
             Gender = updated.Gender,

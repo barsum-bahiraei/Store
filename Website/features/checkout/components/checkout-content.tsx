@@ -14,7 +14,8 @@ import { useDiscountValidation } from "../hooks/use-discount-validation";
 import { PaymentStatus } from "../types/checkout";
 import { CheckoutAddress } from "./checkout-address";
 
-type UserWithAddress = AccountUser & { address: string; postalCode: string };
+type UserWithDeliveryProfile = AccountUser & { postalCode: string; provinceId: number; cityId: number };
+type UserWithAddress = UserWithDeliveryProfile & { address: string };
 
 const paymentStatusLabels: Record<PaymentStatus, string> = {
   [PaymentStatus.New]: "سفارش ثبت شده",
@@ -28,9 +29,16 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   [PaymentStatus.Failed]: "خطا/ناموفق",
 };
 
-function hasCompleteAddress(user?: AccountUser): user is UserWithAddress {
-  return Boolean(user?.address?.trim())
-    && Boolean(user?.postalCode?.trim());
+function hasCompleteDeliveryProfile(user?: AccountUser): user is UserWithDeliveryProfile {
+  return Boolean(user?.postalCode?.trim())
+    && Number.isSafeInteger(user?.provinceId)
+    && Number(user?.provinceId) > 0
+    && Number.isSafeInteger(user?.cityId)
+    && Number(user?.cityId) > 0;
+}
+
+function hasCompleteAddress(user: UserWithDeliveryProfile): user is UserWithAddress {
+  return Boolean(user.address?.trim());
 }
 
 export function CheckoutContent() {
@@ -103,9 +111,11 @@ export function CheckoutContent() {
   const discountAmount = canApplyDiscount ? Math.min(validatedDiscount!.discountAmount, estimatedSubtotal) : 0;
   const finalAmount = Math.max(0, estimatedSubtotal - discountAmount);
   const needsAddress = deliveryMethod !== DeliveryMethod.Pickup;
-  const userWithAddress = hasCompleteAddress(profile.data) ? profile.data : null;
+  const deliveryProfile = hasCompleteDeliveryProfile(profile.data) ? profile.data : null;
+  const userWithAddress = deliveryProfile && hasCompleteAddress(deliveryProfile) ? deliveryProfile : null;
+  const needsProfileCompletion = !deliveryProfile || (needsAddress && !userWithAddress);
   const discountNeedsValidation = Boolean(normalizedDiscountCode) && !isValidatedCode;
-  const submitDisabled = checkout.isPending || discountValidation.isPending || discountNeedsValidation || (isValidatedCode && !canApplyDiscount) || (needsAddress && !userWithAddress);
+  const submitDisabled = checkout.isPending || discountValidation.isPending || discountNeedsValidation || (isValidatedCode && !canApplyDiscount) || needsProfileCompletion;
 
   function handleDiscountCodeChange(value: string) {
     setDiscountCode(value);
@@ -158,7 +168,7 @@ export function CheckoutContent() {
           </div>
         </fieldset>
 
-        {needsAddress && (profile.isError ? <div role="alert" className="rounded-xl border border-border bg-surface p-5"><div className="flex gap-3"><span className="material-symbols-rounded text-error" aria-hidden="true">location_off</span><div><h2 className="font-black">اطلاعات نشانی بارگذاری نشد</h2><p className="mt-1 text-sm text-muted-foreground">{profile.error.message}</p><button type="button" onClick={() => profile.refetch()} disabled={profile.isFetching} className="mt-3 min-h-11 rounded-lg px-3 text-sm font-black text-primary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">{profile.isFetching ? "در حال تلاش…" : "تلاش دوباره"}</button></div></div></div> : userWithAddress ? <CheckoutAddress user={userWithAddress} /> : <div role="alert" className="rounded-xl border border-warning bg-warning/10 p-5"><div className="flex gap-3"><span className="material-symbols-rounded text-warning" aria-hidden="true">location_off</span><div><h2 className="font-black">نشانی تحویل کامل نیست</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">برای ارسال سفارش، نشانی و کد پستی خود را در پروفایل تکمیل کنید.</p><Link href="/account?tab=profile&returnTo=%2Fcheckout" className="mt-3 inline-flex min-h-11 items-center font-black text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring">تکمیل نشانی</Link></div></div></div>)}
+        {profile.isError ? <div role="alert" className="rounded-xl border border-border bg-surface p-5"><div className="flex gap-3"><span className="material-symbols-rounded text-error" aria-hidden="true">location_off</span><div><h2 className="font-black">اطلاعات تحویل بارگذاری نشد</h2><p className="mt-1 text-sm text-muted-foreground">{profile.error.message}</p><button type="button" onClick={() => profile.refetch()} disabled={profile.isFetching} className="mt-3 min-h-11 rounded-lg px-3 text-sm font-black text-primary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">{profile.isFetching ? "در حال تلاش…" : "تلاش دوباره"}</button></div></div></div> : needsProfileCompletion ? <div role="alert" className="rounded-xl border border-warning bg-warning/10 p-5"><div className="flex gap-3"><span className="material-symbols-rounded text-warning" aria-hidden="true">location_off</span><div><h2 className="font-black">اطلاعات تحویل کامل نیست</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">{needsAddress ? "برای ارسال سفارش، استان، شهر، نشانی و کد پستی خود را در پروفایل تکمیل کنید." : "برای ثبت سفارش، استان، شهر و کد پستی خود را در پروفایل تکمیل کنید."}</p><Link href="/account?tab=profile&returnTo=%2Fcheckout" className="mt-3 inline-flex min-h-11 items-center font-black text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring">تکمیل اطلاعات تحویل</Link></div></div></div> : needsAddress && userWithAddress ? <CheckoutAddress user={userWithAddress} /> : null}
 
         <fieldset className="rounded-xl border border-border bg-surface p-5 sm:p-6">
           <legend className="px-2 text-lg font-black">روش پرداخت</legend>

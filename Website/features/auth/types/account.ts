@@ -16,6 +16,10 @@ export type AccountUser = {
   gender: Gender;
   address: string | null;
   postalCode: string | null;
+  provinceId: number | null;
+  provinceName: string | null;
+  cityId: number | null;
+  cityName: string | null;
   latitude: number | null;
   longitude: number | null;
   isEmailVerified: boolean;
@@ -28,6 +32,8 @@ export type UpdateUserProfileInput = {
   email: string | null;
   address: string | null;
   postalCode: string | null;
+  provinceId: number;
+  cityId: number;
   latitude: number | null;
   longitude: number | null;
   gender: Gender;
@@ -35,7 +41,10 @@ export type UpdateUserProfileInput = {
   birthDate: string | null;
 };
 
-export type UpdatedUserProfile = UpdateUserProfileInput;
+export type UpdatedUserProfile = UpdateUserProfileInput & {
+  provinceName: string;
+  cityName: string;
+};
 
 export type AuthenticatedUser = AccountUser & {
   token: string;

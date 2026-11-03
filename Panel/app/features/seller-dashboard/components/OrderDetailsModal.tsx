@@ -149,6 +149,8 @@ export function OrderDetailsModal({ orderId, onClose }: OrderDetailsModalProps) 
                   <p><span className="text-gray-500">نام و نام خانوادگی: </span><strong>{`${order.customer.firstName} ${order.customer.lastName}`.trim() || "ثبت نشده"}</strong></p>
                   <p><span className="text-gray-500">شماره تماس: </span><strong dir="ltr" className="inline-block">{order.customer.phoneNumber}</strong></p>
                   <p><span className="text-gray-500">کد پستی: </span><strong>{order.customer.postalCode || "ثبت نشده"}</strong></p>
+                  <p><span className="text-gray-500">استان: </span><strong>{order.customer.provinceName || "ثبت نشده"}</strong></p>
+                  <p><span className="text-gray-500">شهر: </span><strong>{order.customer.cityName || "ثبت نشده"}</strong></p>
                   <p className="leading-7 sm:col-span-3"><span className="text-gray-500">نشانی کامل: </span><strong>{order.customer.address || "ثبت نشده"}</strong></p>
                 </div>
               </section>

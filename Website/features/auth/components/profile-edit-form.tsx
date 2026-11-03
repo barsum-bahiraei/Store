@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { useCities, useProvinces } from "@/features/locations/hooks/use-locations";
 import { useUpdateUserProfile } from "../hooks/use-account";
 import type { AccountUser, Gender } from "../types/account";
 import { LocationPicker } from "./location-picker";
@@ -18,12 +19,15 @@ const inputClassName = "mt-2 h-12 w-full rounded-xl border border-border bg-surf
 export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProps) {
   const router = useRouter();
   const updateProfile = useUpdateUserProfile();
+  const provinces = useProvinces();
   const [form, setForm] = useState({
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
     email: user.email ?? "",
     address: user.address ?? "",
     postalCode: user.postalCode ?? "",
+    provinceId: user.provinceId?.toString() ?? "",
+    cityId: user.cityId?.toString() ?? "",
     latitude: user.latitude?.toString() ?? "",
     longitude: user.longitude?.toString() ?? "",
     gender: user.gender,
@@ -33,6 +37,8 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
   const [error, setError] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const selectedProvinceId = Number(form.provinceId);
+  const cities = useCities(selectedProvinceId);
   const latitude = Number(form.latitude);
   const longitude = Number(form.longitude);
   const hasValidLocation = Number.isFinite(latitude) && Number.isFinite(longitude)
@@ -53,7 +59,7 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
     setError("");
     setIsSaved(false);
 
-    if (!form.firstName.trim() || !form.lastName.trim() || !form.address.trim() || !form.postalCode.trim()) {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.address.trim() || !form.postalCode.trim() || !form.provinceId || !form.cityId) {
       showError("لطفاً موارد اجباری را تکمیل کنید.");
       return;
     }
@@ -77,6 +83,8 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
         email: form.email.trim() || null,
         address: form.address.trim(),
         postalCode: form.postalCode,
+        provinceId: selectedProvinceId,
+        cityId: Number(form.cityId),
         latitude: hasValidLocation ? latitude : null,
         longitude: hasValidLocation ? longitude : null,
         gender: form.gender,
@@ -137,6 +145,22 @@ export function ProfileEditForm({ user, returnTo, onSaved }: ProfileEditFormProp
           <div>
             <label htmlFor="profile-postal-code" className="inline-flex items-center gap-1 text-sm font-bold">کد پستی <span className="text-error" aria-hidden="true">*</span><span className="sr-only">(الزامی)</span></label>
             <input id="profile-postal-code" required inputMode="numeric" maxLength={10} autoComplete="postal-code" value={form.postalCode} onChange={(event) => setForm((current) => ({ ...current, postalCode: event.target.value.replace(/\D/g, "") }))} disabled={updateProfile.isPending} dir="ltr" placeholder="کد پستی ۱۰ رقمی" className={inputClassName} />
+          </div>
+          <div>
+            <label htmlFor="profile-province" className="inline-flex items-center gap-1 text-sm font-bold">استان <span className="text-error" aria-hidden="true">*</span><span className="sr-only">(الزامی)</span></label>
+            <select id="profile-province" required value={form.provinceId} onChange={(event) => setForm((current) => ({ ...current, provinceId: event.target.value, cityId: "" }))} disabled={updateProfile.isPending || provinces.isPending} className={inputClassName}>
+              <option value="">{provinces.isPending ? "در حال بارگذاری استان‌ها…" : provinces.isError ? "بارگذاری استان‌ها انجام نشد" : "انتخاب استان"}</option>
+              {provinces.data?.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}
+            </select>
+            {provinces.isError && <p className="mt-2 text-xs font-bold text-error">{provinces.error.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="profile-city" className="inline-flex items-center gap-1 text-sm font-bold">شهر <span className="text-error" aria-hidden="true">*</span><span className="sr-only">(الزامی)</span></label>
+            <select id="profile-city" required value={form.cityId} onChange={(event) => setForm((current) => ({ ...current, cityId: event.target.value }))} disabled={updateProfile.isPending || !form.provinceId || cities.isPending} className={inputClassName}>
+              <option value="">{!form.provinceId ? "ابتدا استان را انتخاب کنید" : cities.isPending ? "در حال بارگذاری شهرها…" : cities.isError ? "بارگذاری شهرها انجام نشد" : "انتخاب شهر"}</option>
+              {cities.data?.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}
+            </select>
+            {cities.isError && <p className="mt-2 text-xs font-bold text-error">{cities.error.message}</p>}
           </div>
           <div className="sm:col-span-2">
             <label htmlFor="profile-address" className="inline-flex items-center gap-1 text-sm font-bold">نشانی کامل <span className="text-error" aria-hidden="true">*</span><span className="sr-only">(الزامی)</span></label>

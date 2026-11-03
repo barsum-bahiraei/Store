@@ -301,6 +301,8 @@ public class SellerService(
                 PhoneNumber = invoice.User.PhoneNumber,
                 Address = invoice.User.Address,
                 PostalCode = invoice.User.PostalCode,
+                ProvinceName = invoice.User.Province?.Name,
+                CityName = invoice.User.City?.Name,
                 Latitude = invoice.User.Latitude,
                 Longitude = invoice.User.Longitude
             },

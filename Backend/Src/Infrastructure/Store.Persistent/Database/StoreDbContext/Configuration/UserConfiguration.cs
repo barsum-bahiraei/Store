@@ -20,5 +20,15 @@ public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
         builder.Property(x => x.IsPhoneNumberVerified).HasDefaultValue(false);
         builder.HasIndex(x => x.Email).IsUnique();
         builder.HasIndex(x => x.PhoneNumber).IsUnique();
+
+        builder.HasOne(x => x.Province)
+            .WithMany(x => x.Users)
+            .HasForeignKey(x => x.ProvinceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.City)
+            .WithMany(x => x.Users)
+            .HasForeignKey(x => x.CityId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

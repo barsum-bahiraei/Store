@@ -239,6 +239,9 @@ public class InvoiceRepository(StoreDbContext context) : IInvoiceRepository
     {
         var result = await context.Invoices
             .Include(x => x.User)
+            .ThenInclude(x => x.Province)
+            .Include(x => x.User)
+            .ThenInclude(x => x.City)
             .Include(x => x.InvoiceItems)
             .ThenInclude(x => x.Product)
             .ThenInclude(x => x.Category)

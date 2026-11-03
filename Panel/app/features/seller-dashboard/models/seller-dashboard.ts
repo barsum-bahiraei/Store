@@ -163,6 +163,8 @@ export interface SellerOrderCustomer {
   lastName: string;
   phoneNumber: string;
   address: string | null;
+  provinceName: string | null;
+  cityName: string | null;
   postalCode: string | null;
   latitude: number | null;
   longitude: number | null;

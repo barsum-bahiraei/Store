@@ -71,6 +71,8 @@ public class AccountRepository(StoreDbContext context) : IAccountRepository
         var result = await context.Users
             .Include(x => x.UserRoles)
             .ThenInclude(x => x.Role)
+            .Include(x => x.Province)
+            .Include(x => x.City)
             .FirstOrDefaultAsync(x => x.Id == id, cancellation);
         return result;
     }

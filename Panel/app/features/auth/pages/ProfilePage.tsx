@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { PersianDateTimePicker } from "~/components/common/PersianDateTimePicker";
 import { useAuth } from "~/contexts/auth-context";
+import { locationApi } from "~/features/locations/api/location-api";
+import type { LocationOption } from "~/features/locations/models/location";
 import { SellerLocationMap } from "~/features/sellers/components/SellerLocationMap";
 import { formatLocalDate } from "~/shared/utils/date-time";
 
@@ -24,6 +26,8 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState(currentUser?.lastName ?? "");
   const [email, setEmail] = useState(currentUser?.email ?? "");
   const [address, setAddress] = useState(currentUser?.address ?? "");
+  const [provinceId, setProvinceId] = useState<number | null>(currentUser?.provinceId ?? null);
+  const [cityId, setCityId] = useState<number | null>(currentUser?.cityId ?? null);
   const [postalCode, setPostalCode] = useState(currentUser?.postalCode ?? "");
   const [latitude, setLatitude] = useState<number | null>(currentUser?.latitude ?? null);
   const [longitude, setLongitude] = useState<number | null>(currentUser?.longitude ?? null);
@@ -35,6 +39,56 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationOptionsError, setLocationOptionsError] = useState<string | null>(null);
+  const [provinces, setProvinces] = useState<LocationOption[]>([]);
+  const [cities, setCities] = useState<LocationOption[]>([]);
+  const [provincesLoading, setProvincesLoading] = useState(true);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void locationApi.provinces()
+      .then((items) => {
+        if (active) setProvinces(items);
+      })
+      .catch((reason) => {
+        if (active) setLocationOptionsError(reason instanceof Error ? reason.message : "بارگذاری استان‌ها ناموفق بود.");
+      })
+      .finally(() => {
+        if (active) setProvincesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (provinceId === null) {
+      setCities([]);
+      setCitiesLoading(false);
+      return;
+    }
+
+    let active = true;
+    setCitiesLoading(true);
+    setLocationOptionsError(null);
+    void locationApi.cities(provinceId)
+      .then((items) => {
+        if (active) setCities(items);
+      })
+      .catch((reason) => {
+        if (active) {
+          setCities([]);
+          setLocationOptionsError(reason instanceof Error ? reason.message : "بارگذاری شهرها ناموفق بود.");
+        }
+      })
+      .finally(() => {
+        if (active) setCitiesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [provinceId]);
 
   if (!currentUser) {
     return (
@@ -49,6 +103,8 @@ export default function ProfilePage() {
     setLastName(currentUser.lastName ?? "");
     setEmail(currentUser.email ?? "");
     setAddress(currentUser.address ?? "");
+    setProvinceId(currentUser.provinceId ?? null);
+    setCityId(currentUser.cityId ?? null);
     setPostalCode(currentUser.postalCode ?? "");
     setLatitude(currentUser.latitude);
     setLongitude(currentUser.longitude);
@@ -64,7 +120,7 @@ export default function ProfilePage() {
     setError(null);
     setSuccess(false);
 
-    if (!firstName.trim() || !lastName.trim() || !address.trim() || !postalCode.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !address.trim() || !postalCode.trim() || provinceId === null || cityId === null) {
       setError("لطفاً همه فیلدهای اجباری را تکمیل کنید.");
       return;
     }
@@ -84,6 +140,8 @@ export default function ProfilePage() {
         lastName: lastName.trim(),
         email: email.trim() || undefined,
         address: address.trim() || null,
+        provinceId,
+        cityId,
         postalCode: postalCode.trim() || null,
         latitude,
         longitude,
@@ -222,6 +280,33 @@ export default function ProfilePage() {
                 <input required value={postalCode} onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, ""))} className={inputClasses} placeholder="کد پستی ۱۰ رقمی" inputMode="numeric" maxLength={10} />
               </label>
 
+              <label>
+                <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">استان<RequiredMark /></span>
+                <select
+                  required
+                  value={provinceId ?? ""}
+                  onChange={(event) => {
+                    setProvinceId(event.target.value ? Number(event.target.value) : null);
+                    setCityId(null);
+                  }}
+                  disabled={provincesLoading}
+                  className={inputClasses}
+                >
+                  <option value="">{provincesLoading ? "در حال بارگذاری..." : "انتخاب استان"}</option>
+                  {provinces.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}
+                </select>
+              </label>
+
+              <label>
+                <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">شهر<RequiredMark /></span>
+                <select required value={cityId ?? ""} onChange={(event) => setCityId(event.target.value ? Number(event.target.value) : null)} disabled={provinceId === null || citiesLoading} className={inputClasses}>
+                  <option value="">{citiesLoading ? "در حال بارگذاری..." : provinceId === null ? "ابتدا استان را انتخاب کنید" : "انتخاب شهر"}</option>
+                  {cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}
+                </select>
+              </label>
+
+              {locationOptionsError && <p role="alert" className="text-xs text-red-600 sm:col-span-2 dark:text-red-400">{locationOptionsError}</p>}
+
               <label className="sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">نشانی کامل<RequiredMark /></span>
                 <textarea required value={address} onChange={(event) => setAddress(event.target.value)} className={`${inputClasses} min-h-24 resize-y py-3`} placeholder="استان، شهر، خیابان، کوچه و پلاک" />
@@ -272,6 +357,8 @@ export default function ProfilePage() {
                 ["تاریخ تولد", currentUser.birthDate ? formatLocalDate(currentUser.birthDate) : null],
                 ["کد ملی", currentUser.nationalCode],
                 ["کد پستی", currentUser.postalCode],
+                ["استان", currentUser.provinceName],
+                ["شهر", currentUser.cityName],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl bg-gray-50 p-4 dark:bg-gray-950">
                   <dt className="text-xs text-gray-500 dark:text-gray-400">{label}</dt>

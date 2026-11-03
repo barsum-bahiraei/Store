@@ -99,6 +99,10 @@ public class InvoiceService(
         if (string.IsNullOrWhiteSpace(user.PostalCode))
             return Result<CheckoutOutput>.Failure("کد پستی باید تکمیل شود");
 
+        if (!user.ProvinceId.HasValue || !user.CityId.HasValue || user.Province == null || user.City == null ||
+            user.City.ProvinceId != user.ProvinceId.Value)
+            return Result<CheckoutOutput>.Failure("استان و شهر باید در پروفایل تکمیل شوند");
+
         if (input.DeliveryMethod != DeliveryMethodEnum.Pickup)
         {
             if (string.IsNullOrWhiteSpace(user.Address))

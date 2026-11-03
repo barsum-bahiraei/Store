@@ -114,6 +114,8 @@ export function AccountProfile({ tab = "profile", returnTo }: { tab?: "profile" 
                     <ProfileField icon="badge" label="کد ملی" value={user.nationalCode} />
                     <ProfileField icon="cake" label="تاریخ تولد" value={formatPersianProfileDate(user.birthDate)} />
                     <ProfileField icon="person" label="جنسیت" value={genderLabels[user.gender]} />
+                    <ProfileField icon="map" label="استان" value={user.provinceName} />
+                    <ProfileField icon="location_city" label="شهر" value={user.cityName} />
                     <ProfileField icon="location_on" label="نشانی" value={user.address} />
                     <ProfileField icon="markunread_mailbox" label="کد پستی" value={user.postalCode} />
                     <div className="border-t border-border py-5 sm:col-span-2">

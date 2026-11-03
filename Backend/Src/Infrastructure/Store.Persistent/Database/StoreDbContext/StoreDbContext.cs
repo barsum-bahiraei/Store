@@ -6,6 +6,7 @@ using Store.Domain.Attribute;
 using Store.Domain.Categories;
 using Store.Domain.Files;
 using Store.Domain.Invoices;
+using Store.Domain.Locations;
 using Store.Domain.Products;
 using Store.Domain.Sellers;
 
@@ -40,6 +41,8 @@ public class StoreDbContext : DbContext
     public DbSet<DiscountCodeEntity> DiscountCodes { get; set; }
     public DbSet<UserDiscountCodeEntity> UserDiscountCodes { get; set; }
     public DbSet<ProductBookmarkEntity> ProductBookmarks { get; set; }
+    public DbSet<ProvinceEntity> Provinces { get; set; }
+    public DbSet<CityEntity> Cities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

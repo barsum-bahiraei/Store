@@ -23,6 +23,7 @@ public static class Configuration
         services.AddScoped<AccountService>();
         services.AddScoped<SellerService>();
         services.AddScoped<InvoiceService>();
+        services.AddScoped<LocationService>();
         return services;
     }
 }

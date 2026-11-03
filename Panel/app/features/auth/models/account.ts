@@ -10,6 +10,10 @@ export interface AccountUser {
   email: string | null;
   gender: number;
   address: string | null;
+  provinceId?: number | null;
+  provinceName?: string | null;
+  cityId?: number | null;
+  cityName?: string | null;
   postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -26,6 +30,8 @@ export interface UserProfileUpdateInput {
   lastName?: string;
   email?: string;
   address: string | null;
+  provinceId: number;
+  cityId: number;
   postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -39,6 +45,10 @@ export interface UserProfileUpdateOutput {
   lastName: string | null;
   email: string | null;
   address: string | null;
+  provinceId: number;
+  provinceName: string;
+  cityId: number;
+  cityName: string;
   postalCode: string | null;
   latitude: number | null;
   longitude: number | null;

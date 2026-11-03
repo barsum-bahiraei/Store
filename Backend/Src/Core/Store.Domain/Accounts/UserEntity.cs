@@ -1,4 +1,5 @@
 using Store.Domain.Invoices;
+using Store.Domain.Locations;
 using Store.Domain.Products;
 using Store.Domain.Sellers;
 
@@ -15,10 +16,14 @@ public class UserEntity : BaseEntity
     public GenderTypeEnum Gender { get; set; }
     public string? Address { get; set; }
     public string? PostalCode { get; set; }
+    public int? ProvinceId { get; set; }
+    public int? CityId { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public bool IsEmailVerified { get; set; }
     public bool IsPhoneNumberVerified { get; set; }
+    public ProvinceEntity? Province { get; set; }
+    public CityEntity? City { get; set; }
     public ICollection<UserRoleEntity> UserRoles { get; set; }
     public ICollection<SellerEntity> Sellers { get; set; }
     public ICollection<CartEntity> Cards { get; set; }
