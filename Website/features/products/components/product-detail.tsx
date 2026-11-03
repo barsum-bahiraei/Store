@@ -304,6 +304,12 @@ export function ProductDetailContent({ productId }: { productId: number }) {
               </>
             ) : <span className={`text-2xl font-black ${needsSelection && product.isAvailable ? "text-muted-foreground" : "text-error"}`}>{needsSelection && product.isAvailable ? "قیمت پس از انتخاب ویژگی‌ها نمایش داده می‌شود" : "ناموجود"}</span>}
           </div>
+          {selectedVariant && (
+            <p role="status" className={`mt-2 inline-flex items-center gap-1.5 text-sm font-bold ${stock > 0 ? "text-muted-foreground" : "text-error"}`}>
+              <span className="material-symbols-rounded text-lg" aria-hidden="true">inventory_2</span>
+              {stock > 0 ? `موجودی تنوع انتخاب‌شده: ${stock.toLocaleString("fa-IR")} عدد` : "این تنوع ناموجود است"}
+            </p>
+          )}
           {product.isAvailable ? (
             <>
               {blockedByRole ? (
